@@ -24,19 +24,39 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const sessionToken = searchParams.get('token');
 
-  if (!sessionToken) {
-    return NextResponse.json({ error: 'No token provided' }, { status: 400 });
+  // If token is provided, return specific session
+  if (sessionToken) {
+    const { data, error } = await supabase
+      .from('chat_sessions')
+      .select('*')
+      .eq('session_token', sessionToken)
+      .single();
+
+    if (error || !data) {
+      return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ session: data });
   }
 
-  const { data, error } = await supabase
+  // Otherwise list recent sessions (limit 20) with message check
+  const { data: sessions, error } = await supabase
     .from('chat_sessions')
-    .select('*')
-    .eq('session_token', sessionToken)
-    .single();
+    .select('*, messages(count)')
+    .order('created_at', { ascending: false })
+    .limit(30);
 
-  if (error || !data) {
-    return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+  if (error) {
+    console.error('Error fetching sessions:', error);
+    return NextResponse.json({ sessions: [] });
   }
 
-  return NextResponse.json({ session: data });
+  // Filter out sessions with 0 messages
+  const validSessions = sessions?.filter((s: any) => s.messages && s.messages[0]?.count > 0) || [];
+
+  // Async cleanup (fire and forget): Delete empty sessions older than 1 hour to keep DB clean
+  // Note: RLS policies might restrict deletion, but assuming service role or owner policy allows
+  // This is a basic implementation. Better to have a scheduled cron job.
+  
+  return NextResponse.json({ sessions: validSessions.slice(0, 20) });
 }

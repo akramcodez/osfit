@@ -1,6 +1,6 @@
 'use client';
 
-import { Message } from '@/types';
+import { Message, AssistantMode } from '@/types';
 import MessageBubble from './MessageBubble';
 import LoadingIndicator from './LoadingIndicator';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -10,45 +10,89 @@ import { useEffect, useRef } from 'react';
 interface MessageListProps {
   messages: Message[];
   isLoading?: boolean;
+  onModeSelect?: (mode: any) => void;
+  currentMode?: AssistantMode;
 }
 
-export default function MessageList({ messages, isLoading }: MessageListProps) {
+export default function MessageList({ messages, isLoading, onModeSelect, currentMode }: MessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    // Auto-scroll to bottom
+    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (scrollContainer) {
+       scrollContainer.scrollTop = scrollContainer.scrollHeight;
     }
   }, [messages, isLoading]);
 
   return (
-    <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-      {messages.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-full text-center">
-          <div className="text-6xl mb-4">🚀</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome to OSFIT!</h2>
-          <p className="text-gray-600 max-w-md">
-            Your multilingual assistant for open-source contribution.
-            Select a mode and start chatting!
-          </p>
-        </div>
-      ) : (
-        <>
-          {messages.map((message) => (
-            <MessageBubble key={message.id} message={message} />
-          ))}
-          {isLoading && (
-            <div className="flex gap-3 mb-4">
-              <Avatar className="w-8 h-8">
-                <div className="w-full h-full flex items-center justify-center text-sm font-semibold bg-purple-500 text-white">
-                  AI
-                </div>
-              </Avatar>
-              <LoadingIndicator />
+    <ScrollArea className="w-full h-full" ref={scrollRef}>
+      <div className="flex flex-col items-center w-full py-4 space-y-6">
+        {messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-[50vh] text-center px-4 mt-20">
+            <div className="h-12 w-12 bg-white text-black rounded-full flex items-center justify-center text-2xl font-bold mb-6">
+                OS
             </div>
-          )}
-        </>
-      )}
+            <h2 className="text-2xl font-semibold text-white mb-8">How can I help you today?</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl w-full">
+                <div 
+                    onClick={() => onModeSelect?.('issue_solver')}
+                    className={`col-span-1 md:col-span-2 relative overflow-hidden group p-[1px] rounded-xl cursor-pointer transition-transform duration-300 hover:scale-[1.01]`}
+                >
+                    {/* Border Background: Wavy gradient when idle, Solid Green when selected */}
+                    <div className={`absolute inset-0 transition-opacity duration-300 ${
+                        currentMode === 'issue_solver' 
+                            ? 'bg-[#3ECF8E] opacity-100' 
+                            : 'bg-gradient-to-r from-[#3ECF8E] via-[#2a2a2a] to-[#3ECF8E] animate-gradient opacity-50 group-hover:opacity-70'
+                    }`}></div>
+                    
+                    {/* Inner content container */}
+                    <div className="relative h-full bg-[#2a2a2a] rounded-[11px] p-5 z-10 flex flex-col justify-center">
+                         <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-lg font-semibold text-white">Solve a GitHub Issue</h3>
+                        </div>
+                        <p className="text-sm text-gray-300">Analyze bugs, plan solutions, and generate PR code instantly.</p>
+                    </div>
+                </div>
+                 <div 
+                    onClick={() => onModeSelect?.('file_explainer')}
+                    className={`bg-[#2a2a2a] p-4 rounded-xl border hover:bg-[#3E3E3E] cursor-pointer transition-colors text-left ${
+                      currentMode === 'file_explainer' ? 'border-[#3ECF8E]' : 'border-[#3E3E3E]'
+                    }`}
+                >
+                    <h3 className="text-sm font-medium text-white mb-1">Explain Code File</h3>
+                    <p className="text-xs text-gray-400">Understand complex logic</p>
+                </div>
+                 <div 
+                    onClick={() => onModeSelect?.('mentor')}
+                    className={`bg-[#2a2a2a] p-4 rounded-xl border hover:bg-[#3E3E3E] cursor-pointer transition-colors text-left ${
+                      currentMode === 'mentor' ? 'border-[#3ECF8E]' : 'border-[#3E3E3E]'
+                    }`}
+                >
+                    <h3 className="text-sm font-medium text-white mb-1">Open Source Mentor</h3>
+                    <p className="text-xs text-gray-400">Get guidance on contributing</p>
+                </div>
+            </div>
+          </div>
+        ) : (
+          <div className="w-full max-w-3xl px-4 flex flex-col space-y-6 pb-4">
+            {messages.map((message) => (
+              <MessageBubble key={message.id} message={message} />
+            ))}
+            {isLoading && (
+              <div className="flex gap-4 w-full">
+                <div className="w-8 h-8 rounded-full bg-[#3ECF8E] flex items-center justify-center text-xs font-bold text-black flex-shrink-0 mt-1">
+                    OS
+                </div>
+                <div className="pt-2">
+                    <LoadingIndicator />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </ScrollArea>
   );
 }

@@ -1,5 +1,5 @@
 export type MessageRole = 'user' | 'assistant' | 'system';
-export type AssistantMode = 'idle' | 'issue_solver' | 'file_explainer' | 'mentor';
+export type AssistantMode = 'issue_solver' | 'file_explainer' | 'mentor';
 
 export interface Message {
   id: string;
