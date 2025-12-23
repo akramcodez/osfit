@@ -11,6 +11,7 @@ export default function ChatInterface() {
   const [sessionId, setSessionId] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentMode, setCurrentMode] = useState<AssistantMode>('idle');
+  const [currentLanguage, setCurrentLanguage] = useState('en');
   const [isLoading, setIsLoading] = useState(false);
 
   // Initialize session on mount
@@ -70,7 +71,7 @@ export default function ChatInterface() {
         body: JSON.stringify({
           message: content,
           mode: currentMode,
-          language: 'en', // TODO: Add language selector in Phase 3
+          language: currentLanguage,
           conversationHistory: messages.slice(-5)
         })
       });
@@ -88,7 +89,7 @@ export default function ChatInterface() {
         role: 'assistant',
         content: aiResponse,
         mode: currentMode,
-        metadata: {},
+        metadata: { language: currentLanguage },
         created_at: new Date().toISOString()
       };
 
@@ -102,7 +103,8 @@ export default function ChatInterface() {
           session_id: sessionId,
           role: 'assistant',
           content: aiResponse,
-          mode: currentMode
+          mode: currentMode,
+          metadata: { language: currentLanguage }
         })
       });
     } catch (error: unknown) {
@@ -127,7 +129,12 @@ export default function ChatInterface() {
 
   return (
     <Card className="flex flex-col h-[calc(100vh-4rem)] max-w-4xl mx-auto my-8">
-      <ModeSelector currentMode={currentMode} onModeChange={setCurrentMode} />
+      <ModeSelector 
+        currentMode={currentMode} 
+        onModeChange={setCurrentMode}
+        currentLanguage={currentLanguage}
+        onLanguageChange={setCurrentLanguage}
+      />
       <MessageList messages={messages} />
       <MessageInput onSend={handleSendMessage} disabled={isLoading} />
     </Card>

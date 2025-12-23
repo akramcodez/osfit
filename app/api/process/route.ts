@@ -75,8 +75,40 @@ async function handleIssueSolver(
       // Fetch the issue
       const issue = await fetchGitHubIssue(issueUrl);
 
-      // Analyze with Gemini
-      const systemPrompt = `You are OSFIT's Issue Solver mode. 
+      // Check what user is asking for
+      const askingForSolution = message.toLowerCase().includes('solution') || 
+                                message.toLowerCase().includes('how to solve') ||
+                                message.toLowerCase().includes('approach') ||
+                                message.toLowerCase().includes('fix');
+
+      const askingForPR = message.toLowerCase().includes('pull request') || 
+                          message.toLowerCase().includes('pr ') ||
+                          message.toLowerCase().includes('commit message') ||
+                          message.toLowerCase().includes('branch');
+
+      let systemPrompt: string;
+      
+      if (askingForPR) {
+        systemPrompt = `You are helping a developer prepare a pull request for this GitHub issue.
+
+Generate:
+1. **Branch Name**: Follow git-flow conventions (feature/, bugfix/, etc.)
+2. **Commit Message**: Clear, conventional commit format
+3. **PR Title**: Descriptive and professional
+4. **PR Description Template**: Include problem, solution, testing
+
+Be specific and ready-to-use.`;
+      } else if (askingForSolution) {
+        systemPrompt = `You are OSFIT's Issue Solver mode.
+Provide a detailed solution approach including:
+1. High-level strategy
+2. Key files to modify (if identifiable)
+3. Suggested implementation steps
+4. Potential edge cases to consider
+
+Be practical and specific.`;
+      } else {
+        systemPrompt = `You are OSFIT's Issue Solver mode. 
 Analyze the GitHub issue and provide:
 1. A clear summary of the problem
 2. Key technical details
@@ -84,20 +116,34 @@ Analyze the GitHub issue and provide:
 4. Suggested approach to solve it
 
 Be concise and focus on helping the developer understand and solve the issue.`;
+      }
 
       const context = `
 GitHub Issue: ${issue.title}
 Issue Number: #${issue.number}
 URL: ${issue.url}
+State: ${issue.state}
+Labels: ${issue.labels.join(', ') || 'None'}
 
 Description:
 ${issue.body || 'No description provided'}
 
-${issue.comments && issue.comments.length > 0 ? `Comments (${issue.comments.length}):
-${issue.comments.slice(0, 3).map(c => `- ${c.author}: ${c.body.substring(0, 200)}...`).join('\n')}` : ''}
+${issue.comments && issue.comments.length > 0 ? `Recent Comments (${issue.comments.length}):
+${issue.comments.slice(0, 3).map(c => `- ${c.author}: ${c.body.substring(0, 300)}...`).join('\n\n')}` : ''}
 `;
 
-      return await analyzeWithContext(systemPrompt, message, context);
+      const analysis = await analyzeWithContext(systemPrompt, message, context);
+      
+      if (!askingForSolution && !askingForPR) {
+        return `${analysis}
+
+---
+💡 **Need more help?** Ask me to:
+- Generate a **solution approach**
+- Create a **PR template** (branch name, commit message, description)`;
+      }
+
+      return analysis;
     } catch (error) {
       console.error('Issue fetch error:', error);
       return `I found the URL but had trouble fetching the issue details. The issue is at: ${issueUrl}\n\nPlease make sure the repository is public and the issue exists.`;
@@ -105,7 +151,13 @@ ${issue.comments.slice(0, 3).map(c => `- ${c.author}: ${c.body.substring(0, 200)
   }
 
   // If no URL, guide the user
-  return `I'm in Issue Solver mode! Please share a GitHub issue URL (e.g., https://github.com/owner/repo/issues/123) and I'll help you understand and solve it.`;
+  return `I'm in Issue Solver mode! Share a GitHub issue URL and I'll help you:
+
+1. **Understand the issue** - Summary and technical details
+2. **Plan the solution** - Step-by-step approach
+3. **Prepare your PR** - Branch name, commit message, description
+
+**Example:** https://github.com/owner/repo/issues/123`;
 }
 
 async function handleFileExplainer(
@@ -154,7 +206,14 @@ ${file.content.substring(0, 4000)}${file.content.length > 4000 ? '\n... (truncat
   }
 
   // If no URL, guide the user
-  return `I'm in File Explainer mode! Share a GitHub file URL (e.g., https://github.com/owner/repo/blob/main/src/file.js) and I'll explain it for you.`;
+  return `I'm in File Explainer mode! Share a GitHub file URL and I'll explain:
+
+1. **Purpose** - What the file does
+2. **Components** - Key functions and classes
+3. **Logic flow** - How it works
+4. **Patterns** - Design choices made
+
+**Example:** https://github.com/owner/repo/blob/main/src/file.js`;
 }
 
 async function handleMentor(
