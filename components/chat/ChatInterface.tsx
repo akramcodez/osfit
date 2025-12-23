@@ -62,32 +62,67 @@ export default function ChatInterface() {
       })
     });
 
-    // TODO: Phase 2 - Process with AI and get response
-    // For now, just echo back
-    const assistantMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      session_id: sessionId,
-      role: 'assistant',
-      content: `Echo: ${content}`,
-      mode: currentMode,
-      metadata: {},
-      created_at: new Date().toISOString()
-    };
+    try {
+      // Process with AI
+      const processResponse = await fetch('/api/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: content,
+          mode: currentMode,
+          language: 'en', // TODO: Add language selector in Phase 3
+          conversationHistory: messages.slice(-5)
+        })
+      });
 
-    setMessages(prev => [...prev, assistantMessage]);
-    
-    await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+      const { response: aiResponse, error } = await processResponse.json();
+
+      if (error) {
+        throw new Error(error);
+      }
+
+      // Add assistant response
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
         session_id: sessionId,
         role: 'assistant',
-        content: assistantMessage.content,
-        mode: currentMode
-      })
-    });
+        content: aiResponse,
+        mode: currentMode,
+        metadata: {},
+        created_at: new Date().toISOString()
+      };
 
-    setIsLoading(false);
+      setMessages(prev => [...prev, assistantMessage]);
+      
+      // Save assistant message to database
+      await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: sessionId,
+          role: 'assistant',
+          content: aiResponse,
+          mode: currentMode
+        })
+      });
+    } catch (error: unknown) {
+      console.error('Error processing message:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        session_id: sessionId,
+        role: 'assistant',
+        content: `Sorry, I encountered an error: ${errorMessage}. Please try again.`,
+        mode: currentMode,
+        metadata: {},
+        created_at: new Date().toISOString()
+      };
+      
+      setMessages(prev => [...prev, errorResponse]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
