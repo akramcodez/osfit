@@ -135,7 +135,7 @@ export async function fetchGitHubFile(fileUrl: string) {
   return {
     type: 'file' as const,
     path,
-    content,
+    content: content.substring(0, 8000),
     url: fileUrl,
     language: extension,
   };
