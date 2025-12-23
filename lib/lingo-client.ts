@@ -1,7 +1,15 @@
-import axios from 'axios';
+import { LingoDotDevEngine } from 'lingo.dev/sdk';
+import { generateResponse } from './gemini-client';
 
-const LINGO_API_URL = 'https://api.lingo.dev/v1/translate';
-const LINGO_API_KEY = process.env.LINGO_API_KEY!;
+// Use Lingo.dev only in production, Gemini in development
+const USE_LINGO = process.env.NODE_ENV === 'production';
+
+let lingoDotDev: LingoDotDevEngine | null = null;
+if (USE_LINGO && process.env.LINGO_API_KEY) {
+  lingoDotDev = new LingoDotDevEngine({
+    apiKey: process.env.LINGO_API_KEY,
+  });
+}
 
 export interface TranslateRequest {
   text: string;
@@ -10,46 +18,63 @@ export interface TranslateRequest {
 }
 
 export const SUPPORTED_LANGUAGES = [
-  { code: 'en', name: 'English' },
-  { code: 'es', name: 'Spanish' },
-  { code: 'fr', name: 'French' },
-  { code: 'de', name: 'German' },
-  { code: 'pt', name: 'Portuguese' },
-  { code: 'it', name: 'Italian' },
-  { code: 'zh', name: 'Chinese' },
-  { code: 'ja', name: 'Japanese' },
-  { code: 'ko', name: 'Korean' },
-  { code: 'hi', name: 'Hindi' },
-  { code: 'ar', name: 'Arabic' },
-  { code: 'ru', name: 'Russian' },
+  { code: 'en', name: 'English', nativeName: 'English' },
+  { code: 'es', name: 'Spanish', nativeName: 'Español' },
+  { code: 'fr', name: 'French', nativeName: 'Français' },
+  { code: 'de', name: 'German', nativeName: 'Deutsch' },
+  { code: 'pt', name: 'Portuguese', nativeName: 'Português' },
+  { code: 'it', name: 'Italian', nativeName: 'Italiano' },
+  { code: 'zh', name: 'Chinese', nativeName: '中文' },
+  { code: 'ja', name: 'Japanese', nativeName: '日本語' },
+  { code: 'ko', name: 'Korean', nativeName: '한국어' },
+  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
+  { code: 'ar', name: 'Arabic', nativeName: 'العربية' },
+  { code: 'ru', name: 'Russian', nativeName: 'Русский' },
+  { code: 'bn', name: 'Bengali', nativeName: 'বাংলা' },
 ];
 
+const languageNames: Record<string, string> = {
+  en: 'English', es: 'Spanish', fr: 'French', de: 'German',
+  pt: 'Portuguese', it: 'Italian', zh: 'Chinese', ja: 'Japanese',
+  ko: 'Korean', hi: 'Hindi', ar: 'Arabic', ru: 'Russian', bn: 'Bengali',
+};
+
+/**
+ * Translate text
+ * - In production: uses Lingo.dev SDK (uses credits)
+ * - In development: uses Gemini AI (free, uses your Gemini quota)
+ */
 export async function translateText(request: TranslateRequest): Promise<string> {
   // Skip translation if target is English
   if (request.targetLanguage === 'en') {
     return request.text;
   }
 
-  try {
-    const response = await axios.post(
-      LINGO_API_URL,
-      {
-        text: request.text,
-        target_language: request.targetLanguage,
-        source_language: request.sourceLanguage || 'en'
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${LINGO_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+  const targetLang = languageNames[request.targetLanguage] || request.targetLanguage;
 
-    return response.data.translated_text || response.data.translation || request.text;
+  try {
+    if (USE_LINGO && lingoDotDev) {
+      // Production: use Lingo.dev SDK
+      const content = { text: request.text };
+      const translated = await lingoDotDev.localizeObject(content, {
+        sourceLocale: request.sourceLanguage || 'en',
+        targetLocale: request.targetLanguage,
+      });
+      return translated.text || request.text;
+    } else {
+      // Development: use Gemini for translation (free)
+      const prompt = `Translate the following text to ${targetLang}. 
+Maintain the same formatting (markdown, bullet points, code blocks, etc.).
+Only output the translated text, nothing else.
+
+Text:
+${request.text}`;
+
+      const translated = await generateResponse(prompt);
+      return translated.trim();
+    }
   } catch (error) {
-    console.error('Lingo translation error:', error);
-    // Return original text on error instead of failing
+    console.error('Translation error:', error);
     return request.text;
   }
 }
