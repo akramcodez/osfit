@@ -11,7 +11,7 @@ const ACTOR_NAME = 'sincere_spinner/osfit-github-scraper';
 /**
  * Fetch GitHub issue data
  * - In production: uses cloud Actor (your Apify API key)
- * - In development: fetches directly (free, no Actor runs)
+ * - In development: fetches directly with basic HTML parsing (free)
  */
 export async function fetchGitHubIssue(issueUrl: string) {
   if (USE_CLOUD_ACTOR) {
@@ -37,11 +37,11 @@ export async function fetchGitHubIssue(issueUrl: string) {
       comments: Array<{ author: string; body: string; created_at: string }>;
     };
   } else {
-    // Development: fetch directly from GitHub (no Apify cost)
+    // Development: fetch directly from GitHub with basic HTML parsing
     const response = await fetch(issueUrl, {
       headers: {
         'Accept': 'text/html',
-        'User-Agent': 'OSFIT-Dev'
+        'User-Agent': 'Mozilla/5.0 (compatible; OSFIT-Dev/1.0)'
       }
     });
     
@@ -49,18 +49,64 @@ export async function fetchGitHubIssue(issueUrl: string) {
       throw new Error('Failed to fetch issue');
     }
 
+    const html = await response.text();
+
     // Extract issue number from URL
     const urlParts = issueUrl.split('/');
     const issueNumber = parseInt(urlParts[urlParts.length - 1], 10);
 
-    // For development, just return basic info (title would require HTML parsing)
+    // Parse title from HTML (multiple fallback patterns)
+    let title = `Issue #${issueNumber}`;
+    const titleMatch = html.match(/<bdi class="js-issue-title[^"]*">([^<]+)<\/bdi>/);
+    if (titleMatch) {
+      title = titleMatch[1].trim();
+    } else {
+      // Fallback: look for title in <title> tag
+      const pageTitleMatch = html.match(/<title>([^·]+)/);
+      if (pageTitleMatch) {
+        title = pageTitleMatch[1].trim();
+      }
+    }
+
+    // Try to extract issue body from the first comment
+    let body = '';
+    const bodyMatch = html.match(/<td class="d-block comment-body[^"]*">[\s\S]*?<p[^>]*>([^<]+)<\/p>/);
+    if (bodyMatch) {
+      body = bodyMatch[1].trim();
+    } else {
+      // Alternative: get text content from markdown-body
+      const mdBodyMatch = html.match(/class="markdown-body[^"]*"[^>]*>([\s\S]*?)<\/div>/);
+      if (mdBodyMatch) {
+        // Strip HTML tags and get first 500 chars
+        body = mdBodyMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 500);
+      }
+    }
+
+    // Try to extract state (open/closed)
+    let state = 'unknown';
+    if (html.includes('State--open') || html.includes('status="open"')) {
+      state = 'open';
+    } else if (html.includes('State--closed') || html.includes('status="closed"')) {
+      state = 'closed';
+    }
+
+    // Try to extract labels
+    const labels: string[] = [];
+    const labelMatches = html.matchAll(/class="[^"]*IssueLabel[^"]*"[^>]*>([^<]+)</g);
+    for (const match of labelMatches) {
+      const label = match[1].trim();
+      if (label && !labels.includes(label)) {
+        labels.push(label);
+      }
+    }
+
     return {
-      title: `Issue #${issueNumber}`,
-      body: '(Development mode - full content available in production)',
+      title,
+      body: body || `(Issue body not fully parsed in dev mode. Title: ${title})`,
       number: issueNumber,
       url: issueUrl,
-      state: 'unknown',
-      labels: [],
+      state,
+      labels,
       comments: [],
     };
   }
