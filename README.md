@@ -111,9 +111,3 @@ create table messages (
   created_at timestamp default now()
 );
 ```
-
----
-
-## License
-
-MIT
