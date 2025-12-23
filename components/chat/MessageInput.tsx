@@ -1,49 +1,51 @@
 'use client';
 
-import { useState, KeyboardEvent } from 'react';
-import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 import { Send } from 'lucide-react';
 
 interface MessageInputProps {
-  onSend: (message: string) => void;
-  isLoading: boolean;
+  onSend: (content: string) => void;
+  disabled?: boolean;
 }
 
-export function MessageInput({ onSend, isLoading }: MessageInputProps) {
+export default function MessageInput({ onSend, disabled }: MessageInputProps) {
   const [input, setInput] = useState('');
 
-  function handleSubmit() {
-    if (!input.trim() || isLoading) return;
-    onSend(input.trim());
-    setInput('');
-  }
+  const handleSend = () => {
+    if (input.trim()) {
+      onSend(input.trim());
+      setInput('');
+    }
+  };
 
-  function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+  const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit();
+      handleSend();
     }
-  }
+  };
 
   return (
-    <div className="border-t p-4">
-      <div className="flex gap-2 max-w-3xl mx-auto">
+    <div className="p-4 border-t bg-white">
+      <div className="flex gap-2">
         <Textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Type your message... (Enter to send, Shift+Enter for new line)"
-          className="min-h-[60px] resize-none"
-          disabled={isLoading}
+          onKeyPress={handleKeyPress}
+          placeholder="Type your message... (Press Enter to send)"
+          className="resize-none"
+          rows={2}
+          disabled={disabled}
         />
-        <Button
-          onClick={handleSubmit}
-          disabled={!input.trim() || isLoading}
+        <Button 
+          onClick={handleSend} 
+          disabled={disabled || !input.trim()}
           size="icon"
-          className="shrink-0 h-[60px] w-[60px]"
+          className="self-end"
         >
-          <Send className="h-5 w-5" />
+          <Send className="h-4 w-4" />
         </Button>
       </div>
     </div>

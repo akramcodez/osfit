@@ -1,16 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MessageList } from './MessageList';
-import { MessageInput } from './MessageInput';
-import { ModeSelector } from './ModeSelector';
-import type { Message, AssistantMode, ChatSession } from '@/types';
+import { Message, AssistantMode } from '@/types';
+import MessageList from './MessageList';
+import MessageInput from './MessageInput';
+import ModeSelector from './ModeSelector';
+import { Card } from '@/components/ui/card';
 
-export function ChatInterface() {
+export default function ChatInterface() {
+  const [sessionId, setSessionId] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
-  const [session, setSession] = useState<ChatSession | null>(null);
-  const [mode, setMode] = useState<AssistantMode>('idle');
-  const [language, setLanguage] = useState('en');
+  const [currentMode, setCurrentMode] = useState<AssistantMode>('idle');
   const [isLoading, setIsLoading] = useState(false);
 
   // Initialize session on mount
@@ -18,91 +18,83 @@ export function ChatInterface() {
     initSession();
   }, []);
 
-  async function initSession() {
-    try {
-      const response = await fetch('/api/session', { method: 'POST' });
-      const data = await response.json();
-      setSession(data.session);
-      
-      // Add welcome message
-      const welcomeMessage: Message = {
-        id: 'welcome',
-        session_id: data.session.id,
-        role: 'assistant',
-        content: `👋 Welcome to OSFIT! I'm your open-source assistant.
+  const initSession = async () => {
+    const response = await fetch('/api/session', { method: 'POST' });
+    const { session } = await response.json();
+    setSessionId(session.id);
+    
+    // Load existing messages if any
+    loadMessages(session.id);
+  };
 
-I can help you with:
-• **Issue Solver** - Understand and solve GitHub issues
-• **File Explainer** - Explain code files
-• **Open Source Mentor** - Guidance on contributing
+  const loadMessages = async (sessionId: string) => {
+    const response = await fetch(`/api/chat?session_id=${sessionId}`);
+    const { messages } = await response.json();
+    setMessages(messages || []);
+  };
 
-What would you like help with today?`,
-        mode: 'idle',
-        created_at: new Date().toISOString(),
-      };
-      setMessages([welcomeMessage]);
-    } catch (error) {
-      console.error('Failed to initialize session:', error);
-    }
-  }
+  const handleSendMessage = async (content: string) => {
+    if (!sessionId) return;
 
-  async function sendMessage(content: string) {
-    if (!session || !content.trim()) return;
-
+    // Add user message to UI immediately
     const userMessage: Message = {
-      id: `user-${Date.now()}`,
-      session_id: session.id,
+      id: Date.now().toString(),
+      session_id: sessionId,
       role: 'user',
       content,
-      mode,
-      created_at: new Date().toISOString(),
+      mode: currentMode,
+      metadata: {},
+      created_at: new Date().toISOString()
     };
-
-    setMessages((prev) => [...prev, userMessage]);
+    
+    setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          session_id: session.id,
-          message: content,
-          mode,
-          language,
-        }),
-      });
+    // Save user message to database
+    await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: sessionId,
+        role: 'user',
+        content,
+        mode: currentMode
+      })
+    });
 
-      const data = await response.json();
-      
-      if (data.message) {
-        const assistantMessage: Message = {
-          id: data.message.id || `assistant-${Date.now()}`,
-          session_id: session.id,
-          role: 'assistant',
-          content: data.message.content,
-          mode,
-          created_at: new Date().toISOString(),
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-      }
-    } catch (error) {
-      console.error('Failed to send message:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+    // TODO: Phase 2 - Process with AI and get response
+    // For now, just echo back
+    const assistantMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      session_id: sessionId,
+      role: 'assistant',
+      content: `Echo: ${content}`,
+      mode: currentMode,
+      metadata: {},
+      created_at: new Date().toISOString()
+    };
+
+    setMessages(prev => [...prev, assistantMessage]);
+    
+    await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: sessionId,
+        role: 'assistant',
+        content: assistantMessage.content,
+        mode: currentMode
+      })
+    });
+
+    setIsLoading(false);
+  };
 
   return (
-    <div className="flex flex-col h-full">
-      <ModeSelector 
-        mode={mode} 
-        onModeChange={setMode}
-        language={language}
-        onLanguageChange={setLanguage}
-      />
-      <MessageList messages={messages} isLoading={isLoading} />
-      <MessageInput onSend={sendMessage} isLoading={isLoading} />
-    </div>
+    <Card className="flex flex-col h-[calc(100vh-4rem)] max-w-4xl mx-auto my-8">
+      <ModeSelector currentMode={currentMode} onModeChange={setCurrentMode} />
+      <MessageList messages={messages} />
+      <MessageInput onSend={handleSendMessage} disabled={isLoading} />
+    </Card>
   );
 }

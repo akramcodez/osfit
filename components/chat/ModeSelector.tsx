@@ -1,65 +1,51 @@
 'use client';
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { SUPPORTED_LANGUAGES } from '@/lib/lingo-client';
-import type { AssistantMode } from '@/types';
+import { AssistantMode } from '@/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FileCode, MessageSquare, Lightbulb } from 'lucide-react';
 
 interface ModeSelectorProps {
-  mode: AssistantMode;
+  currentMode: AssistantMode;
   onModeChange: (mode: AssistantMode) => void;
-  language: string;
-  onLanguageChange: (language: string) => void;
 }
 
-const MODE_OPTIONS = [
-  { value: 'idle', label: 'General', icon: '💬' },
-  { value: 'issue_solver', label: 'Issue Solver', icon: '🔧' },
-  { value: 'file_explainer', label: 'File Explainer', icon: '📄' },
-  { value: 'mentor', label: 'OS Mentor', icon: '🎓' },
-] as const;
-
-export function ModeSelector({ 
-  mode, 
-  onModeChange, 
-  language, 
-  onLanguageChange 
-}: ModeSelectorProps) {
+export default function ModeSelector({ currentMode, onModeChange }: ModeSelectorProps) {
   return (
-    <div className="border-b p-4">
-      <div className="flex flex-wrap items-center justify-between gap-4 max-w-3xl mx-auto">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Mode:</span>
-          <div className="flex gap-1">
-            {MODE_OPTIONS.map((option) => (
-              <Badge
-                key={option.value}
-                variant={mode === option.value ? 'default' : 'outline'}
-                className="cursor-pointer"
-                onClick={() => onModeChange(option.value as AssistantMode)}
-              >
-                {option.icon} {option.label}
-              </Badge>
-            ))}
-          </div>
-        </div>
-
-        <Select value={language} onValueChange={onLanguageChange}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Language" />
+    <div className="p-4 border-b bg-gray-50">
+      <div className="flex items-center gap-3">
+        <span className="text-sm font-medium text-gray-700">Mode:</span>
+        <Select 
+          value={currentMode} 
+          onValueChange={(value) => onModeChange(value as AssistantMode)}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {SUPPORTED_LANGUAGES.map((lang) => (
-              <SelectItem key={lang.code} value={lang.code}>
-                {lang.name}
-              </SelectItem>
-            ))}
+            <SelectItem value="idle">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                General Chat
+              </div>
+            </SelectItem>
+            <SelectItem value="issue_solver">
+              <div className="flex items-center gap-2">
+                <Lightbulb className="h-4 w-4" />
+                Issue Solver
+              </div>
+            </SelectItem>
+            <SelectItem value="file_explainer">
+              <div className="flex items-center gap-2">
+                <FileCode className="h-4 w-4" />
+                File Explainer
+              </div>
+            </SelectItem>
+            <SelectItem value="mentor">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Open Source Mentor
+              </div>
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
