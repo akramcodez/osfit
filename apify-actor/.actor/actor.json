@@ -1,0 +1,12 @@
+{
+  "actorSpecification": 1,
+  "name": "osfit-github-scraper",
+  "title": "OSFIT GitHub Scraper",
+  "description": "Fetches GitHub issues and file content for the OSFIT open-source assistant",
+  "version": "0.1",
+  "meta": {
+    "templateId": "ts-crawlee-cheerio"
+  },
+  "input": "./input_schema.json",
+  "dockerfile": "./Dockerfile"
+}

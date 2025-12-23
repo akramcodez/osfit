@@ -1,0 +1,21 @@
+{
+  "name": "osfit-github-scraper",
+  "version": "0.1.0",
+  "description": "OSFIT GitHub Scraper - Fetches GitHub issues and file content",
+  "main": "dist/main.js",
+  "scripts": {
+    "start": "npx tsx src/main.ts",
+    "start:prod": "node dist/main.js",
+    "build": "tsc",
+    "test": "echo \"No tests yet\""
+  },
+  "dependencies": {
+    "@crawlee/cheerio": "^3.15.3",
+    "apify": "^3.2.0",
+    "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0"
+  }
+}

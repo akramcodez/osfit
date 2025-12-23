@@ -1,0 +1,22 @@
+{
+  "title": "OSFIT GitHub Scraper Input",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "url": {
+      "title": "GitHub URL",
+      "type": "string",
+      "description": "GitHub issue or file URL to fetch",
+      "editor": "textfield"
+    },
+    "type": {
+      "title": "Content Type",
+      "type": "string",
+      "description": "Type of content to fetch: 'issue' or 'file'",
+      "enum": ["issue", "file"],
+      "default": "issue",
+      "editor": "select"
+    }
+  },
+  "required": ["url", "type"]
+}
