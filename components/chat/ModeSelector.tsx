@@ -3,7 +3,7 @@
 import { AssistantMode } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FileCode, MessageSquare, Lightbulb } from 'lucide-react';
-import LanguageSelector from './LanguageSelector';
+import { t, LanguageCode } from '@/lib/translations';
 
 interface ModeSelectorProps {
   currentMode: AssistantMode;
@@ -18,6 +18,8 @@ export default function ModeSelector({
   currentLanguage,
   onLanguageChange
 }: ModeSelectorProps) {
+  const lang = currentLanguage as LanguageCode;
+  
   return (
     <div className="flex items-center gap-3">
         <Select 
@@ -32,19 +34,19 @@ export default function ModeSelector({
             <SelectItem value="issue_solver" className="focus:bg-[#2A2A2A] focus:text-white">
             <div className="flex items-center gap-2">
                 <Lightbulb className="h-4 w-4" />
-                Issue Solver
+                {t('issueSolver', lang)}
             </div>
             </SelectItem>
             <SelectItem value="file_explainer" className="focus:bg-[#2A2A2A] focus:text-white">
             <div className="flex items-center gap-2">
                 <FileCode className="h-4 w-4" />
-                File Explainer
+                {t('fileExplainer', lang)}
             </div>
             </SelectItem>
             <SelectItem value="mentor" className="focus:bg-[#2A2A2A] focus:text-white">
             <div className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
-                Open Source Mentor
+                {t('openSourceMentor', lang)}
             </div>
             </SelectItem>
         </SelectContent>
@@ -53,3 +55,4 @@ export default function ModeSelector({
     </div>
   );
 }
+

@@ -2,11 +2,118 @@ import { NextResponse } from 'next/server';
 import { analyzeWithContext } from '@/lib/gemini-client';
 import { translateText } from '@/lib/lingo-client';
 import { fetchGitHubIssue, fetchGitHubFile } from '@/lib/apify-client';
+import { MOCK_RESPONSES } from '@/lib/mock-responses';
+import { createClient } from '@supabase/supabase-js';
+
+import { getSupabase } from '@/lib/supabase';
+import { geminiClient } from '@/lib/gemini-client';
+
+// Helper to determine if we should use mock data
+// Defaults to TRUE in development unless explicitly disabled
+// const USE_MOCK_AI = false;
+const USE_MOCK_AI = process.env.NODE_ENV === 'development' && process.env.USE_REAL_AI !== 'true';
+
+// Helper to get user from auth header
+async function getUserFromRequest(request: Request) {
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return null;
+  }
+  
+  const token = authHeader.replace('Bearer ', '');
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+  
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) return null;
+  
+  return user;
+}
 
 export async function POST(request: Request) {
   try {
+    // Check auth
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
-    const { message, mode, language = 'en', conversationHistory = [] } = body;
+    const { message, mode, language = 'en', conversationHistory = [], sessionId } = body;
+
+    // --- SMART TITLE GENERATION START ---
+    if (sessionId) {
+      console.log('[TITLE DEBUG] sessionId received:', sessionId);
+      const supabase = getSupabase();
+      // Check if session has a title
+      const { data: session, error: sessionError } = await supabase
+        .from('chat_sessions')
+        .select('title')
+        .eq('id', sessionId) 
+        .single();
+      
+      console.log('[TITLE DEBUG] Session lookup result:', { session, error: sessionError?.message });
+      
+      // If no title, generate one
+      if (session && !session.title) {
+        console.log('[TITLE DEBUG] Generating title...');
+        let title = '';
+        
+        if (USE_MOCK_AI) {
+           // Mock Title
+           title = message.length > 20 ? message.slice(0, 20) + '...' : message;
+        } else {
+           // Real AI Title Generation
+           try {
+               const model = geminiClient.getGenerativeModel({ model: "gemini-pro" });
+               const titlePrompt = `Generate a very short chat title (max 4 words) for this initial message: "${message}". No quotes.`;
+               const result = await model.generateContent(titlePrompt);
+               title = result.response.text().trim().replace(/^["']|["']$/g, '');
+               console.log('[TITLE DEBUG] Gemini generated title:', title);
+           } catch (e) {
+               console.error('[TITLE DEBUG] Title gen failed:', e);
+               title = message.slice(0, 20) + '...';
+           }
+        }
+        
+        if (title) {
+           console.log('[TITLE DEBUG] Saving title to DB...');
+           const { error: updateError } = await supabase
+            .from('chat_sessions')
+            .update({ title: title })
+            .eq('id', sessionId);
+           
+           if (updateError) {
+               console.error('[TITLE DEBUG] DB update failed:', updateError);
+           } else {
+               console.log('[TITLE DEBUG] Title saved successfully!');
+           }
+        }
+      } else {
+        console.log('[TITLE DEBUG] Session already has title or not found');
+      }
+    } else {
+      console.log('[TITLE DEBUG] No sessionId provided');
+    }
+    // --- SMART TITLE GENERATION END ---
+
+    // Return mock response if enabled
+    if (USE_MOCK_AI) {
+        // specific check for hi=== request for mentor
+        if (mode === 'mentor' && message.trim() === 'hi===') {
+             return NextResponse.json({ response: 'hi===' });
+        }
+        
+        let mockResponse = '';
+        if (mode === 'mentor') mockResponse = MOCK_RESPONSES.mentor;
+        else if (mode === 'issue_solver') mockResponse = MOCK_RESPONSES.issue_solver;
+        else if (mode === 'file_explainer') mockResponse = MOCK_RESPONSES.file_explainer;
+        else mockResponse = "Mock: Mode not recognized.";
+
+        return NextResponse.json({ response: mockResponse });
+    }
 
     let response = '';
 

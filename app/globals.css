@@ -108,4 +108,144 @@
   body {
     @apply bg-zinc-900 text-foreground h-screen overflow-hidden;
   }
+  
+  /* Force transparent background for code blocks to fix grey box issue */
+  .hljs {
+    background: transparent !important;
+  }
+  pre code.hljs {
+    padding: 0 !important;
+  }
+  
+  /* Nuclear option for stubborn backgrounds */
+  .clean-code-block,
+  .clean-code-block * {
+    background-color: transparent !important;
+  }
 }
+
+/* ====== Custom Animations ====== */
+
+/* Message appear animation */
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Sidebar slide animation */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutLeft {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+}
+
+/* Fade animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scale bounce for buttons */
+@keyframes scaleBounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+/* Subtle float for cards */
+@keyframes subtleFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+/* Typing indicator dots */
+@keyframes typingDot {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-4px); }
+}
+
+@layer utilities {
+  /* Message animations */
+  .animate-message-in {
+    animation: messageSlideIn 0.3s ease-out forwards;
+  }
+  
+  /* Sidebar animations */
+  .animate-slide-in {
+    animation: slideInLeft 0.3s ease-out forwards;
+  }
+  
+  .animate-slide-out {
+    animation: slideOutLeft 0.2s ease-in forwards;
+  }
+  
+  /* Fade animations */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+  
+  .animate-fade-in-up {
+    animation: fadeInUp 0.4s ease-out forwards;
+  }
+  
+  /* Button press effect */
+  .animate-press {
+    animation: scaleBounce 0.15s ease-in-out;
+  }
+  
+  /* Card hover float */
+  .hover-float:hover {
+    animation: subtleFloat 2s ease-in-out infinite;
+  }
+  
+  /* Smooth transitions for all interactive elements */
+  .smooth-transition {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Staggered animation delays */
+  .animation-delay-100 { animation-delay: 100ms; }
+  .animation-delay-200 { animation-delay: 200ms; }
+  .animation-delay-300 { animation-delay: 300ms; }
+  .animation-delay-400 { animation-delay: 400ms; }
+  
+  /* Typing dots animation */
+  .typing-dot-1 { animation: typingDot 1.4s ease-in-out infinite; }
+  .typing-dot-2 { animation: typingDot 1.4s ease-in-out infinite 0.2s; }
+  .typing-dot-3 { animation: typingDot 1.4s ease-in-out infinite 0.4s; }
+}
+
+

@@ -14,6 +14,7 @@ export interface Message {
 export interface ChatSession {
   id: string;
   session_token: string;
+  title?: string;
   created_at: string;
   last_active: string;
 }
