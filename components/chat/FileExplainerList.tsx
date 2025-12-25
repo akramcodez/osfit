@@ -85,42 +85,50 @@ export default function FileExplainerList({
       <div className="flex flex-col items-center w-full py-4 pb-48">
         {explanations.length === 0 ? (
           // Empty state for File Explainer
-          <div className="flex flex-col items-center justify-center h-[50vh] text-center px-4 mt-20">
-            <div className="h-16 w-16 bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl flex items-center justify-center mb-6">
-              <FileCode className="h-8 w-8 text-[#3ECF8E]" />
+            <div className="flex flex-col items-center justify-center h-[50vh] text-center px-4 mt-20">
+            <div className="h-12 w-12 bg-white text-black rounded-full flex items-center justify-center text-2xl font-bold mb-6">
+                OS
             </div>
-            <h2 className="text-2xl font-semibold text-white mb-3">File Explainer</h2>
-            <p className="text-gray-400 max-w-md mb-8">
-              Paste a GitHub file URL and I'll explain the code - its purpose, key functions, logic flow, and dependencies.
-            </p>
+            <h2 className="text-2xl font-semibold text-white mb-8">{t('howCanIHelp', language)}</h2>
             
-            <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-4 max-w-lg w-full">
-              <p className="text-xs text-gray-500 mb-2">Example URL:</p>
-              <code className="text-sm text-[#3ECF8E] break-all">
-                https://github.com/facebook/react/blob/main/packages/react/src/React.js
-              </code>
-            </div>
-
-            {/* Mode switcher cards */}
-            <div className="grid grid-cols-2 gap-4 max-w-lg w-full mt-8">
-              <div
-                onClick={() => onModeSelect?.('mentor')}
-                className={`bg-[#2a2a2a] p-4 rounded-xl border cursor-pointer transition-colors text-left ${
-                  currentMode === 'mentor' ? 'border-[#3ECF8E]' : 'border-[#3E3E3E] hover:border-[#4E4E4E]'
-                }`}
-              >
-                <h3 className="text-sm font-medium text-white mb-1">{t('openSourceMentor', language)}</h3>
-                <p className="text-xs text-gray-400">{t('getGuidance', language)}</p>
-              </div>
-              <div
-                onClick={() => onModeSelect?.('issue_solver')}
-                className={`bg-[#2a2a2a] p-4 rounded-xl border cursor-pointer transition-colors text-left ${
-                  currentMode === 'issue_solver' ? 'border-[#3ECF8E]' : 'border-[#3E3E3E] hover:border-[#4E4E4E]'
-                }`}
-              >
-                <h3 className="text-sm font-medium text-white mb-1">{t('issueSolver', language)}</h3>
-                <p className="text-xs text-gray-400">{t('solveGitHubIssueDesc', language)}</p>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl w-full">
+                <div 
+                    onClick={() => onModeSelect?.('issue_solver')}
+                    className={`col-span-1 md:col-span-2 relative overflow-hidden group p-[1px] rounded-xl cursor-pointer transition-transform duration-300 hover:scale-[1.01]`}
+                >
+                    {/* Border Background: Wavy gradient when idle, Solid Green when selected */}
+                    <div className={`absolute inset-0 transition-opacity duration-300 ${
+                        currentMode === 'issue_solver' 
+                            ? 'bg-[#3ECF8E] opacity-100' 
+                            : 'bg-gradient-to-r from-[#3ECF8E] via-[#2a2a2a] to-[#3ECF8E] animate-gradient opacity-50 group-hover:opacity-70'
+                    }`}></div>
+                    
+                    {/* Inner content container */}
+                    <div className="relative h-full bg-[#2a2a2a] rounded-[11px] p-5 z-10 flex flex-col justify-center">
+                         <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-lg font-semibold text-white">{t('solveGitHubIssue', language)}</h3>
+                        </div>
+                        <p className="text-sm text-gray-300">{t('solveGitHubIssueDesc', language)}</p>
+                    </div>
+                </div>
+                 <div 
+                    onClick={() => onModeSelect?.('file_explainer')}
+                    className={`bg-[#2a2a2a] p-4 rounded-xl border hover:bg-[#3E3E3E] cursor-pointer transition-colors text-left ${
+                      currentMode === 'file_explainer' ? 'border-[#3ECF8E]' : 'border-[#3E3E3E]'
+                    }`}
+                >
+                    <h3 className="text-sm font-medium text-white mb-1">{t('explainCodeFile', language)}</h3>
+                    <p className="text-xs text-gray-400">{t('explainCodeFileDesc', language)}</p>
+                </div>
+                 <div 
+                    onClick={() => onModeSelect?.('mentor')}
+                    className={`bg-[#2a2a2a] p-4 rounded-xl border hover:bg-[#3E3E3E] cursor-pointer transition-colors text-left ${
+                      currentMode === 'mentor' ? 'border-[#3ECF8E]' : 'border-[#3E3E3E]'
+                    }`}
+                >
+                    <h3 className="text-sm font-medium text-white mb-1">{t('openSourceMentor', language)}</h3>
+                    <p className="text-xs text-gray-400">{t('getGuidance', language)}</p>
+                </div>
             </div>
           </div>
         ) : (
