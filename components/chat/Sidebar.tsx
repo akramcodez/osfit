@@ -20,6 +20,7 @@ interface SidebarProps {
   onLogout?: () => void;
   onAuthRequest?: (mode: 'signin' | 'signup') => void;
   onShowUserSettings?: () => void;
+  hideToggleButton?: boolean;
 }
 
 export default function Sidebar({ 
@@ -34,7 +35,8 @@ export default function Sidebar({
   username,
   onLogout,
   onAuthRequest,
-  onShowUserSettings
+  onShowUserSettings,
+  hideToggleButton = false
 }: SidebarProps) {
   const [sessions, setSessions] = useState<any[]>([]);
 
@@ -68,7 +70,7 @@ export default function Sidebar({
       {/* Collapsed state - Menu toggle button */}
       <div 
         className={`absolute top-4 left-4 z-30 transition-all duration-300 ease-out ${
-          isOpen ? 'opacity-0 pointer-events-none -translate-x-10' : 'opacity-100 translate-x-0'
+          isOpen || hideToggleButton ? 'opacity-0 pointer-events-none -translate-x-10' : 'opacity-100 translate-x-0'
         }`}
       >
         <Button 

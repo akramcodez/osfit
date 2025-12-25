@@ -31,13 +31,42 @@ export default function MessageList({
 }: MessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Auto-scroll to bottom when messages change or loading
   useEffect(() => {
-    // Auto-scroll to bottom
     const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
     if (scrollContainer) {
-       scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      scrollContainer.scrollTo({
+        top: scrollContainer.scrollHeight,
+        behavior: 'smooth'
+      });
     }
-  }, [messages, isLoading]);
+  }, [messages.length, isLoading]);
+
+  // Also scroll when message content changes (for streaming)
+  const lastMessageContent = messages.length > 0 ? messages[messages.length - 1]?.content?.length : 0;
+  
+  useEffect(() => {
+    if (!streamingMessageId) return;
+
+    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (!scrollContainer) return;
+
+    // Smooth scroll immediately
+    scrollContainer.scrollTo({
+      top: scrollContainer.scrollHeight,
+      behavior: 'smooth'
+    });
+
+    // Keep smooth scrolling during streaming (faster interval for responsiveness)
+    const scrollInterval = setInterval(() => {
+      scrollContainer.scrollTo({
+        top: scrollContainer.scrollHeight,
+        behavior: 'smooth'
+      });
+    }, 100); // Every 100ms during streaming
+
+    return () => clearInterval(scrollInterval);
+  }, [streamingMessageId, lastMessageContent]);
 
   // Show centered spinner when loading a session
   if (isSessionLoading) {

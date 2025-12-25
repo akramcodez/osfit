@@ -26,8 +26,6 @@ interface KeyStatus {
   has_lingo: boolean;
 }
 
-// Use the main t() function from translations.ts for all text
-
 export default function UserSettings({ user, username, onBack, language, onLanguageChange }: UserSettingsProps) {
   const [keyStatus, setKeyStatus] = useState<KeyStatus>({
     has_gemini: false,
@@ -87,21 +85,21 @@ export default function UserSettings({ user, username, onBack, language, onLangu
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session?.access_token}`
         },
-        body: JSON.stringify({ [`${keyType}_key`]: value })
+        body: JSON.stringify({ [`${keyType}_key`]: value }),
       });
       
-      if (res.ok) {
-        setMessage({ type: 'success', text: `${keyType.toUpperCase()} key saved successfully` });
-        fetchKeyStatus();
-        // Clear the input
-        if (keyType === 'gemini') setGeminiKey('');
-        if (keyType === 'apify') setApifyKey('');
-        if (keyType === 'lingo') setLingoKey('');
-      } else {
-        setMessage({ type: 'error', text: 'Failed to save key' });
-      }
+      if (!res.ok) throw new Error('Failed to save');
+      
+      setMessage({ type: 'success', text: 'API key saved successfully' });
+      
+      // Clear input and refresh status
+      if (keyType === 'gemini') setGeminiKey('');
+      if (keyType === 'apify') setApifyKey('');
+      if (keyType === 'lingo') setLingoKey('');
+      
+      await fetchKeyStatus();
     } catch (e) {
-      setMessage({ type: 'error', text: 'Failed to save key' });
+      setMessage({ type: 'error', text: 'Failed to save API key' });
     } finally {
       setSavingKey(null);
       setTimeout(() => setMessage(null), 3000);
@@ -116,17 +114,15 @@ export default function UserSettings({ user, username, onBack, language, onLangu
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
-        }
+        },
       });
       
-      if (res.ok) {
-        setMessage({ type: 'success', text: `${keyType.toUpperCase()} key removed` });
-        fetchKeyStatus();
-      } else {
-        setMessage({ type: 'error', text: 'Failed to remove key' });
-      }
+      if (!res.ok) throw new Error('Failed to delete');
+      
+      setMessage({ type: 'success', text: 'API key removed' });
+      await fetchKeyStatus();
     } catch (e) {
-      setMessage({ type: 'error', text: 'Failed to remove key' });
+      setMessage({ type: 'error', text: 'Failed to remove API key' });
     } finally {
       setDeletingKey(null);
       setTimeout(() => setMessage(null), 3000);
@@ -276,57 +272,54 @@ export default function UserSettings({ user, username, onBack, language, onLangu
                         {t('configured', language)}
                       </span>
                     ) : (
-                      <span className="text-xs text-gray-500">{t('notSet', language)}</span>
+                      <span className="text-xs text-gray-500 bg-white/5 px-2 py-1 rounded">
+                        {t('notSet', language)}
+                      </span>
                     )}
                     <a 
                       href={config.docsUrl} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-gray-500 hover:text-gray-300 transition-colors"
+                      className="text-gray-500 hover:text-[#3ECF8E] transition-colors"
                     >
                       <ExternalLink className="h-4 w-4" />
                     </a>
                   </div>
                 </div>
 
-                <div className="flex gap-2 mt-3">
+                <div className="flex gap-2">
                   <div className="relative flex-1">
                     <Input
                       type={config.show ? 'text' : 'password'}
-                      placeholder={config.hasKey ? '••••••••••••••••' : t('enterApiKey', language)}
+                      placeholder={t('enterApiKey', language)}
                       value={config.value}
                       onChange={(e) => config.setValue(e.target.value)}
-                      className="bg-[#1A1A1A] border-[#2A2A2A] text-white placeholder:text-gray-500 pr-10 h-9 text-sm"
+                      className="pr-10 bg-[#1C1C1C] border-[#2A2A2A] text-white placeholder:text-gray-600"
                     />
                     <button
-                      type="button"
                       onClick={() => config.setShow(!config.show)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
                     >
                       {config.show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  
                   <Button
-                    size="sm"
                     onClick={() => saveKey(config.type, config.value)}
                     disabled={savingKey === config.type || !config.value.trim()}
-                    className="bg-[#166534] border border-[#22c55e] hover:bg-[#15803d] text-white h-9 px-3"
+                    className="bg-[#3ECF8E] hover:bg-[#35b87d] text-black"
                   >
                     {savingKey === config.type ? (
-                      <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <div className="h-4 w-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
                     ) : (
                       <Save className="h-4 w-4" />
                     )}
                   </Button>
-                  
                   {config.hasKey && (
                     <Button
-                      size="sm"
-                      variant="ghost"
+                      variant="outline"
                       onClick={() => deleteKey(config.type)}
                       disabled={deletingKey === config.type}
-                      className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-9 px-3"
+                      className="border-red-500/30 text-red-400 hover:bg-red-500/10"
                     >
                       {deletingKey === config.type ? (
                         <div className="h-4 w-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
@@ -338,8 +331,6 @@ export default function UserSettings({ user, username, onBack, language, onLangu
                 </div>
               </motion.div>
             ))}
-
-
           </motion.div>
         </div>
       </div>

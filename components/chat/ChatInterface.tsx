@@ -218,6 +218,7 @@ export default function ChatInterface() {
       const { session: newSession } = await response.json();
       setSessionId(newSession.id);
       setMessages([]);
+      setShowUserSettings(false); // Close settings when starting new chat
     } catch (err) {
       console.error('Failed to initialize session:', err);
       setSessionError('Failed to start session. Please refresh the page.');
@@ -227,6 +228,7 @@ export default function ChatInterface() {
   const loadSession = async (existingSessionId: string) => {
     setSessionId(existingSessionId);
     setMessages([]);
+    setShowUserSettings(false); // Close settings when loading a chat
     await loadMessages(existingSessionId);
   };
 
@@ -414,6 +416,7 @@ export default function ChatInterface() {
           setShowAuthDialog(true);
         }}
         onShowUserSettings={() => setShowUserSettings(true)}
+        hideToggleButton={showUserSettings}
       />
 
       <main className="flex-1 flex flex-col h-full relative overflow-hidden">

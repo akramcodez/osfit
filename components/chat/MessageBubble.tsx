@@ -4,7 +4,7 @@ import { Message } from '@/types';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import ReactMarkdown from 'react-markdown';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -14,96 +14,134 @@ import { CodeBlock } from '@/components/chat/CodeBlock';
 
 interface MessageBubbleProps {
   message: Message;
-  isNew?: boolean; // Flag to enable streaming for new messages
+  isNew?: boolean;
   onStreamComplete?: () => void;
 }
 
 export default function MessageBubble({ message, isNew = false, onStreamComplete }: MessageBubbleProps) {
   const isUser = message.role === 'user';
-  const [displayedContent, setDisplayedContent] = useState(isUser || !isNew ? message.content : '');
+  const [displayedLength, setDisplayedLength] = useState(isUser || !isNew ? message.content.length : 0);
   const [isStreaming, setIsStreaming] = useState(!isUser && isNew && message.content.length > 0);
+  const streamRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const completedRef = useRef<boolean>(false);
 
+  // Fast streaming - complete in ~1-2 seconds max
   useEffect(() => {
-    if (!isUser && isNew && message.content) {
-      let currentIndex = 0;
+    if (!isUser && isNew && message.content && !completedRef.current) {
       const content = message.content;
+      const totalLength = content.length;
       
-      // Stream characters with variable speed
+      // Calculate speed to finish in ~3-4 seconds (like ChatGPT/Gemini)
+      const targetDuration = 3500; // ms
+      const baseChunkSize = Math.max(2, Math.ceil(totalLength / (targetDuration / 25)));
+      
       const streamContent = () => {
-        if (currentIndex >= content.length) {
-          setIsStreaming(false);
-          onStreamComplete?.(); // Notify parent that streaming is done
-          return;
-        }
-
-        // Add 2-4 characters at a time for natural feel
-        const chunkSize = Math.min(2 + Math.floor(Math.random() * 3), content.length - currentIndex);
-        currentIndex += chunkSize;
-        setDisplayedContent(content.slice(0, currentIndex));
-
-        // Variable delay: faster for regular text, pause at punctuation
-        const currentChar = content[currentIndex - 1];
-        let delay = 8; // Base speed
-        if (['.', '!', '?', '\n'].includes(currentChar)) {
-          delay = 80; // Pause at sentence ends
-        } else if ([',', ';', ':'].includes(currentChar)) {
-          delay = 40; // Small pause at commas
-        }
-
-        setTimeout(streamContent, delay);
+        setDisplayedLength(prev => {
+          if (prev >= totalLength) {
+            setIsStreaming(false);
+            if (!completedRef.current) {
+              completedRef.current = true;
+              // Defer callback to avoid setState during render
+              setTimeout(() => onStreamComplete?.(), 0);
+            }
+            return totalLength;
+          }
+          
+          // Variable chunk size for natural feel
+          const remaining = totalLength - prev;
+          const chunkSize = Math.min(baseChunkSize + Math.floor(Math.random() * 3), remaining);
+          const newLength = prev + chunkSize;
+          
+          // Continue streaming
+          streamRef.current = setTimeout(streamContent, 16); // 60fps
+          
+          return newLength;
+        });
       };
-
-      streamContent();
-    } else {
-      setDisplayedContent(message.content);
+      
+      streamRef.current = setTimeout(streamContent, 16);
+      
+      return () => {
+        if (streamRef.current) clearTimeout(streamRef.current);
+      };
+    } else if (!isNew || isUser) {
+      setDisplayedLength(message.content.length);
     }
   }, [message.content, isUser, isNew, onStreamComplete]);
-  
+
+  // Memoize displayed content to reduce re-renders
+  const displayedContent = useMemo(() => {
+    if (displayedLength >= message.content.length) {
+      return message.content;
+    }
+    return message.content.slice(0, displayedLength);
+  }, [message.content, displayedLength]);
+
+  // For streaming, show plain text to avoid layout jumps
+  // Once complete, render full markdown
+  const shouldRenderMarkdown = !isStreaming || displayedLength >= message.content.length;
+
   return (
     <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} mb-2 animate-message-in`}>
       <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-[85%]`}>
         <Card className={`border-0 ${
           isUser 
             ? 'p-3 bg-primary/10 text-primary-foreground text-white' 
-            : 'p-0 bg-transparent shadow-none' /** AI: Free floating */
+            : 'p-0 bg-transparent shadow-none'
         }`}>
-          <div className={`prose max-w-none prose-headings:font-semibold ${
-            isUser ? 'prose-p:text-gray-100 prose-a:text-white prose-sm' : 'prose-base prose-invert prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent prose-pre:border-0'
-          }`}>
-            <ReactMarkdown 
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeHighlight]}
-              components={{
-                pre: CodeBlock,
-                table: ({node, ...props}) => (
-                  <div className="overflow-x-auto my-4 border border-white/10 rounded-lg">
-                    <table {...props} className="w-full text-left border-collapse" />
-                  </div>
-                ),
-                thead: ({node, ...props}) => (
-                  <thead {...props} className="bg-white/5 text-gray-200" />
-                ),
-                th: ({node, ...props}) => (
-                  <th {...props} className="px-4 py-3 border-b border-white/10 font-medium text-sm" />
-                ),
-                td: ({node, ...props}) => (
-                  <td {...props} className="px-4 py-3 border-b border-white/5 text-sm text-gray-300 last:border-0" />
-                ),
-                ul: ({node, ...props}) => (
-                  <ul {...props} className="list-disc pl-6 my-4 space-y-1" />
-                ),
-                ol: ({node, ...props}) => (
-                  <ol {...props} className="list-decimal pl-6 my-4 space-y-1" />
-                ),
-                li: ({node, ...props}) => (
-                  <li {...props} className="pl-1" />
-                )
-              }}
-            >
-              {displayedContent}
-            </ReactMarkdown>
-            {/* Blinking cursor while streaming */}
-            {isStreaming && (
+          <div 
+            className={`prose max-w-none prose-headings:font-semibold ${
+              isUser 
+                ? 'prose-p:text-gray-100 prose-a:text-white prose-sm' 
+                : 'prose-base prose-invert prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent prose-pre:border-0'
+            }`}
+            style={{ minHeight: isStreaming ? '1.5em' : 'auto' }}
+          >
+            {shouldRenderMarkdown ? (
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeHighlight]}
+                components={{
+                  pre: CodeBlock,
+                  table: ({node, ...props}) => (
+                    <div className="overflow-x-auto my-4 rounded-lg border border-[#3E3E3E]">
+                      <table {...props} className="w-full text-left border-collapse" />
+                    </div>
+                  ),
+                  thead: ({node, ...props}) => (
+                    <thead {...props} className="bg-[#2A2A2A] text-gray-200 border-b border-[#3E3E3E]" />
+                  ),
+                  tr: ({node, ...props}) => (
+                    <tr {...props} className="border-b border-[#2A2A2A] last:border-0" />
+                  ),
+                  th: ({node, ...props}) => (
+                    <th {...props} className="px-4 py-3 font-medium text-sm text-white border-r border-[#3E3E3E] last:border-r-0" />
+                  ),
+                  td: ({node, ...props}) => (
+                    <td {...props} className="px-4 py-3 text-sm text-gray-300 border-r border-[#2A2A2A] last:border-r-0" />
+                  ),
+                  ul: ({node, ...props}) => (
+                    <ul {...props} className="list-disc pl-6 my-4 space-y-1" />
+                  ),
+                  ol: ({node, ...props}) => (
+                    <ol {...props} className="list-decimal pl-6 my-4 space-y-1" />
+                  ),
+                  li: ({node, ...props}) => (
+                    <li {...props} className="pl-1" />
+                  )
+                }}
+              >
+                {displayedContent}
+              </ReactMarkdown>
+            ) : (
+              // While streaming: show plain text with whitespace preserved
+              <pre className="whitespace-pre-wrap font-sans text-base leading-relaxed m-0 p-0 bg-transparent">
+                {displayedContent}
+                <span className="inline-block w-2 h-4 bg-[#3ECF8E] ml-1 animate-pulse align-middle" />
+              </pre>
+            )}
+            {/* Cursor after markdown complete */}
+            {shouldRenderMarkdown && isStreaming && (
               <span className="inline-block w-2 h-4 bg-[#3ECF8E] ml-1 animate-pulse" />
             )}
           </div>
