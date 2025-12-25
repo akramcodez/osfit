@@ -42,3 +42,5 @@ yarn-error.log*
 next-env.d.ts
 apify-actor/node_modules/
 apify-actor/storage/
+
+.env.local
