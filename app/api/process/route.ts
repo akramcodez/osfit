@@ -190,6 +190,7 @@ export async function POST(request: Request) {
     }
 
     let response = '';
+    let fileInfo: { path?: string; content?: string; language?: string; url?: string } | null = null;
 
     // Pass effective keys to handlers for proper key usage
     try {
@@ -201,7 +202,9 @@ export async function POST(request: Request) {
           response = await handleIssueSolver(message, conversationHistory, effectiveKeys);
           break;
         case 'file_explainer':
-          response = await handleFileExplainer(message, conversationHistory, effectiveKeys);
+          const fileResult = await handleFileExplainer(message, conversationHistory, effectiveKeys);
+          response = fileResult.response;
+          fileInfo = fileResult.fileInfo;
           break;
         case 'mentor':
           response = await handleMentor(message, conversationHistory, effectiveKeys);
@@ -237,7 +240,7 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ response });
+    return NextResponse.json({ response, fileInfo });
   } catch (error: unknown) {
     console.error('Process error:', error);
     
@@ -389,11 +392,16 @@ ${issue.comments.slice(0, 3).map(c => `- ${c.author}: ${c.body.substring(0, 300)
 **Example:** https://github.com/owner/repo/issues/123`;
 }
 
+interface FileExplainerResult {
+  response: string;
+  fileInfo: { path?: string; content?: string; language?: string; url?: string } | null;
+}
+
 async function handleFileExplainer(
   message: string,
   history: unknown[],
   effectiveKeys: EffectiveKeys
-): Promise<string> {
+): Promise<FileExplainerResult> {
   // Check if message contains a GitHub file URL
   const fileUrlMatch = message.match(/github\.com\/[^\/]+\/[^\/]+\/blob\/[^\s]+/);
 
@@ -432,22 +440,38 @@ ${file.content.substring(0, 4000)}${file.content.length > 4000 ? '\n... (truncat
 \`\`\`
 `;
 
-      return await analyzeWithContext(systemPrompt, message, context, effectiveKeys.gemini.key);
+      const explanation = await analyzeWithContext(systemPrompt, message, context, effectiveKeys.gemini.key);
+      
+      return {
+        response: explanation,
+        fileInfo: {
+          path: file.path,
+          content: file.content,
+          language: file.language,
+          url: file.url
+        }
+      };
     } catch (error) {
       console.error('File fetch error:', error);
-      return `I found the URL but had trouble fetching the file. Please make sure the repository is public and the file exists.`;
+      return {
+        response: `I found the URL but had trouble fetching the file. Please make sure the repository is public and the file exists.`,
+        fileInfo: null
+      };
     }
   }
 
   // If no URL, guide the user
-  return `I'm in File Explainer mode! Share a GitHub file URL and I'll explain:
+  return {
+    response: `I'm in File Explainer mode! Share a GitHub file URL and I'll explain:
 
 1. **Purpose** - What the file does
 2. **Components** - Key functions and classes
 3. **Logic flow** - How it works
 4. **Patterns** - Design choices made
 
-**Example:** https://github.com/owner/repo/blob/main/src/file.js`;
+**Example:** https://github.com/owner/repo/blob/main/src/file.js`,
+    fileInfo: null
+  };
 }
 
 async function handleMentor(

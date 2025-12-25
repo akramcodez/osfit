@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Message, AssistantMode, FileExplanation } from '@/types';
 import { LanguageCode } from '@/lib/translations';
 import MessageList from './MessageList';
+import FileExplainerList from './FileExplainerList';
 import MessageInput from './MessageInput';
 import ModeSelector from './ModeSelector';
 import LanguageSelector from './LanguageSelector';
@@ -599,16 +600,29 @@ export default function ChatInterface() {
               <div className="flex-1 relative w-full h-full flex flex-col">
                   
                   <div className="absolute inset-0 pb-32">
-                      <MessageList 
-                          messages={currentMode === 'file_explainer' ? fileExplanations : messages} 
-                          isLoading={isLoading} 
-                          isSessionLoading={isSessionLoading}
-                          onModeSelect={handleModeSelect} 
-                          currentMode={currentMode}
-                          language={currentLanguage as LanguageCode}
-                          streamingMessageId={streamingMessageId}
-                          onStreamComplete={() => setStreamingMessageId(null)}
-                      />
+                      {currentMode === 'file_explainer' ? (
+                          <FileExplainerList
+                              explanations={fileExplanations}
+                              isLoading={isLoading}
+                              isSessionLoading={isSessionLoading}
+                              onModeSelect={handleModeSelect}
+                              currentMode={currentMode}
+                              language={currentLanguage as LanguageCode}
+                              streamingId={streamingMessageId}
+                              onStreamComplete={() => setStreamingMessageId(null)}
+                          />
+                      ) : (
+                          <MessageList 
+                              messages={messages} 
+                              isLoading={isLoading} 
+                              isSessionLoading={isSessionLoading}
+                              onModeSelect={handleModeSelect} 
+                              currentMode={currentMode}
+                              language={currentLanguage as LanguageCode}
+                              streamingMessageId={streamingMessageId}
+                              onStreamComplete={() => setStreamingMessageId(null)}
+                          />
+                      )}
                   </div>
 
                   <div className="absolute bottom-0 left-0 right-0 w-full flex justify-center p-4 bg-gradient-to-t from-[#1C1C1C] from-50% via-[#1C1C1C]/80 to-transparent pt-20 pb-6 z-10">

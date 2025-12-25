@@ -43,13 +43,18 @@ export default function MessageList({
 
   // Auto-scroll to bottom when messages change or loading
   useEffect(() => {
-    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-    if (scrollContainer) {
-      scrollContainer.scrollTo({
-        top: scrollContainer.scrollHeight,
-        behavior: 'smooth'
-      });
-    }
+    // Small delay to ensure DOM has updated
+    const timeoutId = setTimeout(() => {
+      const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTo({
+          top: scrollContainer.scrollHeight,
+          behavior: 'smooth'
+        });
+      }
+    }, 50);
+    
+    return () => clearTimeout(timeoutId);
   }, [messages.length, isLoading]);
 
   // Also scroll when message content changes (for streaming)
