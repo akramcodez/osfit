@@ -1,8 +1,7 @@
 'use client';
 
-import { Message } from '@/types';
+import { Message, FileExplanation } from '@/types';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import ReactMarkdown from 'react-markdown';
 import { useState, useEffect, useRef, useMemo } from 'react';
 
@@ -12,23 +11,33 @@ import 'highlight.js/styles/atom-one-dark.css';
 
 import { CodeBlock } from '@/components/chat/CodeBlock';
 
+// Union type for display items
+type DisplayItem = Message | FileExplanation;
+
+// Helper to get content from either type
+function getContent(item: DisplayItem): string {
+  if ('content' in item) return item.content;
+  if ('explanation' in item) return item.explanation || '';
+  return '';
+}
+
 interface MessageBubbleProps {
-  message: Message;
+  message: DisplayItem;
   isNew?: boolean;
   onStreamComplete?: () => void;
 }
 
 export default function MessageBubble({ message, isNew = false, onStreamComplete }: MessageBubbleProps) {
   const isUser = message.role === 'user';
-  const [displayedLength, setDisplayedLength] = useState(isUser || !isNew ? message.content.length : 0);
-  const [isStreaming, setIsStreaming] = useState(!isUser && isNew && message.content.length > 0);
+  const content = getContent(message);
+  const [displayedLength, setDisplayedLength] = useState(isUser || !isNew ? content.length : 0);
+  const [isStreaming, setIsStreaming] = useState(!isUser && isNew && content.length > 0);
   const streamRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const completedRef = useRef<boolean>(false);
 
   // Fast streaming - complete in ~1-2 seconds max
   useEffect(() => {
-    if (!isUser && isNew && message.content && !completedRef.current) {
-      const content = message.content;
+    if (!isUser && isNew && content && !completedRef.current) {
       const totalLength = content.length;
       
       // Calculate speed to finish in ~3-4 seconds (like ChatGPT/Gemini)
@@ -65,21 +74,21 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
         if (streamRef.current) clearTimeout(streamRef.current);
       };
     } else if (!isNew || isUser) {
-      setDisplayedLength(message.content.length);
+      setDisplayedLength(content.length);
     }
-  }, [message.content, isUser, isNew, onStreamComplete]);
+  }, [content, isUser, isNew, onStreamComplete]);
 
   // Memoize displayed content to reduce re-renders
   const displayedContent = useMemo(() => {
-    if (displayedLength >= message.content.length) {
-      return message.content;
+    if (displayedLength >= content.length) {
+      return content;
     }
-    return message.content.slice(0, displayedLength);
-  }, [message.content, displayedLength]);
+    return content.slice(0, displayedLength);
+  }, [content, displayedLength]);
 
   // For streaming, show plain text to avoid layout jumps
   // Once complete, render full markdown
-  const shouldRenderMarkdown = !isStreaming || displayedLength >= message.content.length;
+  const shouldRenderMarkdown = !isStreaming || displayedLength >= content.length;
 
   return (
     <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} mb-2 animate-message-in`}>
@@ -148,11 +157,6 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
         </Card>
         
         <div className={`flex items-center gap-2 mt-1 px-1 ${isUser ? 'flex-row' : 'flex-row-reverse justify-end'}`}>
-          {message.mode && (
-            <Badge variant="outline" className="text-[10px] h-5 border-white/10 text-gray-500">
-              {message.mode.replace('_', ' ')}
-            </Badge>
-          )}
           <span className="text-[10px] text-gray-600">
             {new Date(message.created_at).toLocaleTimeString([], { 
               hour: '2-digit', 

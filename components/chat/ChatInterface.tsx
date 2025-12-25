@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Message, AssistantMode } from '@/types';
+import { Message, AssistantMode, FileExplanation } from '@/types';
 import { LanguageCode } from '@/lib/translations';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
@@ -166,6 +166,7 @@ export default function ChatInterface() {
   
   const [sessionId, setSessionId] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
+  const [fileExplanations, setFileExplanations] = useState<FileExplanation[]>([]);
   const [currentMode, setCurrentMode] = useState<AssistantMode>('mentor');
   const [currentLanguage, setCurrentLanguage] = useState('en');
   const [isLoading, setIsLoading] = useState(false);
@@ -218,6 +219,7 @@ export default function ChatInterface() {
       const { session: newSession } = await response.json();
       setSessionId(newSession.id);
       setMessages([]);
+      setFileExplanations([]);
       setShowUserSettings(false); // Close settings when starting new chat
     } catch (err) {
       console.error('Failed to initialize session:', err);
@@ -228,24 +230,26 @@ export default function ChatInterface() {
   const loadSession = async (existingSessionId: string) => {
     setSessionId(existingSessionId);
     setMessages([]);
+    setFileExplanations([]);
     setShowUserSettings(false); // Close settings when loading a chat
-    await loadMessages(existingSessionId);
+    await loadMessages(existingSessionId, currentMode);
   };
 
-  const loadMessages = async (id: string) => {
+  const loadMessages = async (id: string, mode: AssistantMode = 'mentor') => {
     try {
       setIsSessionLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`/api/chat?session_id=${id}`, {
+      const response = await fetch(`/api/chat?session_id=${id}&mode=${mode}`, {
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
         }
       });
       const { messages: existingMessages } = await response.json();
-      if (existingMessages && existingMessages.length > 0) {
-        setMessages(existingMessages);
+      
+      if (mode === 'file_explainer') {
+        setFileExplanations(existingMessages || []);
       } else {
-        setMessages([]);
+        setMessages(existingMessages || []);
       }
     } catch (err) {
       console.error('Failed to load messages:', err);
@@ -270,12 +274,24 @@ export default function ChatInterface() {
       return;
     }
     
+    // Handle based on current mode
+    if (currentMode === 'mentor') {
+      await handleMentorMessage(content);
+    } else if (currentMode === 'file_explainer') {
+      await handleFileExplainerMessage(content);
+    } else {
+      // Issue solver - placeholder
+      setApiError('Issue Solver mode is coming soon!');
+    }
+  };
+
+  // Handle Mentor mode messages
+  const handleMentorMessage = async (content: string) => {
     const userMessage: Message = {
       id: Date.now().toString(),
       session_id: sessionId,
       role: 'user',
       content,
-      mode: currentMode,
       metadata: {},
       created_at: new Date().toISOString()
     };
@@ -288,7 +304,7 @@ export default function ChatInterface() {
       const { data: { session } } = await supabase.auth.getSession();
       const authHeader = { 'Authorization': `Bearer ${session?.access_token}` };
       
-      // Save user message
+      // Save user message to messages table
       await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeader },
@@ -296,7 +312,7 @@ export default function ChatInterface() {
           session_id: sessionId,
           role: 'user',
           content,
-          mode: currentMode
+          mode: 'mentor'
         })
       });
       
@@ -316,7 +332,6 @@ export default function ChatInterface() {
 
       const responseData = await processResponse.json();
       
-      // Check for structured API error response
       if (responseData.error) {
         setApiError(parseApiErrorResponse(responseData, currentLanguage));
         return;
@@ -329,7 +344,6 @@ export default function ChatInterface() {
         session_id: sessionId,
         role: 'assistant',
         content: aiResponse,
-        mode: currentMode,
         metadata: { language: currentLanguage },
         created_at: new Date().toISOString()
       };
@@ -337,6 +351,7 @@ export default function ChatInterface() {
       setStreamingMessageId(assistantMessage.id);
       setMessages(prev => [...prev, assistantMessage]);
       
+      // Save assistant message to messages table
       await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeader },
@@ -344,7 +359,112 @@ export default function ChatInterface() {
           session_id: sessionId,
           role: 'assistant',
           content: aiResponse,
+          mode: 'mentor',
+          metadata: { language: currentLanguage }
+        })
+      });
+      
+      setRefreshSidebarTrigger(prev => prev + 1);
+    } catch (err: unknown) {
+      console.error('Error processing:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Error processing request';
+      setApiError(parseSimpleError(errorMessage, currentLanguage));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle File Explainer mode messages
+  const handleFileExplainerMessage = async (content: string) => {
+    const userEntry: FileExplanation = {
+      id: Date.now().toString(),
+      session_id: sessionId,
+      role: 'user',
+      file_url: content.includes('github.com') ? content.match(/https?:\/\/github\.com[^\s]*/)?.[0] : undefined,
+      explanation: content,
+      metadata: {},
+      created_at: new Date().toISOString()
+    };
+    
+    setFileExplanations(prev => [...prev, userEntry]);
+    setIsLoading(true);
+    setApiError('');
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const authHeader = { 'Authorization': `Bearer ${session?.access_token}` };
+      
+      // Save user entry to file_explanations table
+      await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeader },
+        body: JSON.stringify({
+          session_id: sessionId,
+          role: 'user',
+          file_url: userEntry.file_url,
+          explanation: content,
+          mode: 'file_explainer',
+          metadata: {}
+        })
+      });
+      
+      setRefreshSidebarTrigger(prev => prev + 1);
+
+      const processResponse = await fetch('/api/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeader },
+        body: JSON.stringify({
+          message: content,
           mode: currentMode,
+          language: currentLanguage,
+          conversationHistory: fileExplanations.slice(-5).map(fe => ({ 
+            role: fe.role, 
+            content: fe.explanation 
+          })),
+          sessionId: sessionId
+        })
+      });
+
+      const responseData = await processResponse.json();
+      
+      if (responseData.error) {
+        setApiError(parseApiErrorResponse(responseData, currentLanguage));
+        return;
+      }
+
+      const aiResponse = responseData.response;
+      // Extract file info from the response if available
+      const fileInfo = responseData.fileInfo || {};
+
+      const assistantEntry: FileExplanation = {
+        id: (Date.now() + 1).toString(),
+        session_id: sessionId,
+        role: 'assistant',
+        file_url: userEntry.file_url,
+        file_path: fileInfo.path,
+        file_content: fileInfo.content,
+        language: fileInfo.language,
+        explanation: aiResponse,
+        metadata: { language: currentLanguage },
+        created_at: new Date().toISOString()
+      };
+
+      setStreamingMessageId(assistantEntry.id);
+      setFileExplanations(prev => [...prev, assistantEntry]);
+      
+      // Save assistant entry to file_explanations table
+      await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeader },
+        body: JSON.stringify({
+          session_id: sessionId,
+          role: 'assistant',
+          file_url: userEntry.file_url,
+          file_path: fileInfo.path,
+          file_content: fileInfo.content,
+          language: fileInfo.language,
+          explanation: aiResponse,
+          mode: 'file_explainer',
           metadata: { language: currentLanguage }
         })
       });
@@ -369,8 +489,19 @@ export default function ChatInterface() {
     }
   };
 
-  const handleModeSelect = (mode: AssistantMode) => {
+  // Handle mode change - reload data from correct table
+  const handleModeChange = async (mode: AssistantMode) => {
     setCurrentMode(mode);
+    setApiError('');
+    
+    // If we have a session, load data for the new mode
+    if (sessionId) {
+      await loadMessages(sessionId, mode);
+    }
+  };
+
+  const handleModeSelect = (mode: AssistantMode) => {
+    handleModeChange(mode);
   };
 
   const handleLogout = async () => {
@@ -378,6 +509,7 @@ export default function ChatInterface() {
     setUser(null);
     setSessionId('');
     setMessages([]);
+    setFileExplanations([]);
   };
 
   // Show loading while checking auth
@@ -452,7 +584,7 @@ export default function ChatInterface() {
                    <div className="flex-1 flex justify-end pr-4 md:pr-0 gap-3">
                        <ModeSelector 
                           currentMode={currentMode} 
-                          onModeChange={setCurrentMode}
+                          onModeChange={handleModeChange}
                           currentLanguage={currentLanguage}
                           onLanguageChange={setCurrentLanguage}
                       />
@@ -468,7 +600,7 @@ export default function ChatInterface() {
                   
                   <div className="absolute inset-0 pb-32">
                       <MessageList 
-                          messages={messages} 
+                          messages={currentMode === 'file_explainer' ? fileExplanations : messages} 
                           isLoading={isLoading} 
                           isSessionLoading={isSessionLoading}
                           onModeSelect={handleModeSelect} 

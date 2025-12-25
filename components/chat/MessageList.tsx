@@ -1,6 +1,6 @@
 'use client';
 
-import { Message, AssistantMode } from '@/types';
+import { Message, AssistantMode, FileExplanation } from '@/types';
 import MessageBubble from './MessageBubble';
 import LoadingIndicator from './LoadingIndicator';
 import Spinner from '@/components/ui/spinner';
@@ -8,8 +8,18 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useEffect, useRef } from 'react';
 import { t, LanguageCode } from '@/lib/translations';
 
+// Union type for display items
+type DisplayItem = Message | FileExplanation;
+
+// Helper to get content from either type
+function getContent(item: DisplayItem): string {
+  if ('content' in item) return item.content;
+  if ('explanation' in item) return item.explanation || '';
+  return '';
+}
+
 interface MessageListProps {
-  messages: Message[];
+  messages: DisplayItem[];
   isLoading?: boolean;
   isSessionLoading?: boolean;
   onModeSelect?: (mode: any) => void;
@@ -43,7 +53,8 @@ export default function MessageList({
   }, [messages.length, isLoading]);
 
   // Also scroll when message content changes (for streaming)
-  const lastMessageContent = messages.length > 0 ? messages[messages.length - 1]?.content?.length : 0;
+  const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+  const lastMessageContent = lastMessage ? getContent(lastMessage).length : 0;
   
   useEffect(() => {
     if (!streamingMessageId) return;

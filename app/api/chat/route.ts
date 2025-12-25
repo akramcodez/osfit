@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+type Mode = 'mentor' | 'file_explainer' | 'issue_solver';
+
 // Helper to get user from auth header
 async function getUserFromRequest(request: Request) {
   const authHeader = request.headers.get('Authorization');
@@ -40,6 +42,20 @@ async function verifySessionOwnership(supabase: any, sessionId: string, userId: 
   return !!data;
 }
 
+// Get table name based on mode
+function getTableForMode(mode: Mode): string {
+  switch (mode) {
+    case 'mentor':
+      return 'messages';
+    case 'file_explainer':
+      return 'file_explanations';
+    case 'issue_solver':
+      return 'issue_solutions';
+    default:
+      return 'messages';
+  }
+}
+
 export async function POST(request: Request) {
   const user = await getUserFromRequest(request);
   if (!user) {
@@ -48,7 +64,7 @@ export async function POST(request: Request) {
 
   const supabase = getSupabase();
   const body = await request.json();
-  const { session_id, role, content, mode, metadata } = body;
+  const { session_id, role, content, mode = 'mentor', metadata, file_url, file_path, file_content, language, explanation } = body;
 
   // Verify user owns this session
   const ownsSession = await verifySessionOwnership(supabase, session_id, user.id);
@@ -56,15 +72,40 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Session not found' }, { status: 404 });
   }
 
-  const { data, error } = await supabase
-    .from('messages')
-    .insert({
+  const table = getTableForMode(mode as Mode);
+  
+  let insertData: Record<string, any>;
+  
+  if (mode === 'file_explainer') {
+    // File explanations table structure
+    insertData = {
+      session_id,
+      role,
+      file_url: file_url || null,
+      file_path: file_path || null,
+      file_content: file_content || null,
+      language: language || null,
+      explanation: explanation || content, // Use content as explanation if not provided separately
+      metadata: metadata || {}
+    };
+  } else if (mode === 'issue_solver') {
+    // Issue solutions - placeholder for now
+    insertData = {
+      session_id
+    };
+  } else {
+    // Mentor messages table structure
+    insertData = {
       session_id,
       role,
       content,
-      mode: mode || 'mentor',
       metadata: metadata || {}
-    })
+    };
+  }
+
+  const { data, error } = await supabase
+    .from(table)
+    .insert(insertData)
     .select()
     .single();
 
@@ -84,6 +125,7 @@ export async function GET(request: Request) {
   const supabase = getSupabase();
   const { searchParams } = new URL(request.url);
   const sessionId = searchParams.get('session_id');
+  const mode = (searchParams.get('mode') || 'mentor') as Mode;
 
   if (!sessionId) {
     return NextResponse.json({ error: 'No session_id provided' }, { status: 400 });
@@ -95,8 +137,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Session not found' }, { status: 404 });
   }
 
+  const table = getTableForMode(mode);
+
   const { data, error } = await supabase
-    .from('messages')
+    .from(table)
     .select('*')
     .eq('session_id', sessionId)
     .order('created_at', { ascending: true });
