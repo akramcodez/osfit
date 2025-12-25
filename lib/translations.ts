@@ -33,6 +33,21 @@ export interface TranslationStrings {
   explainCodeFile: string;
   explainCodeFileDesc: string;
   getGuidance: string;
+  
+  // Settings Page (optional for backward compatibility)
+  backToChat?: string;
+  apiKeys?: string;
+  apiKeysDescription?: string;
+  configured?: string;
+  notSet?: string;
+  enterApiKey?: string;
+  security?: string;
+  geminiApiKey?: string;
+  geminiApiKeyDesc?: string;
+  apifyApiKey?: string;
+  apifyApiKeyDesc?: string;
+  lingoApiKey?: string;
+  lingoApiKeyDesc?: string;
 }
 
 export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
@@ -55,6 +70,20 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: 'Explain Code File',
     explainCodeFileDesc: 'Understand complex logic',
     getGuidance: 'Get guidance on contributing',
+    // Settings
+    backToChat: 'Back to Chat',
+    apiKeys: 'API Keys',
+    apiKeysDescription: 'Configure your own API keys to use the app with your personal accounts. Keys are encrypted and stored securely.',
+    configured: 'Configured',
+    notSet: 'Not set',
+    enterApiKey: 'Enter API key',
+    security: 'Your keys are stored securely',
+    geminiApiKey: 'Gemini API Key',
+    geminiApiKeyDesc: 'Powers AI responses and analysis',
+    apifyApiKey: 'Apify API Key',
+    apifyApiKeyDesc: 'Fetches GitHub issues and files',
+    lingoApiKey: 'Lingo API Key',
+    lingoApiKeyDesc: 'Enables translation features',
   },
   es: {
     newChat: 'Nuevo chat',
@@ -75,6 +104,20 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: 'Explicar archivo de código',
     explainCodeFileDesc: 'Entender lógica compleja',
     getGuidance: 'Obtener orientación para contribuir',
+    // Settings
+    backToChat: 'Volver al Chat',
+    apiKeys: 'Claves API',
+    apiKeysDescription: 'Configure sus propias claves API. Las claves están encriptadas.',
+    configured: 'Configurado',
+    notSet: 'No configurado',
+    enterApiKey: 'Ingrese clave API',
+    security: 'Sus claves se almacenan de forma segura',
+    geminiApiKey: 'Clave API de Gemini',
+    geminiApiKeyDesc: 'Potencia respuestas de IA y análisis',
+    apifyApiKey: 'Clave API de Apify',
+    apifyApiKeyDesc: 'Obtiene issues y archivos de GitHub',
+    lingoApiKey: 'Clave API de Lingo',
+    lingoApiKeyDesc: 'Habilita funciones de traducción',
   },
   fr: {
     newChat: 'Nouveau chat',
@@ -95,6 +138,20 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: 'Expliquer un fichier de code',
     explainCodeFileDesc: 'Comprendre la logique complexe',
     getGuidance: 'Obtenir des conseils pour contribuer',
+    // Settings
+    backToChat: 'Retour au Chat',
+    apiKeys: 'Clés API',
+    apiKeysDescription: 'Configurez vos propres clés API. Les clés sont cryptées et stockées en toute sécurité.',
+    configured: 'Configuré',
+    notSet: 'Non défini',
+    enterApiKey: 'Entrez la clé API',
+    security: 'Vos clés sont stockées en toute sécurité',
+    geminiApiKey: 'Clé API Gemini',
+    geminiApiKeyDesc: 'Alimente les réponses IA et l\'analyse',
+    apifyApiKey: 'Clé API Apify',
+    apifyApiKeyDesc: 'Récupère les issues et fichiers GitHub',
+    lingoApiKey: 'Clé API Lingo',
+    lingoApiKeyDesc: 'Active les fonctions de traduction',
   },
   de: {
     newChat: 'Neuer Chat',
@@ -115,6 +172,20 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: 'Code-Datei erklären',
     explainCodeFileDesc: 'Komplexe Logik verstehen',
     getGuidance: 'Orientierung zum Beitragen erhalten',
+    // Settings
+    backToChat: 'Zurück zum Chat',
+    apiKeys: 'API-Schlüssel',
+    apiKeysDescription: 'Konfigurieren Sie Ihre eigenen API-Schlüssel. Die Schlüssel werden verschlüsselt und sicher gespeichert.',
+    configured: 'Konfiguriert',
+    notSet: 'Nicht festgelegt',
+    enterApiKey: 'API-Schlüssel eingeben',
+    security: 'Ihre Schlüssel werden sicher gespeichert',
+    geminiApiKey: 'Gemini API-Schlüssel',
+    geminiApiKeyDesc: 'Ermöglicht KI-Antworten und Analyse',
+    apifyApiKey: 'Apify API-Schlüssel',
+    apifyApiKeyDesc: 'Ruft GitHub-Issues und Dateien ab',
+    lingoApiKey: 'Lingo API-Schlüssel',
+    lingoApiKeyDesc: 'Aktiviert Übersetzungsfunktionen',
   },
   hi: {
     newChat: 'नई चैट',
@@ -135,6 +206,20 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: 'कोड फ़ाइल समझाएं',
     explainCodeFileDesc: 'जटिल तर्क समझें',
     getGuidance: 'योगदान के लिए मार्गदर्शन प्राप्त करें',
+    // Settings
+    backToChat: 'चैट पर वापस जाएं',
+    apiKeys: 'API कुंजी',
+    apiKeysDescription: 'ऐप को अपने व्यक्तिगत खातों के साथ उपयोग करने के लिए अपनी API कुंजी कॉन्फ़िगर करें।',
+    configured: 'कॉन्फ़िगर किया गया',
+    notSet: 'सेट नहीं',
+    enterApiKey: 'API कुंजी दर्ज करें',
+    security: 'आपकी कुंजी सुरक्षित रूप से संग्रहीत हैं',
+    geminiApiKey: 'Gemini API कुंजी',
+    geminiApiKeyDesc: 'AI प्रतिक्रियाओं और विश्लेषण को सक्षम करता है',
+    apifyApiKey: 'Apify API कुंजी',
+    apifyApiKeyDesc: 'GitHub issues और फ़ाइलें प्राप्त करता है',
+    lingoApiKey: 'Lingo API कुंजी',
+    lingoApiKeyDesc: 'अनुवाद सुविधाएं सक्षम करता है',
   },
   zh: {
     newChat: '新对话',
@@ -155,6 +240,20 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: '解释代码文件',
     explainCodeFileDesc: '理解复杂逻辑',
     getGuidance: '获取贡献指导',
+    // Settings
+    backToChat: '返回聊天',
+    apiKeys: 'API 密钥',
+    apiKeysDescription: '配置您自己的 API 密钥。密钥已加密并安全存储。',
+    configured: '已配置',
+    notSet: '未设置',
+    enterApiKey: '输入 API 密钥',
+    security: '您的密钥已安全存储',
+    geminiApiKey: 'Gemini API 密钥',
+    geminiApiKeyDesc: '驱动 AI 响应和分析',
+    apifyApiKey: 'Apify API 密钥',
+    apifyApiKeyDesc: '获取 GitHub 问题和文件',
+    lingoApiKey: 'Lingo API 密钥',
+    lingoApiKeyDesc: '启用翻译功能',
   },
   ja: {
     newChat: '新しいチャット',
@@ -175,6 +274,20 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: 'コードファイルを説明',
     explainCodeFileDesc: '複雑なロジックを理解',
     getGuidance: '貢献のガイダンスを取得',
+    // Settings
+    backToChat: 'チャットに戻る',
+    apiKeys: 'APIキー',
+    apiKeysDescription: '独自のAPIキーを設定してください。キーは暗号化され安全に保存されます。',
+    configured: '設定済み',
+    notSet: '未設定',
+    enterApiKey: 'APIキーを入力',
+    security: 'キーは安全に保存されています',
+    geminiApiKey: 'Gemini APIキー',
+    geminiApiKeyDesc: 'AI応答と分析を実行',
+    apifyApiKey: 'Apify APIキー',
+    apifyApiKeyDesc: 'GitHubのissueとファイルを取得',
+    lingoApiKey: 'Lingo APIキー',
+    lingoApiKeyDesc: '翻訳機能を有効化',
   },
   ko: {
     newChat: '새 대화',
@@ -195,6 +308,20 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: '코드 파일 설명',
     explainCodeFileDesc: '복잡한 로직 이해',
     getGuidance: '기여 가이드 받기',
+    // Settings
+    backToChat: '채팅으로 돌아가기',
+    apiKeys: 'API 키',
+    apiKeysDescription: 'API 키를 구성하세요. 키는 암호화되어 안전하게 저장됩니다.',
+    configured: '구성됨',
+    notSet: '설정되지 않음',
+    enterApiKey: 'API 키 입력',
+    security: '키는 안전하게 저장됩니다',
+    geminiApiKey: 'Gemini API 키',
+    geminiApiKeyDesc: 'AI 응답 및 분석 지원',
+    apifyApiKey: 'Apify API 키',
+    apifyApiKeyDesc: 'GitHub 이슈 및 파일 가져오기',
+    lingoApiKey: 'Lingo API 키',
+    lingoApiKeyDesc: '번역 기능 활성화',
   },
   pt: {
     newChat: 'Novo chat',
@@ -215,6 +342,20 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: 'Explicar arquivo de código',
     explainCodeFileDesc: 'Entender lógica complexa',
     getGuidance: 'Obter orientação para contribuir',
+    // Settings
+    backToChat: 'Voltar ao Chat',
+    apiKeys: 'Chaves API',
+    apiKeysDescription: 'Configure suas próprias chaves API. As chaves são criptografadas e armazenadas com segurança.',
+    configured: 'Configurado',
+    notSet: 'Não definido',
+    enterApiKey: 'Digite a chave API',
+    security: 'Suas chaves são armazenadas com segurança',
+    geminiApiKey: 'Chave API Gemini',
+    geminiApiKeyDesc: 'Alimenta respostas de IA e análise',
+    apifyApiKey: 'Chave API Apify',
+    apifyApiKeyDesc: 'Busca issues e arquivos do GitHub',
+    lingoApiKey: 'Chave API Lingo',
+    lingoApiKeyDesc: 'Habilita recursos de tradução',
   },
   ru: {
     newChat: 'Новый чат',
@@ -235,6 +376,20 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: 'Объяснить файл кода',
     explainCodeFileDesc: 'Понять сложную логику',
     getGuidance: 'Получить руководство по вкладу',
+    // Settings
+    backToChat: 'Вернуться в чат',
+    apiKeys: 'API ключи',
+    apiKeysDescription: 'Настройте свои API-ключи. Ключи зашифрованы и хранятся безопасно.',
+    configured: 'Настроено',
+    notSet: 'Не установлено',
+    enterApiKey: 'Введите API-ключ',
+    security: 'Ваши ключи надежно хранятся',
+    geminiApiKey: 'API-ключ Gemini',
+    geminiApiKeyDesc: 'Обеспечивает ответы ИИ и анализ',
+    apifyApiKey: 'API-ключ Apify',
+    apifyApiKeyDesc: 'Получает issues и файлы из GitHub',
+    lingoApiKey: 'API-ключ Lingo',
+    lingoApiKeyDesc: 'Включает функции перевода',
   },
   ar: {
     newChat: 'محادثة جديدة',
@@ -254,7 +409,21 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     solveGitHubIssueDesc: 'تحليل الأخطاء، تخطيط الحلول، إنشاء كود PR.',
     explainCodeFile: 'شرح ملف الكود',
     explainCodeFileDesc: 'فهم المنطق المعقد',
-    getGuidance: 'الحصول على إرشادات للمساهمة',
+    getGuidance: 'الحصول على إرشاداт للمساهمة',
+    // Settings
+    backToChat: 'العودة إلى الدردشة',
+    apiKeys: 'مفاتيح API',
+    apiKeysDescription: 'قم بتكوين مفاتيح API الخاصة بك. يتم تشفير المفاتيح وتخزينها بشكل آمن.',
+    configured: 'تم التكوين',
+    notSet: 'غير محدد',
+    enterApiKey: 'أدخل مفتاح API',
+    security: 'يتم تخزين مفاتيحك بشكل آمن',
+    geminiApiKey: 'مفتاح API لـ Gemini',
+    geminiApiKeyDesc: 'يشغل استجابات الذكاء الاصطناعي والتحليل',
+    apifyApiKey: 'مفتاح API لـ Apify',
+    apifyApiKeyDesc: 'يجلب مشاكل وملفات GitHub',
+    lingoApiKey: 'مفتاح API لـ Lingo',
+    lingoApiKeyDesc: 'يفعل ميزات الترجمة',
   },
   bn: {
     newChat: 'নতুন চ্যাট',
@@ -275,12 +444,26 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: 'কোড ফাইল ব্যাখ্যা করুন',
     explainCodeFileDesc: 'জটিল যুক্তি বুঝুন',
     getGuidance: 'অবদানের জন্য নির্দেশনা নিন',
+    // Settings
+    backToChat: 'চ্যাটে ফিরে যান',
+    apiKeys: 'API কী',
+    apiKeysDescription: 'আপনার নিজের API কী কনফিগার করুন। কীগুলি এনক্রিপ্ট করা আছে।',
+    configured: 'কনফিগার করা হয়েছে',
+    notSet: 'সেট করা হয়নি',
+    enterApiKey: 'API কী লিখুন',
+    security: 'আপনার কী নিরাপদে সংরক্ষিত আছে',
+    geminiApiKey: 'Gemini API কী',
+    geminiApiKeyDesc: 'AI প্রতিক্রিয়া এবং বিশ্লেষণ চালায়',
+    apifyApiKey: 'Apify API কী',
+    apifyApiKeyDesc: 'GitHub সমস্যা এবং ফাইল নিয়ে আসে',
+    lingoApiKey: 'Lingo API কী',
+    lingoApiKeyDesc: 'অনুবাদ বৈশিষ্ট্য সক্ষম করে',
   },
 };
 
 // Helper function to get a translation
 export function t(key: keyof TranslationStrings, lang: LanguageCode = 'en'): string {
-  return TRANSLATIONS[lang]?.[key] || TRANSLATIONS.en[key];
+  return TRANSLATIONS[lang]?.[key] || TRANSLATIONS.en[key] || key;
 }
 
 // Speech Recognition Language Codes

@@ -64,6 +64,19 @@
   --ring: #3ECF8E;
   
   --radius: 0.5rem;
+  
+  /* Custom App Colors */
+  --color-brand: #3ECF8E;
+  --color-brand-dark: #35b37b;
+  --color-success: #22c55e;
+  --color-success-dark: #166534;
+  --color-surface-1: #1A1A1A;
+  --color-surface-2: #161616;
+  --color-surface-3: #0A0A0A;
+  --color-border-subtle: #2A2A2A;
+  --color-border-strong: #3E3E3E;
+  --color-text-muted: #A0A0A0;
+  --color-text-subtle: #6B7280;
 }
 
 @layer utilities {

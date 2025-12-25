@@ -4,14 +4,77 @@ import { translateText } from '@/lib/lingo-client';
 import { fetchGitHubIssue, fetchGitHubFile } from '@/lib/apify-client';
 import { MOCK_RESPONSES } from '@/lib/mock-responses';
 import { createClient } from '@supabase/supabase-js';
+import { getUserApiKeys } from '@/app/api/user/keys/route';
 
 import { getSupabase } from '@/lib/supabase';
-import { geminiClient } from '@/lib/gemini-client';
+import { geminiClient, getGeminiClient } from '@/lib/gemini-client';
 
 // Helper to determine if we should use mock data
-// Defaults to TRUE in development unless explicitly disabled
-// const USE_MOCK_AI = false;
-const USE_MOCK_AI = process.env.NODE_ENV === 'development' && process.env.USE_REAL_AI !== 'true';
+// In development: use mocks by default UNLESS user has configured their own keys
+// In production: always use real AI
+const isDevelopment = process.env.NODE_ENV === 'development';
+const forceRealAI = process.env.USE_REAL_AI === 'true';
+
+// System API keys from environment
+const SYSTEM_GEMINI_KEY = process.env.GEMINI_API_KEY || '';
+const SYSTEM_APIFY_KEY = process.env.APIFY_API_KEY || '';
+const SYSTEM_LINGO_KEY = process.env.LINGO_API_KEY || '';
+
+// Type for tracking which keys are being used and their source
+interface EffectiveKeys {
+  gemini: { key: string | null; source: 'user' | 'system' | 'none' };
+  apify: { key: string | null; source: 'user' | 'system' | 'none' };
+  lingo: { key: string | null; source: 'user' | 'system' | 'none' };
+}
+
+/**
+ * Get effective keys with priority: user keys > system keys
+ * Returns which key is being used and its source for proper error handling
+ */
+function getEffectiveKeys(userKeys: { gemini_key: string | null; apify_key: string | null; lingo_key: string | null }): EffectiveKeys {
+  return {
+    gemini: {
+      key: userKeys.gemini_key || SYSTEM_GEMINI_KEY || null,
+      source: userKeys.gemini_key ? 'user' : (SYSTEM_GEMINI_KEY ? 'system' : 'none')
+    },
+    apify: {
+      key: userKeys.apify_key || SYSTEM_APIFY_KEY || null,
+      source: userKeys.apify_key ? 'user' : (SYSTEM_APIFY_KEY ? 'system' : 'none')
+    },
+    lingo: {
+      key: userKeys.lingo_key || SYSTEM_LINGO_KEY || null,
+      source: userKeys.lingo_key ? 'user' : (SYSTEM_LINGO_KEY ? 'system' : 'none')
+    }
+  };
+}
+
+// Custom error class for API key failures
+class ApiKeyError extends Error {
+  service: 'gemini' | 'apify' | 'lingo';
+  source: 'user' | 'system';
+  
+  constructor(service: 'gemini' | 'apify' | 'lingo', source: 'user' | 'system', originalMessage: string) {
+    super(originalMessage);
+    this.name = 'ApiKeyError';
+    this.service = service;
+    this.source = source;
+  }
+}
+
+// Helper to check if error is a quota/rate limit error
+function isQuotaError(error: unknown): boolean {
+  if (error instanceof Error) {
+    const msg = error.message.toLowerCase();
+    return msg.includes('quota') || msg.includes('rate limit') || msg.includes('429') || 
+           msg.includes('too many requests') || msg.includes('exceeded');
+  }
+  return false;
+}
+
+// Helper to check if user has any keys configured
+function userHasKeys(userKeys: { gemini_key: string | null; apify_key: string | null; lingo_key: string | null }): boolean {
+  return !!(userKeys.gemini_key || userKeys.apify_key || userKeys.lingo_key);
+}
 
 // Helper to get user from auth header
 async function getUserFromRequest(request: Request) {
@@ -40,6 +103,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Fetch user's API keys (will use these if available, else system keys)
+    const userKeys = await getUserApiKeys(user.id);
+    
+    // Get effective keys with priority: user > system
+    const effectiveKeys = getEffectiveKeys(userKeys);
+    
+    // Determine if we should use mock AI
+    // In dev: use mocks UNLESS user has their own keys configured OR USE_REAL_AI is set
+    const USE_MOCK_AI = isDevelopment && !forceRealAI && !userHasKeys(userKeys);
+
     const body = await request.json();
     const { message, mode, language = 'en', conversationHistory = [], sessionId } = body;
 
@@ -65,9 +138,10 @@ export async function POST(request: Request) {
            // Mock Title
            title = message.length > 20 ? message.slice(0, 20) + '...' : message;
         } else {
-           // Real AI Title Generation
+           // Real AI Title Generation - use effective key
            try {
-               const model = geminiClient.getGenerativeModel({ model: "gemini-pro" });
+               const client = getGeminiClient(effectiveKeys.gemini.key);
+               const model = client.getGenerativeModel({ model: "gemini-pro" });
                const titlePrompt = `Generate a very short chat title (max 4 words) for this initial message: "${message}". No quotes.`;
                const result = await model.generateContent(titlePrompt);
                title = result.response.text().trim().replace(/^["']|["']$/g, '');
@@ -117,35 +191,66 @@ export async function POST(request: Request) {
 
     let response = '';
 
-    switch (mode) {
-      case 'idle':
-        response = await handleIdleMode(message, conversationHistory);
-        break;
-      case 'issue_solver':
-        response = await handleIssueSolver(message, conversationHistory);
-        break;
-      case 'file_explainer':
-        response = await handleFileExplainer(message, conversationHistory);
-        break;
-      case 'mentor':
-        response = await handleMentor(message, conversationHistory);
-        break;
-      default:
-        response = 'Mode not recognized. Please select a valid mode.';
+    // Pass effective keys to handlers for proper key usage
+    try {
+      switch (mode) {
+        case 'idle':
+          response = await handleIdleMode(message, conversationHistory, effectiveKeys);
+          break;
+        case 'issue_solver':
+          response = await handleIssueSolver(message, conversationHistory, effectiveKeys);
+          break;
+        case 'file_explainer':
+          response = await handleFileExplainer(message, conversationHistory, effectiveKeys);
+          break;
+        case 'mentor':
+          response = await handleMentor(message, conversationHistory, effectiveKeys);
+          break;
+        default:
+          response = 'Mode not recognized. Please select a valid mode.';
+      }
+    } catch (modeError) {
+      // Check if this is a Gemini API error and wrap it with source info
+      if (isQuotaError(modeError)) {
+        throw new ApiKeyError('gemini', effectiveKeys.gemini.source as 'user' | 'system', 
+          modeError instanceof Error ? modeError.message : 'API quota exceeded');
+      }
+      throw modeError;
     }
 
     // Translate response if needed
     if (language !== 'en') {
-      response = await translateText({
-        text: response,
-        targetLanguage: language,
-        sourceLanguage: 'en'
-      });
+      try {
+        response = await translateText({
+          text: response,
+          targetLanguage: language,
+          sourceLanguage: 'en'
+        });
+      } catch (translateError) {
+        // Check if this is a Lingo API error
+        if (isQuotaError(translateError)) {
+          throw new ApiKeyError('lingo', effectiveKeys.lingo.source as 'user' | 'system',
+            translateError instanceof Error ? translateError.message : 'Translation API quota exceeded');
+        }
+        // If translation fails, just return English response
+        console.error('Translation failed, returning English:', translateError);
+      }
     }
 
     return NextResponse.json({ response });
   } catch (error: unknown) {
     console.error('Process error:', error);
+    
+    // Handle ApiKeyError with specific error info
+    if (error instanceof ApiKeyError) {
+      return NextResponse.json({
+        error: error.message,
+        errorType: 'api_key_error',
+        service: error.service,
+        source: error.source
+      }, { status: 500 });
+    }
+    
     const errorMessage = error instanceof Error ? error.message : 'Processing failed';
     return NextResponse.json(
       { error: errorMessage },
@@ -154,7 +259,7 @@ export async function POST(request: Request) {
   }
 }
 
-async function handleIdleMode(message: string, history: unknown[]): Promise<string> {
+async function handleIdleMode(message: string, history: unknown[], effectiveKeys: EffectiveKeys): Promise<string> {
   const systemPrompt = `You are OSFIT, a helpful multilingual assistant for open-source contributors. 
 You help developers understand GitHub issues, explain code files, and provide mentorship.
 
@@ -162,12 +267,13 @@ Current mode: General Chat
 
 Respond naturally and helpfully. If the user mentions a GitHub URL, suggest switching to the appropriate mode.`;
 
-  return await analyzeWithContext(systemPrompt, message, formatHistory(history));
+  return await analyzeWithContext(systemPrompt, message, formatHistory(history), effectiveKeys.gemini.key);
 }
 
 async function handleIssueSolver(
   message: string,
-  history: unknown[]
+  history: unknown[],
+  effectiveKeys: EffectiveKeys
 ): Promise<string> {
   // Check if message contains a GitHub issue URL
   const issueUrlMatch = message.match(/github\.com\/[^\/]+\/[^\/]+\/issues\/\d+/);
@@ -239,7 +345,7 @@ ${issue.comments && issue.comments.length > 0 ? `Recent Comments (${issue.commen
 ${issue.comments.slice(0, 3).map(c => `- ${c.author}: ${c.body.substring(0, 300)}...`).join('\n\n')}` : ''}
 `;
 
-      const analysis = await analyzeWithContext(systemPrompt, message, context);
+      const analysis = await analyzeWithContext(systemPrompt, message, context, effectiveKeys.gemini.key);
       
       if (!askingForSolution && !askingForPR) {
         return `${analysis}
@@ -269,7 +375,8 @@ ${issue.comments.slice(0, 3).map(c => `- ${c.author}: ${c.body.substring(0, 300)
 
 async function handleFileExplainer(
   message: string,
-  history: unknown[]
+  history: unknown[],
+  effectiveKeys: EffectiveKeys
 ): Promise<string> {
   // Check if message contains a GitHub file URL
   const fileUrlMatch = message.match(/github\.com\/[^\/]+\/[^\/]+\/blob\/[^\s]+/);
@@ -305,7 +412,7 @@ ${file.content.substring(0, 4000)}${file.content.length > 4000 ? '\n... (truncat
 \`\`\`
 `;
 
-      return await analyzeWithContext(systemPrompt, message, context);
+      return await analyzeWithContext(systemPrompt, message, context, effectiveKeys.gemini.key);
     } catch (error) {
       console.error('File fetch error:', error);
       return `I found the URL but had trouble fetching the file. Please make sure the repository is public and the file exists.`;
@@ -325,7 +432,8 @@ ${file.content.substring(0, 4000)}${file.content.length > 4000 ? '\n... (truncat
 
 async function handleMentor(
   message: string,
-  history: unknown[]
+  history: unknown[],
+  effectiveKeys: EffectiveKeys
 ): Promise<string> {
   const systemPrompt = `You are OSFIT's Open Source Mentor mode.
 You provide guidance on:
@@ -337,7 +445,7 @@ You provide guidance on:
 
 Be encouraging, practical, and specific. Share actionable advice.`;
 
-  return await analyzeWithContext(systemPrompt, message, formatHistory(history));
+  return await analyzeWithContext(systemPrompt, message, formatHistory(history), effectiveKeys.gemini.key);
 }
 
 function formatHistory(history: unknown[]): string {

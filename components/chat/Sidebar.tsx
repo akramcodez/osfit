@@ -18,6 +18,8 @@ interface SidebarProps {
   user?: SupabaseUser | null;
   username?: string;
   onLogout?: () => void;
+  onAuthRequest?: (mode: 'signin' | 'signup') => void;
+  onShowUserSettings?: () => void;
 }
 
 export default function Sidebar({ 
@@ -30,7 +32,9 @@ export default function Sidebar({
   language = 'en',
   user,
   username,
-  onLogout
+  onLogout,
+  onAuthRequest,
+  onShowUserSettings
 }: SidebarProps) {
   const [sessions, setSessions] = useState<any[]>([]);
 
@@ -138,13 +142,12 @@ export default function Sidebar({
               </>
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center px-6">
-                {/* Gradient icon background */}
-                <div className="h-16 w-16 bg-gradient-to-br from-[#3ECF8E]/20 to-[#3ECF8E]/5 rounded-2xl flex items-center justify-center mb-4 border border-[#3ECF8E]/20">
-                  <User className="h-8 w-8 text-[#3ECF8E]" />
+                <div className="h-12 w-12 bg-[#1A1A1A] rounded-xl flex items-center justify-center mb-3 border border-[#2A2A2A]">
+                  <User className="h-6 w-6 text-gray-400" />
                 </div>
                 <h3 className="text-sm font-medium text-white mb-1">Welcome to OSFIT</h3>
-                <p className="text-xs text-gray-500 leading-relaxed">
-                  Sign in to save your chats and unlock all features
+                <p className="text-xs text-gray-500">
+                  Sign in to save your chats
                 </p>
               </div>
             )}
@@ -153,15 +156,18 @@ export default function Sidebar({
           <div className="p-3 border-t border-white/10">
             {user ? (
               <>
-                {/* User info */}
-                <div className="flex items-center gap-3 px-2 py-2 mb-2">
-                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#3ECF8E] to-[#2da770] flex items-center justify-center text-xs font-bold text-black shadow-lg shadow-[#3ECF8E]/20">
+                {/* User info - clickable to open settings */}
+                <button 
+                  onClick={onShowUserSettings}
+                  className="w-full flex items-center gap-3 px-2 py-2 mb-2 rounded-lg hover:bg-[#2A2A2A] transition-colors cursor-pointer"
+                >
+                  <div className="h-8 w-8 rounded-full bg-[#3ECF8E] flex items-center justify-center text-xs font-bold text-black">
                     {username?.charAt(0).toUpperCase() || 'U'}
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 text-left">
                     <p className="text-sm font-medium text-white truncate">{username}</p>
                   </div>
-                </div>
+                </button>
                 
                 <Button 
                   variant="ghost" 
@@ -174,9 +180,21 @@ export default function Sidebar({
               </>
             ) : (
               <div className="flex flex-col gap-2">
-                <p className="text-[11px] text-gray-500 text-center">
-                  Send a message to get started →
-                </p>
+                <Button 
+                  size="sm"
+                  className="w-full bg-[#166534] border border-[#22c55e] text-white hover:bg-[#15803d] text-xs font-medium h-8 transition-colors"
+                  onClick={() => onAuthRequest?.('signup')}
+                >
+                  Sign Up
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="w-full border-[#2A2A2A] bg-transparent text-gray-400 hover:text-white hover:border-[#4A4A4A] text-xs h-8 transition-colors"
+                  onClick={() => onAuthRequest?.('signin')}
+                >
+                  Sign In
+                </Button>
               </div>
             )}
           </div>
