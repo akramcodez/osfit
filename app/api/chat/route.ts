@@ -174,6 +174,62 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // If issue_solver, we need to transform the single row state into a message history
+  if (mode === 'issue_solver' && data) {
+    const expandedMessages: unknown[] = [];
+    
+    // Sort by created_at first (though usually just one or few rows)
+    data.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+    data.forEach((row: any) => {
+      // 1. User Message (Issue URL) - We likely have a separate user message in 'messages' table if we saved it?
+      // Wait, current implementation saves 'role=user' rows to 'issue_solutions' too?
+      // Let's check: handleIssueSolverMessage calls POST with role='user'.
+      // POST with mode='issue_solver' inserts into 'issue_solutions'.
+      // So we have rows with role='user' AND rows with role='assistant'.
+
+      if (row.role === 'user') {
+        expandedMessages.push(row);
+      } else if (row.role === 'assistant') {
+        // This is an issue row. Expand it based on what data is present.
+        
+        // 2. Explanation Message
+        if (row.explanation) {
+          expandedMessages.push({
+            ...row,
+            id: `${row.id}-explanation`,
+            content: row.explanation,
+            metadata: { ...row.metadata, step: 'explanation' }
+          });
+        }
+        
+        // 3. Solution Plan Message (if exists)
+        if (row.solution_plan) {
+          expandedMessages.push({
+            ...row,
+            id: `${row.id}-solution`,
+            content: row.solution_plan,
+            created_at: new Date(new Date(row.created_at).getTime() + 1000).toISOString(), // Offset time slightly
+            metadata: { ...row.metadata, step: 'solution_plan' }
+          });
+        }
+        
+        // 4. PR Content Message (if exists)
+        if (row.pr_solution) {
+          expandedMessages.push({
+            ...row,
+            id: `${row.id}-pr`,
+            content: `## 🎉 PR Ready!\n\n${row.pr_solution}`,
+            created_at: new Date(new Date(row.created_at).getTime() + 2000).toISOString(),
+            metadata: { ...row.metadata, step: 'pr_generated' }
+          });
+        }
+      }
+    });
+
+    return NextResponse.json({ messages: expandedMessages });
+  }
+
   return NextResponse.json({ messages: data });
 }
 
