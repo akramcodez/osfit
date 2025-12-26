@@ -9,6 +9,9 @@ import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/atom-one-dark.css';
 import { CodeBlock } from './CodeBlock';
+import InteractiveCodeViewer from './InteractiveCodeViewer';
+import MermaidRenderer from './MermaidRenderer';
+import Spinner from '@/components/ui/spinner';
 
 interface FileExplainerCardProps {
   data: FileExplanation;
@@ -113,6 +116,17 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
   const streamRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const completedRef = useRef<boolean>(false);
 
+  // Line explanation state
+  const [selectedLine, setSelectedLine] = useState<number | null>(null);
+  const [lineExplanation, setLineExplanation] = useState<string>('');
+  const [isExplainingLine, setIsExplainingLine] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'line' | 'diagram'>('overview');
+
+  // Diagram/Flowchart state
+  const [flowchart, setFlowchart] = useState<string | null>(null);
+  const [isGeneratingFlowchart, setIsGeneratingFlowchart] = useState(false);
+  const [flowchartError, setFlowchartError] = useState<string | null>(null);
+
   const explanation = data.explanation || '';
   // Use demo code if no file content is available
   const fileContent = data.file_content || DEMO_CODE;
@@ -171,6 +185,41 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
   const openInGitHub = () => {
     if (data.file_url) {
       window.open(data.file_url, '_blank');
+    }
+  };
+
+  // Handle line click - fetch explanation for specific line
+  const handleLineClick = async (lineNumber: number, lineContent: string) => {
+    setSelectedLine(lineNumber);
+    setActiveTab('line');
+    setIsExplainingLine(true);
+    setLineExplanation('');
+
+    try {
+      const response = await fetch('/api/explain-line', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lineNumber,
+          lineContent,
+          fullFileContent: fileContent,
+          language,
+          filePath: fileName,
+          useMockData: true // Enable for testing
+        })
+      });
+
+      const result = await response.json();
+      if (result.explanation) {
+        setLineExplanation(result.explanation);
+      } else {
+        setLineExplanation('Could not explain this line. Try another one.');
+      }
+    } catch (error) {
+      console.error('Line explanation error:', error);
+      setLineExplanation('Failed to get explanation. Please try again.');
+    } finally {
+      setIsExplainingLine(false);
     }
   };
 
@@ -270,7 +319,6 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
               style={{ overflow: 'hidden' }}
             >
               <div className="flex">
-          {/* Left: Code Content */}
           <motion.div
             initial={false}
             animate={{
@@ -281,23 +329,15 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
             className="bg-[#0d0d0d] border-r border-[#2a2a2a]"
             style={{ overflow: 'hidden' }}
           >
-            {/* Code (rendered via Markdown for syntax highlight) */}
-            <div className="p-4 overflow-auto max-h-[500px] app-scroll">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeHighlight]}
-                components={{
-                  pre: ({ children, ...props }) => (
-                    <CodeBlock {...props}>{children}</CodeBlock>
-                  ),
-                }}
-              >
-                {`
-\n\n\`\`\`${language}
-${fileContent}
-\`\`\`
-                `}
-              </ReactMarkdown>
+            {/* Interactive Code Viewer */}
+            <div className="p-2">
+              <InteractiveCodeViewer
+                code={fileContent}
+                language={language}
+                selectedLine={selectedLine}
+                onLineClick={handleLineClick}
+                isLoading={isExplainingLine}
+              />
             </div>
           </motion.div>
 
@@ -309,93 +349,246 @@ ${fileContent}
             className="bg-[#1a1a1a]"
             style={{ overflow: 'hidden' }}
           >
-            {/* Explanation Header */}
-            <div className="flex items-center gap-2 px-4 py-2 border-b border-[#2a2a2a]">
-              <div className="h-5 w-5 rounded bg-[#3ECF8E] flex items-center justify-center">
-                <span className="text-[10px] font-bold text-black">OS</span>
+            {/* Explanation Header with Tabs */}
+            <div className="flex items-center justify-between px-4 py-2 border-b border-[#2a2a2a]">
+              <div className="flex items-center gap-2">
+                <div className="h-5 w-5 rounded bg-[#3ECF8E] flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-black">OS</span>
+                </div>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setActiveTab('overview')}
+                    className={`px-2 py-1 text-[10px] font-medium uppercase tracking-wider rounded transition-colors ${
+                      activeTab === 'overview'
+                        ? 'bg-[#3ECF8E]/20 text-[#3ECF8E]'
+                        : 'text-gray-500 hover:text-gray-300'
+                    }`}
+                  >
+                    Overview
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('line')}
+                    className={`px-2 py-1 text-[10px] font-medium uppercase tracking-wider rounded transition-colors ${
+                      activeTab === 'line'
+                        ? 'bg-[#3ECF8E]/20 text-[#3ECF8E]'
+                        : 'text-gray-500 hover:text-gray-300'
+                    }`}
+                  >
+                    Line {selectedLine || '—'}
+                  </button>
+                  <button
+                    onClick={async () => {
+                      setActiveTab('diagram');
+                      // Lazy load flowchart if not already loaded
+                      if (!flowchart && !isGeneratingFlowchart && !flowchartError) {
+                        setIsGeneratingFlowchart(true);
+                        setFlowchartError(null);
+                        try {
+                          const response = await fetch('/api/generate-flowchart', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              fileContent,
+                              language,
+                              filePath: fileName,
+                              explanationId: data.id,
+                              useMockData: true // Enable for testing
+                            })
+                          });
+                          const result = await response.json();
+                          if (result.flowchart) {
+                            setFlowchart(result.flowchart);
+                          } else {
+                            setFlowchartError('Could not generate diagram');
+                          }
+                        } catch (err) {
+                          console.error('Flowchart error:', err);
+                          setFlowchartError('Failed to generate diagram');
+                        } finally {
+                          setIsGeneratingFlowchart(false);
+                        }
+                      }
+                    }}
+                    className={`px-2 py-1 text-[10px] font-medium uppercase tracking-wider rounded transition-colors ${
+                      activeTab === 'diagram'
+                        ? 'bg-[#3ECF8E]/20 text-[#3ECF8E]'
+                        : 'text-gray-500 hover:text-gray-300'
+                    }`}
+                  >
+                    Diagram
+                  </button>
+                </div>
               </div>
-              <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">
-                Explanation
-              </span>
             </div>
             {/* Explanation Content */}
             <div className="p-4 overflow-auto max-h-[500px] app-scroll">
-              <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeHighlight]}
-                  components={{
-                    pre: ({ children, ...props }) => <CodeBlock {...props}>{children}</CodeBlock>,
-                    code: ({ className, children, ...props }) => {
-                      const isInline = !className;
-                      if (isInline) {
-                        return (
-                          <code className="px-1.5 py-0.5 bg-white/10 rounded text-[#3ECF8E] text-sm" {...props}>
-                            {children}
-                          </code>
-                        );
-                      }
-                      return <code className={className} {...props}>{children}</code>;
-                    },
-                    h1: ({ children }) => (
-                      <h1 className="text-xl font-semibold text-white mb-2 tracking-tight">{children}</h1>
-                    ),
-                    h2: ({ children }) => (
-                      <h2 className="text-lg font-semibold text-white mb-2 tracking-tight">{children}</h2>
-                    ),
-                    h3: ({ children }) => (
-                      <h3 className="text-base font-semibold text-white mb-2">{children}</h3>
-                    ),
-                    p: ({ children }) => (
-                      <p className="text-gray-200 leading-relaxed mb-2">{children}</p>
-                    ),
-                    ul: ({ children }) => (
-                      <ul className="list-disc list-outside ml-6 space-y-1 mb-3">{children}</ul>
-                    ),
-                    ol: ({ children }) => (
-                      <ol className="list-decimal list-outside ml-6 space-y-1 mb-3">{children}</ol>
-                    ),
-                    li: ({ children }) => (
-                      <li className="text-gray-200">{children}</li>
-                    ),
-                    a: ({ children, href }) => (
-                      <a href={href as string} target="_blank" rel="noopener noreferrer" className="text-[#3ECF8E] hover:underline">{children}</a>
-                    ),
-                    blockquote: ({ children }) => (
-                      <blockquote className="border-l-2 border-[#3ECF8E] pl-3 text-gray-300 bg-[#0d0d0d]/40 rounded mb-3">{children}</blockquote>
-                    ),
-                    hr: () => <hr className="border-[#2a2a2a] my-4" />,
-                    strong: ({ children }) => (
-                      <strong className="font-semibold text-white">{children}</strong>
-                    ),
-                    table: ({ children }) => (
-                      <div className="my-3 overflow-hidden rounded-lg border border-[#2a2a2a]">
-                        <table className="w-full text-left text-sm text-gray-200">{children}</table>
+              {/* Overview Tab Content */}
+              {activeTab === 'overview' && (
+                <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeHighlight]}
+                    components={{
+                      pre: ({ children, ...props }) => <CodeBlock {...props}>{children}</CodeBlock>,
+                      code: ({ className, children, ...props }) => {
+                        const isInline = !className;
+                        if (isInline) {
+                          return (
+                            <code className="px-1.5 py-0.5 bg-white/10 rounded text-[#3ECF8E] text-sm" {...props}>
+                              {children}
+                            </code>
+                          );
+                        }
+                        return <code className={className} {...props}>{children}</code>;
+                      },
+                      h1: ({ children }) => (
+                        <h1 className="text-xl font-semibold text-white mb-2 tracking-tight">{children}</h1>
+                      ),
+                      h2: ({ children }) => (
+                        <h2 className="text-lg font-semibold text-white mb-2 tracking-tight">{children}</h2>
+                      ),
+                      h3: ({ children }) => (
+                        <h3 className="text-base font-semibold text-white mb-2">{children}</h3>
+                      ),
+                      p: ({ children }) => (
+                        <p className="text-gray-200 leading-relaxed mb-2">{children}</p>
+                      ),
+                      ul: ({ children }) => (
+                        <ul className="list-disc list-outside ml-6 space-y-1 mb-3">{children}</ul>
+                      ),
+                      ol: ({ children }) => (
+                        <ol className="list-decimal list-outside ml-6 space-y-1 mb-3">{children}</ol>
+                      ),
+                      li: ({ children }) => (
+                        <li className="text-gray-200">{children}</li>
+                      ),
+                      a: ({ children, href }) => (
+                        <a href={href as string} target="_blank" rel="noopener noreferrer" className="text-[#3ECF8E] hover:underline">{children}</a>
+                      ),
+                      blockquote: ({ children }) => (
+                        <blockquote className="border-l-2 border-[#3ECF8E] pl-3 text-gray-300 bg-[#0d0d0d]/40 rounded mb-3">{children}</blockquote>
+                      ),
+                      hr: () => <hr className="border-[#2a2a2a] my-4" />,
+                      strong: ({ children }) => (
+                        <strong className="font-semibold text-white">{children}</strong>
+                      ),
+                      table: ({ children }) => (
+                        <div className="my-3 overflow-hidden rounded-lg border border-[#2a2a2a]">
+                          <table className="w-full text-left text-sm text-gray-200">{children}</table>
+                        </div>
+                      ),
+                      thead: ({ children }) => (
+                        <thead className="bg-[#0d0d0d] text-gray-300">{children}</thead>
+                      ),
+                      tbody: ({ children }) => (
+                        <tbody className="bg-[#111111]">{children}</tbody>
+                      ),
+                      tr: ({ children }) => (
+                        <tr className="border-t border-[#2a2a2a]">{children}</tr>
+                      ),
+                      th: ({ children }) => (
+                        <th className="px-3 py-2 font-medium">{children}</th>
+                      ),
+                      td: ({ children }) => (
+                        <td className="px-3 py-2 align-top">{children}</td>
+                      ),
+                    }}
+                  >
+                    {displayedExplanation}
+                  </ReactMarkdown>
+                  {isStreaming && (
+                    <span className="inline-block w-2 h-4 bg-[#3ECF8E] ml-1 animate-pulse" />
+                  )}
+                </div>
+              )}
+
+              {/* Line Tab Content */}
+              {activeTab === 'line' && (
+                <div className="prose prose-invert prose-sm max-w-none">
+                  {!selectedLine ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">👆 Click any line in the code to explain it</p>
+                    </div>
+                  ) : isExplainingLine ? (
+                    <div className="flex flex-col items-center justify-center py-8 gap-3">
+                      <Spinner size="md" />
+                      <p className="text-gray-400 text-sm">Explaining line {selectedLine}...</p>
+                    </div>
+                  ) : lineExplanation ? (
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="px-2 py-1 bg-[#3ECF8E]/20 text-[#3ECF8E] text-xs font-mono rounded">
+                          Line {selectedLine}
+                        </span>
                       </div>
-                    ),
-                    thead: ({ children }) => (
-                      <thead className="bg-[#0d0d0d] text-gray-300">{children}</thead>
-                    ),
-                    tbody: ({ children }) => (
-                      <tbody className="bg-[#111111]">{children}</tbody>
-                    ),
-                    tr: ({ children }) => (
-                      <tr className="border-t border-[#2a2a2a]">{children}</tr>
-                    ),
-                    th: ({ children }) => (
-                      <th className="px-3 py-2 font-medium">{children}</th>
-                    ),
-                    td: ({ children }) => (
-                      <td className="px-3 py-2 align-top">{children}</td>
-                    ),
-                  }}
-                >
-                  {displayedExplanation}
-                </ReactMarkdown>
-                {isStreaming && (
-                  <span className="inline-block w-2 h-4 bg-[#3ECF8E] ml-1 animate-pulse" />
-                )}
-              </div>
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        rehypePlugins={[rehypeHighlight]}
+                        components={{
+                          pre: ({ children, ...props }) => <CodeBlock {...props}>{children}</CodeBlock>,
+                          code: ({ className, children, ...props }) => {
+                            const isInline = !className;
+                            if (isInline) {
+                              return (
+                                <code className="px-1.5 py-0.5 bg-white/10 rounded text-[#3ECF8E] text-sm" {...props}>
+                                  {children}
+                                </code>
+                              );
+                            }
+                            return <code className={className} {...props}>{children}</code>;
+                          },
+                          p: ({ children }) => (
+                            <p className="text-gray-200 leading-relaxed mb-2">{children}</p>
+                          ),
+                        }}
+                      >
+                        {lineExplanation}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">Select a line to see its explanation</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Diagram Tab Content */}
+              {activeTab === 'diagram' && (
+                <div className="prose prose-invert prose-sm max-w-none">
+                  {isGeneratingFlowchart ? (
+                    <div className="flex flex-col items-center justify-center py-12 gap-3">
+                      <Spinner size="md" />
+                      <p className="text-gray-400 text-sm">Generating flowchart...</p>
+                    </div>
+                  ) : flowchartError ? (
+                    <div className="text-center py-8">
+                      <p className="text-red-400 mb-4">⚠️ {flowchartError}</p>
+                      <button
+                        onClick={() => {
+                          setFlowchartError(null);
+                          setActiveTab('diagram'); // Re-trigger generation
+                        }}
+                        className="px-4 py-2 bg-[#3ECF8E]/20 text-[#3ECF8E] rounded-lg text-sm hover:bg-[#3ECF8E]/30 transition-colors"
+                      >
+                        Try Again
+                      </button>
+                    </div>
+                  ) : flowchart ? (
+                    <div className="flex flex-col items-center">
+                      <div className="text-xs text-gray-500 mb-4 uppercase tracking-wider">
+                        File Logic Flow
+                      </div>
+                      <MermaidRenderer chart={flowchart} className="w-full" />
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-12 gap-3">
+                      <Spinner size="md" />
+                      <p className="text-gray-400 text-sm">Loading diagram...</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </motion.div>
               </div>
