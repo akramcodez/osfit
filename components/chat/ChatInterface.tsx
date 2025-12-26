@@ -206,25 +206,37 @@ export default function ChatInterface() {
     }
   }, [user]);
 
-  const initSession = async () => {
-    if (!user) return;
+  const initSession = async (): Promise<string | null> => {
+    if (!user) return null;
     
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch('/api/session', { 
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${session?.access_token}`
-        }
+        },
+        body: JSON.stringify({ mode: currentMode })
       });
-      const { session: newSession } = await response.json();
+      const { session: newSession, error } = await response.json();
+      
+      if (error) {
+        console.error('Session create error:', error);
+        setSessionError('Failed to start session. Please refresh the page.');
+        return null;
+      }
+      
+      console.log('[SESSION] Created new session:', newSession.id);
       setSessionId(newSession.id);
       setMessages([]);
       setFileExplanations([]);
-      setShowUserSettings(false); // Close settings when starting new chat
+      setShowUserSettings(false);
+      return newSession.id;
     } catch (err) {
       console.error('Failed to initialize session:', err);
       setSessionError('Failed to start session. Please refresh the page.');
+      return null;
     }
   };
 
@@ -268,18 +280,22 @@ export default function ChatInterface() {
       return;
     }
 
-    if (!sessionId) {
-      await initSession();
-      // Wait a bit for session to be created
-      setTimeout(() => handleSendMessage(content), 100);
-      return;
+    let activeSessionId: string | null = sessionId;
+    
+    if (!activeSessionId) {
+      // Create session and get the ID directly
+      activeSessionId = await initSession();
+      if (!activeSessionId) {
+        setApiError('Failed to create session. Please try again.');
+        return;
+      }
     }
     
     // Handle based on current mode
     if (currentMode === 'mentor') {
-      await handleMentorMessage(content);
+      await handleMentorMessage(content, activeSessionId);
     } else if (currentMode === 'file_explainer') {
-      await handleFileExplainerMessage(content);
+      await handleFileExplainerMessage(content, activeSessionId);
     } else {
       // Issue solver - placeholder
       setApiError('Issue Solver mode is coming soon!');
@@ -287,10 +303,10 @@ export default function ChatInterface() {
   };
 
   // Handle Mentor mode messages
-  const handleMentorMessage = async (content: string) => {
+  const handleMentorMessage = async (content: string, activeSessionId: string) => {
     const userMessage: Message = {
       id: Date.now().toString(),
-      session_id: sessionId,
+      session_id: activeSessionId,
       role: 'user',
       content,
       metadata: {},
@@ -306,16 +322,20 @@ export default function ChatInterface() {
       const authHeader = { 'Authorization': `Bearer ${session?.access_token}` };
       
       // Save user message to messages table
-      await fetch('/api/chat', {
+      const chatRes = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeader },
         body: JSON.stringify({
-          session_id: sessionId,
+          session_id: activeSessionId,
           role: 'user',
           content,
           mode: 'mentor'
         })
       });
+      
+      if (!chatRes.ok) {
+        console.error('Failed to save user message:', await chatRes.text());
+      }
       
       setRefreshSidebarTrigger(prev => prev + 1);
 
@@ -327,7 +347,7 @@ export default function ChatInterface() {
           mode: currentMode,
           language: currentLanguage,
           conversationHistory: messages.slice(-5),
-          sessionId: sessionId
+          sessionId: activeSessionId
         })
       });
 
@@ -342,7 +362,7 @@ export default function ChatInterface() {
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        session_id: sessionId,
+        session_id: activeSessionId,
         role: 'assistant',
         content: aiResponse,
         metadata: { language: currentLanguage },
@@ -357,7 +377,7 @@ export default function ChatInterface() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeader },
         body: JSON.stringify({
-          session_id: sessionId,
+          session_id: activeSessionId,
           role: 'assistant',
           content: aiResponse,
           mode: 'mentor',
@@ -376,40 +396,47 @@ export default function ChatInterface() {
   };
 
   // Handle File Explainer mode messages
-  const handleFileExplainerMessage = async (content: string) => {
-    const userEntry: FileExplanation = {
-      id: Date.now().toString(),
-      session_id: sessionId,
+  const handleFileExplainerMessage = async (content: string, activeSessionId: string) => {
+    // Validate input - must be a GitHub file URL (contains /blob/)
+    const trimmedContent = content.trim();
+    const isGitHubUrl = trimmedContent.includes('github.com');
+    const isFileUrl = trimmedContent.includes('/blob/');
+    const isFolderUrl = trimmedContent.includes('/tree/');
+    
+    // Validation checks
+    if (!isGitHubUrl) {
+      setApiError('Please enter a valid GitHub file URL (e.g., github.com/owner/repo/blob/main/file.js)');
+      return;
+    }
+    
+    if (isFolderUrl) {
+      setApiError('Folder URLs are not supported. Please enter a file URL (use /blob/ not /tree/)');
+      return;
+    }
+    
+    if (!isFileUrl) {
+      setApiError('Invalid URL format. File URLs should contain /blob/ in the path');
+      return;
+    }
+
+    // Show temporary loading state in UI (not saved to DB)
+    const tempUserEntry: FileExplanation = {
+      id: 'temp-' + Date.now().toString(),
+      session_id: activeSessionId,
       role: 'user',
-      file_url: content.includes('github.com') ? content.match(/https?:\/\/github\.com[^\s]*/)?.[0] : undefined,
+      file_url: trimmedContent.match(/https?:\/\/github\.com[^\s]*/)?.[0] || trimmedContent,
       explanation: content,
       metadata: {},
       created_at: new Date().toISOString()
     };
     
-    setFileExplanations(prev => [...prev, userEntry]);
+    setFileExplanations(prev => [...prev, tempUserEntry]);
     setIsLoading(true);
     setApiError('');
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const authHeader = { 'Authorization': `Bearer ${session?.access_token}` };
-      
-      // Save user entry to file_explanations table
-      await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeader },
-        body: JSON.stringify({
-          session_id: sessionId,
-          role: 'user',
-          file_url: userEntry.file_url,
-          explanation: content,
-          mode: 'file_explainer',
-          metadata: {}
-        })
-      });
-      
-      setRefreshSidebarTrigger(prev => prev + 1);
 
       const processResponse = await fetch('/api/process', {
         method: 'POST',
@@ -422,7 +449,7 @@ export default function ChatInterface() {
             role: fe.role, 
             content: fe.explanation 
           })),
-          sessionId: sessionId
+          sessionId: activeSessionId
         })
       });
 
@@ -430,18 +457,20 @@ export default function ChatInterface() {
       
       if (responseData.error) {
         setApiError(parseApiErrorResponse(responseData, currentLanguage));
+        // Remove temp user entry on error
+        setFileExplanations(prev => prev.filter(fe => fe.id !== tempUserEntry.id));
         return;
       }
 
       const aiResponse = responseData.response;
-      // Extract file info from the response if available
       const fileInfo = responseData.fileInfo || {};
 
+      // Remove temp user entry and add the complete assistant entry
       const assistantEntry: FileExplanation = {
-        id: (Date.now() + 1).toString(),
-        session_id: sessionId,
+        id: Date.now().toString(),
+        session_id: activeSessionId,
         role: 'assistant',
-        file_url: userEntry.file_url,
+        file_url: tempUserEntry.file_url,
         file_path: fileInfo.path,
         file_content: fileInfo.content,
         language: fileInfo.language,
@@ -451,16 +480,17 @@ export default function ChatInterface() {
       };
 
       setStreamingMessageId(assistantEntry.id);
-      setFileExplanations(prev => [...prev, assistantEntry]);
+      // Replace temp entry with real assistant entry
+      setFileExplanations(prev => prev.filter(fe => fe.id !== tempUserEntry.id).concat(assistantEntry));
       
-      // Save assistant entry to file_explanations table
+      // Save only the assistant entry to file_explanations table
       await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeader },
         body: JSON.stringify({
-          session_id: sessionId,
+          session_id: activeSessionId,
           role: 'assistant',
-          file_url: userEntry.file_url,
+          file_url: tempUserEntry.file_url,
           file_path: fileInfo.path,
           file_content: fileInfo.content,
           language: fileInfo.language,
@@ -475,6 +505,8 @@ export default function ChatInterface() {
       console.error('Error processing:', err);
       const errorMessage = err instanceof Error ? err.message : 'Error processing request';
       setApiError(parseSimpleError(errorMessage, currentLanguage));
+      // Remove temp user entry on error
+      setFileExplanations(prev => prev.filter(fe => !fe.id.startsWith('temp-')));
     } finally {
       setIsLoading(false);
     }

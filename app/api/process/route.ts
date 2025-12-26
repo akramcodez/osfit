@@ -123,50 +123,64 @@ export async function POST(request: Request) {
       // Check if session has a title
       const { data: session, error: sessionError } = await supabase
         .from('chat_sessions')
-        .select('title')
-        .eq('id', sessionId) 
-        .single();
+        .select('title, mode')
+        .eq('id', sessionId)
+        .maybeSingle();
       
       console.log('[TITLE DEBUG] Session lookup result:', { session, error: sessionError?.message });
       
-      // If no title, generate one
-      if (session && !session.title) {
-        console.log('[TITLE DEBUG] Generating title...');
-        let title = '';
-        
-        if (USE_MOCK_AI) {
-           // Mock Title
-           title = message.length > 20 ? message.slice(0, 20) + '...' : message;
+      // Generate title if session exists and has no title
+      if (session) {
+        if (!session.title) {
+          console.log('[TITLE DEBUG] Generating title for mode:', mode);
+          let title = '';
+          
+          // Generate title based on mode (no AI needed - simple extraction)
+          if (mode === 'file_explainer') {
+            // Extract filename from URL: file: main.js
+            const fileMatch = message.match(/github\.com\/[^\/]+\/[^\/]+\/blob\/[^\/]+\/(.+)/);
+            if (fileMatch) {
+              const fullPath = fileMatch[1];
+              const fileName = fullPath.split('/').pop() || 'unknown';
+              title = `file: ${fileName}`;
+            } else {
+              title = 'file: explanation';
+            }
+          } else if (mode === 'issue_solver') {
+            // Extract first 3 words: issue: how to center...
+            const words = message.trim().split(/\s+/).slice(0, 3).join(' ');
+            title = `issue: ${words}${message.split(/\s+/).length > 3 ? '...' : ''}`;
+          } else {
+            // Mentor/default mode: chat: what is os...
+            const words = message.trim().split(/\s+/).slice(0, 4).join(' ');
+            title = `chat: ${words}${message.split(/\s+/).length > 4 ? '...' : ''}`;
+          }
+          
+          // Ensure title is not too long
+          if (title.length > 40) {
+            title = title.substring(0, 37) + '...';
+          }
+          
+          if (title) {
+             console.log('[TITLE DEBUG] Generated title:', title);
+             // Update both title and mode
+             const { data: updateData, error: updateError } = await supabase
+              .from('chat_sessions')
+              .update({ title: title, mode: mode })
+              .eq('id', sessionId)
+              .select();
+             
+             if (updateError) {
+                 console.error('[TITLE DEBUG] DB update failed:', updateError);
+             } else {
+                 console.log('[TITLE DEBUG] Title saved successfully!', updateData);
+             }
+          }
         } else {
-           // Real AI Title Generation - use effective key
-           try {
-               const client = getGeminiClient(effectiveKeys.gemini.key);
-               const model = client.getGenerativeModel({ model: "gemini-pro" });
-               const titlePrompt = `Generate a very short chat title (max 4 words) for this initial message: "${message}". No quotes.`;
-               const result = await model.generateContent(titlePrompt);
-               title = result.response.text().trim().replace(/^["']|["']$/g, '');
-               console.log('[TITLE DEBUG] Gemini generated title:', title);
-           } catch (e) {
-               console.error('[TITLE DEBUG] Title gen failed:', e);
-               title = message.slice(0, 20) + '...';
-           }
-        }
-        
-        if (title) {
-           console.log('[TITLE DEBUG] Saving title to DB...');
-           const { error: updateError } = await supabase
-            .from('chat_sessions')
-            .update({ title: title })
-            .eq('id', sessionId);
-           
-           if (updateError) {
-               console.error('[TITLE DEBUG] DB update failed:', updateError);
-           } else {
-               console.log('[TITLE DEBUG] Title saved successfully!');
-           }
+          console.log('[TITLE DEBUG] Session already has title:', session.title);
         }
       } else {
-        console.log('[TITLE DEBUG] Session already has title or not found');
+        console.log('[TITLE DEBUG] Session not found for id:', sessionId);
       }
     } else {
       console.log('[TITLE DEBUG] No sessionId provided');
@@ -181,12 +195,23 @@ export async function POST(request: Request) {
         }
         
         let mockResponse = '';
+        let mockFileInfo = null;
+        
         if (mode === 'mentor') mockResponse = MOCK_RESPONSES.mentor;
         else if (mode === 'issue_solver') mockResponse = MOCK_RESPONSES.issue_solver;
-        else if (mode === 'file_explainer') mockResponse = MOCK_RESPONSES.file_explainer;
+        else if (mode === 'file_explainer') {
+          mockResponse = MOCK_RESPONSES.file_explainer;
+          // Provide mock file info for file explainer mode
+          mockFileInfo = {
+            path: 'src/utils/api-client.ts',
+            content: `// Mock API Client\nimport axios from 'axios';\n\nexport const apiClient = axios.create({\n  baseURL: '/api',\n  timeout: 10000,\n});\n\nexport async function fetchData(endpoint: string) {\n  const response = await apiClient.get(endpoint);\n  return response.data;\n}`,
+            language: 'typescript',
+            url: 'https://github.com/example/repo/blob/main/src/utils/api-client.ts'
+          };
+        }
         else mockResponse = "Mock: Mode not recognized.";
 
-        return NextResponse.json({ response: mockResponse });
+        return NextResponse.json({ response: mockResponse, fileInfo: mockFileInfo });
     }
 
     let response = '';
@@ -269,8 +294,16 @@ Rules:
 - Be concise and to the point
 - No emojis ever
 - Short, clear explanations
-- Use markdown for structure (headers, lists, code blocks)
 - Skip unnecessary pleasantries
+
+MARKDOWN FORMAT (REQUIRED):
+- Use ## for main headings (when needed)
+- Use **bold** for key terms
+- Use \`code\` for commands, file names, technical terms
+- Use numbered lists (1. 2. 3.) for steps
+- Use bullet lists (- item) for options/features
+- Use \`\`\`language for code blocks with language specified
+- Use > for tips or important notes
 
 Current mode: General Chat
 - Answer open source questions directly
@@ -319,11 +352,38 @@ Rules:
 - Be concise, no emojis
 - Provide copy-paste ready content
 
-Generate:
-1. Branch Name (feature/, bugfix/ convention)
-2. Commit Message (conventional format)
-3. PR Title
-4. PR Description with: Problem, Solution, Testing sections`;
+MARKDOWN FORMAT (REQUIRED):
+- Use ## for section headings
+- Use \`code\` for branch names, commands
+- Use \`\`\` for multi-line content
+
+STRUCTURE (follow exactly):
+## Branch Name
+\`\`\`
+feature/description or bugfix/description
+\`\`\`
+
+## Commit Message
+\`\`\`
+type(scope): description
+\`\`\`
+
+## PR Title
+\`\`\`
+type(scope): description
+\`\`\`
+
+## PR Description
+\`\`\`markdown
+### Problem
+[description]
+
+### Solution
+[description]
+
+### Testing
+- [ ] Test case 1
+\`\`\``;
       } else if (askingForSolution) {
         systemPrompt = `You are OSFIT Issue Solver - Solution Mode.
 
@@ -331,11 +391,27 @@ Rules:
 - Be concise, no emojis
 - Focus on actionable steps
 
-Provide:
-1. Problem summary (1-2 sentences)
-2. Implementation steps (numbered)
-3. Files to modify
-4. Edge cases to consider`;
+MARKDOWN FORMAT (REQUIRED):
+- Use ## for section headings
+- Use **bold** for key terms
+- Use \`code\` for file names, functions, commands
+- Use \`\`\`language for code blocks
+- Use numbered lists for steps
+
+STRUCTURE (follow exactly):
+## Problem Summary
+[1-2 sentence overview]
+
+## Implementation Steps
+1. Step one
+2. Step two
+
+## Files to Modify
+- \`path/to/file.ts\` - what to change
+
+## Edge Cases
+- Case 1
+- Case 2`;
       } else {
         systemPrompt = `You are OSFIT Issue Solver - Analysis Mode.
 
@@ -343,11 +419,27 @@ Rules:
 - Be concise, no emojis
 - Clear, simple language
 
-Provide:
-1. Issue Summary (what is the problem?)
-2. Technical Details (key aspects)
-3. Difficulty (Easy/Medium/Hard)
-4. Suggested Approach (how to start)`;
+MARKDOWN FORMAT (REQUIRED):
+- Use ## for section headings
+- Use **bold** for key terms
+- Use \`code\` for technical terms, file names
+- Use bullet/numbered lists
+- Use > for tips
+
+STRUCTURE (follow exactly):
+## Issue Summary
+[Brief problem description]
+
+## Technical Details
+- Key aspect 1
+- Key aspect 2
+
+## Difficulty
+**[Easy/Medium/Hard]** - [reason]
+
+## Suggested Approach
+1. First step
+2. Second step`;
       }
 
       const context = `
@@ -421,13 +513,31 @@ async function handleFileExplainer(
 Rules:
 - Be concise, no emojis
 - Clear, educational explanations
-- Use code snippets when helpful
 
-Provide:
-1. File Purpose (1-2 sentences)
-2. Key Functions/Components (list with one-line descriptions)
-3. Logic Flow (how it works)
-4. Dependencies (what it imports/exports)`;
+MARKDOWN FORMAT (REQUIRED):
+- Use ## for section headings
+- Use **bold** for function/class names
+- Use \`code\` for variables, parameters, file paths
+- Use \`\`\`language for code snippets (always specify language)
+- Use numbered lists for steps/flow
+- Use bullet lists for features/items
+- Use > for important notes
+
+STRUCTURE (follow exactly):
+## File Purpose
+[1-2 sentence overview]
+
+## Key Functions/Components
+- **functionName()** - description
+- **ClassName** - description
+
+## Logic Flow
+1. First step
+2. Second step
+
+## Dependencies
+- \`import\` - what it imports
+- \`export\` - what it exports`;
 
       const context = `
 File: ${file.path}
@@ -485,7 +595,17 @@ Rules:
 - Be concise, no emojis
 - Give practical, actionable advice
 - Short answers, simple language
-- Use markdown for structure
+
+MARKDOWN FORMAT (REQUIRED):
+- Use ## for main headings
+- Use ### for sub-headings
+- Use **bold** for key terms
+- Use \`code\` for commands, file names, technical terms
+- Use numbered lists (1. 2. 3.) for steps
+- Use bullet lists (- item) for options
+- Use \`\`\`language for code blocks with language specified
+- Use > for important notes or tips
+- Use --- for section breaks when needed
 
 === OPEN SOURCE KNOWLEDGE BASE ===
 

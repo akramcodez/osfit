@@ -51,14 +51,17 @@ export default function Sidebar({
   const fetchSessions = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
+      console.log('[SIDEBAR] Auth session:', session?.access_token ? 'Has token' : 'No token');
       const res = await fetch('/api/session', {
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
         }
       });
       const data = await res.json();
+      console.log('[SIDEBAR] Sessions response:', data);
       if (data.sessions) {
         setSessions(data.sessions);
+        console.log('[SIDEBAR] Set sessions count:', data.sessions.length);
       }
     } catch (e) {
       console.error('Failed to fetch sessions', e);
@@ -118,28 +121,30 @@ export default function Sidebar({
               <>
                 <div className="text-xs font-medium text-gray-500 mb-3 px-2">{t('recent', language)}</div>
                 <div className="space-y-1">
-                  {sessions.map((session, index) => (
-                    <div 
-                      key={session.id}
-                      onClick={() => onLoadSession?.(session.id)}
-                      className={`px-3 py-2 text-sm rounded-lg cursor-pointer truncate transition-all duration-150 hover:translate-x-1 active:scale-[0.98] ${
-                        currentSessionId === session.id 
-                          ? 'bg-[#2A2A2A] text-white font-medium' 
-                          : 'text-gray-300 hover:bg-[#2A2A2A] hover:text-white'
-                      }`}
-                      style={{ 
-                        transitionDelay: isOpen ? `${index * 30}ms` : '0ms',
-                        opacity: isOpen ? 1 : 0,
-                        transform: isOpen ? 'translateX(0)' : 'translateX(-20px)'
-                      }}
-                    >
-                      {session.title ? (
-                        session.title
-                      ) : (
-                        <span className="text-gray-400 italic animate-pulse">{t('newChatLoading', language)}</span>
-                      )}
+                  {sessions.length === 0 ? (
+                    <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                      No chats yet. Start a new conversation!
                     </div>
-                  ))}
+                  ) : (
+                    sessions.map((session, index) => (
+                      <div 
+                        key={session.id}
+                        onClick={() => onLoadSession?.(session.id)}
+                        className={`px-3 py-2 text-sm rounded-lg cursor-pointer truncate transition-all duration-150 hover:translate-x-1 active:scale-[0.98] ${
+                          currentSessionId === session.id 
+                            ? 'bg-[#2A2A2A] text-white font-medium' 
+                            : 'text-gray-300 hover:bg-[#2A2A2A] hover:text-white'
+                        }`}
+                        style={{ 
+                          transitionDelay: isOpen ? `${index * 30}ms` : '0ms',
+                          opacity: isOpen ? 1 : 0,
+                          transform: isOpen ? 'translateX(0)' : 'translateX(-20px)'
+                        }}
+                      >
+                        {session.title || `${session.mode || 'chat'}: ${new Date(session.created_at).toLocaleDateString()}`}
+                      </div>
+                    ))
+                  )}
                 </div>
               </>
             ) : (

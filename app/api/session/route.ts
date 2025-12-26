@@ -38,11 +38,21 @@ export async function POST(request: Request) {
   const supabase = getSupabase();
   const sessionToken = uuidv4();
   
+  // Get mode from request body if provided
+  let mode = 'mentor';
+  try {
+    const body = await request.json();
+    mode = body.mode || 'mentor';
+  } catch {
+    // No body provided, use default
+  }
+  
   const { data, error } = await supabase
     .from('chat_sessions')
     .insert({ 
       session_token: sessionToken,
-      user_id: user.id 
+      user_id: user.id,
+      mode: mode
     })
     .select()
     .single();
@@ -81,10 +91,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ session: data });
   }
 
-  // Otherwise list user's recent sessions with message count
+  // Otherwise list user's recent sessions
   const { data: sessions, error } = await supabase
     .from('chat_sessions')
-    .select('*, messages(count)')
+    .select('id, title, mode, created_at')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(30);
@@ -94,8 +104,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ sessions: [] });
   }
 
-  // Filter out sessions with 0 messages
-  const validSessions = sessions?.filter((s: any) => s.messages && s.messages[0]?.count > 0) || [];
-
-  return NextResponse.json({ sessions: validSessions.slice(0, 20) });
+  console.log('[SESSION API] Fetching sessions for user:', user.id);
+  console.log('[SESSION API] Found sessions:', sessions?.length, sessions);
+  
+  // Return all sessions - show title or fallback to mode/date
+  return NextResponse.json({ sessions: sessions?.slice(0, 20) || [] });
 }

@@ -32,12 +32,16 @@ function getSupabase() {
 
 // Verify user owns the session
 async function verifySessionOwnership(supabase: any, sessionId: string, userId: string) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('chat_sessions')
     .select('id')
     .eq('id', sessionId)
     .eq('user_id', userId)
-    .single();
+    .maybeSingle();
+  
+  if (error) {
+    console.error('Session ownership check error:', error);
+  }
   
   return !!data;
 }

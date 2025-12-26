@@ -129,15 +129,65 @@ export async function fetchGitHubFile(fileUrl: string) {
   }
 
   const content = await response.text();
-  const path = fileUrl.split('/').pop() || '';
-  const extension = path.split('.').pop() || '';
+  
+  // Extract full path from URL: github.com/owner/repo/blob/branch/path/to/file.js
+  // After blob/branch, the rest is the file path
+  const urlParts = fileUrl.split('/blob/');
+  let path = '';
+  if (urlParts.length > 1) {
+    // Remove branch name (first segment after blob/)
+    const afterBlob = urlParts[1];
+    const segments = afterBlob.split('/');
+    // First segment is branch name, rest is path
+    path = segments.slice(1).join('/');
+  }
+  if (!path) {
+    path = fileUrl.split('/').pop() || 'unknown';
+  }
+  
+  const fileName = path.split('/').pop() || '';
+  const extension = fileName.split('.').pop()?.toLowerCase() || '';
+
+  // Map common extensions to language names
+  const languageMap: Record<string, string> = {
+    'js': 'javascript',
+    'jsx': 'javascript',
+    'ts': 'typescript',
+    'tsx': 'typescript',
+    'py': 'python',
+    'rb': 'ruby',
+    'go': 'go',
+    'rs': 'rust',
+    'java': 'java',
+    'kt': 'kotlin',
+    'swift': 'swift',
+    'c': 'c',
+    'cpp': 'cpp',
+    'h': 'c',
+    'hpp': 'cpp',
+    'cs': 'csharp',
+    'php': 'php',
+    'html': 'html',
+    'css': 'css',
+    'scss': 'scss',
+    'json': 'json',
+    'yaml': 'yaml',
+    'yml': 'yaml',
+    'md': 'markdown',
+    'sql': 'sql',
+    'sh': 'bash',
+    'bash': 'bash',
+    'dockerfile': 'dockerfile',
+  };
+
+  const language = languageMap[extension] || extension;
 
   return {
     type: 'file' as const,
     path,
     content: content.substring(0, 8000),
     url: fileUrl,
-    language: extension,
+    language,
   };
 }
 
