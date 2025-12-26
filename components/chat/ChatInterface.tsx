@@ -496,8 +496,8 @@ export default function ChatInterface() {
       // Replace temp entry with real assistant entry
       setFileExplanations(prev => prev.filter(fe => fe.id !== tempUserEntry.id).concat(assistantEntry));
       
-      // Save only the assistant entry to file_explanations table
-      await fetch('/api/chat', {
+      // Save only the assistant entry to file_explanations table and get the database ID
+      const saveResponse = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeader },
         body: JSON.stringify({
@@ -512,6 +512,15 @@ export default function ChatInterface() {
           metadata: { language: currentLanguage }
         })
       });
+      
+      const { message: savedEntry } = await saveResponse.json();
+      
+      // Update with the database ID
+      if (savedEntry?.id) {
+        setFileExplanations(prev => 
+          prev.map(fe => fe.id === assistantEntry.id ? { ...fe, id: savedEntry.id } : fe)
+        );
+      }
       
       setRefreshSidebarTrigger(prev => prev + 1);
     } catch (err: unknown) {
@@ -548,6 +557,72 @@ export default function ChatInterface() {
 
   const handleModeSelect = (mode: AssistantMode) => {
     handleModeChange(mode);
+  };
+
+  const handleDeleteFileExplanation = async (id: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      console.log('[DELETE] Attempting to delete ID:', id);
+      
+      // Delete from database
+      const response = await fetch('/api/chat', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ id, mode: 'file_explainer' })
+      });
+
+      const result = await response.json();
+      console.log('[DELETE] Response:', response.status, result);
+
+      if (response.ok) {
+        // Remove from local state
+        setFileExplanations(prev => prev.filter(fe => fe.id !== id));
+      } else {
+        console.error('Failed to delete explanation:', result);
+        setApiError(result.error || 'Failed to delete. Please try again.');
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
+      setApiError('Failed to delete. Please try again.');
+    }
+  };
+
+  const handleDeleteSession = async (id: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // Delete session from database
+      const response = await fetch('/api/session', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ id })
+      });
+
+      if (response.ok) {
+        // If we deleted the current session, reset to new chat state
+        if (id === sessionId) {
+          setSessionId('');
+          setMessages([]);
+          setFileExplanations([]);
+        }
+        // Refresh sidebar
+        setRefreshSidebarTrigger(prev => prev + 1);
+      } else {
+        const result = await response.json();
+        console.error('Failed to delete session:', result);
+        setSessionError('Failed to delete session.');
+      }
+    } catch (err) {
+      console.error('Delete session error:', err);
+      setSessionError('Failed to delete session.');
+    }
   };
 
   const handleLogout = async () => {
@@ -590,6 +665,7 @@ export default function ChatInterface() {
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} 
         currentSessionId={sessionId}
         onLoadSession={loadSession}
+        onDeleteSession={handleDeleteSession}
         refreshTrigger={refreshSidebarTrigger}
         language={currentLanguage as LanguageCode}
         user={user}
@@ -661,6 +737,7 @@ export default function ChatInterface() {
                               language={currentLanguage as LanguageCode}
                               streamingId={streamingMessageId}
                               onStreamComplete={() => setStreamingMessageId(null)}
+                              onDelete={handleDeleteFileExplanation}
                           />
                       ) : (
                           <MessageList 

@@ -113,3 +113,47 @@ export async function GET(request: Request) {
   // Return all sessions - show title or fallback to mode/date
   return NextResponse.json({ sessions: sessions?.slice(0, 20) || [] });
 }
+export async function DELETE(request: Request) {
+  const user = await getUserFromRequest(request);
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const supabase = getSupabase();
+  const body = await request.json();
+  const { id } = body;
+
+  if (!id) {
+    return NextResponse.json({ error: 'No session ID provided' }, { status: 400 });
+  }
+
+  // Verify user owns this session
+  const { data: session, error: fetchError } = await supabase
+    .from('chat_sessions')
+    .select('id')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (fetchError || !session) {
+    return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+  }
+
+  // Delete associated messages first (foreign key constraint)
+  await supabase.from('messages').delete().eq('session_id', id);
+  await supabase.from('file_explanations').delete().eq('session_id', id);
+  // await supabase.from('issue_solutions').delete().eq('session_id', id);
+
+  // Delete the session
+  const { error: deleteError } = await supabase
+    .from('chat_sessions')
+    .delete()
+    .eq('id', id);
+
+  if (deleteError) {
+    console.error('Delete session error:', deleteError);
+    return NextResponse.json({ error: deleteError.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
+}

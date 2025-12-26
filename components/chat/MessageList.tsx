@@ -41,6 +41,21 @@ export default function MessageList({
 }: MessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Scroll to bottom when mode changes (component mounts/switches)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTo({
+          top: scrollContainer.scrollHeight,
+          behavior: 'smooth'
+        });
+      }
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [currentMode]);
+
   // Auto-scroll to bottom when messages change or loading
   useEffect(() => {
     // Small delay to ensure DOM has updated

@@ -18,6 +18,7 @@ interface FileExplainerListProps {
   language?: LanguageCode;
   streamingId?: string | null;
   onStreamComplete?: () => void;
+  onDelete?: (id: string) => void;
 }
 
 export default function FileExplainerList({
@@ -28,49 +29,115 @@ export default function FileExplainerList({
   currentMode,
   language = 'en',
   streamingId,
-  onStreamComplete
+  onStreamComplete,
+  onDelete
 }: FileExplainerListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isUserScrollingRef = useRef(false);
+  const isProgrammaticScrollRef = useRef(false);
 
-  // Auto-scroll to bottom
+  // Detect user scrolling (but ignore programmatic scrolls)
   useEffect(() => {
+    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      // Ignore programmatic scrolls
+      if (isProgrammaticScrollRef.current) return;
+      
+      const scrollHeight = scrollContainer.scrollHeight;
+      const clientHeight = scrollContainer.clientHeight;
+      const currentScrollTop = scrollContainer.scrollTop;
+      
+      // User is manually scrolling if they're not at the bottom
+      const isAtBottom = scrollHeight - currentScrollTop - clientHeight < 50;
+      isUserScrollingRef.current = !isAtBottom;
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll);
+    return () => scrollContainer.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Helper function to scroll to bottom (sets flag to ignore programmatic scroll)
+  const scrollToBottom = (container: Element) => {
+    isProgrammaticScrollRef.current = true;
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: 'smooth'
+    });
+    // Reset flag after scroll animation completes
+    setTimeout(() => {
+      isProgrammaticScrollRef.current = false;
+    }, 500);
+  };
+
+  // Reset scroll flag and scroll to bottom when mode changes
+  useEffect(() => {
+    isUserScrollingRef.current = false; // Reset flag on mode change
+    
     const timeoutId = setTimeout(() => {
       const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
       if (scrollContainer) {
-        scrollContainer.scrollTo({
-          top: scrollContainer.scrollHeight,
-          behavior: 'smooth'
-        });
+        scrollToBottom(scrollContainer);
+      }
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [currentMode]);
+
+  // Auto-scroll to bottom when new message arrives (if user is at bottom)
+  useEffect(() => {
+    if (isUserScrollingRef.current) return; // Don't auto-scroll if user is scrolling
+
+    const timeoutId = setTimeout(() => {
+      const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollToBottom(scrollContainer);
       }
     }, 50);
 
     return () => clearTimeout(timeoutId);
-  }, [explanations.length, isLoading]);
+  }, [explanations.length]);
 
-  // Scroll during streaming
-  const lastExplanation = explanations.length > 0 ? explanations[explanations.length - 1] : null;
-  const lastContentLength = lastExplanation?.explanation?.length || 0;
-
+  // Scroll during streaming - but less aggressively
   useEffect(() => {
-    if (!streamingId) return;
+    if (!streamingId || isUserScrollingRef.current) return;
 
     const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
     if (!scrollContainer) return;
 
-    scrollContainer.scrollTo({
-      top: scrollContainer.scrollHeight,
-      behavior: 'smooth'
-    });
+    // Only scroll if user hasn't manually scrolled up
+    const doScrollToBottom = () => {
+      if (!isUserScrollingRef.current) {
+        isProgrammaticScrollRef.current = true;
+        scrollContainer.scrollTo({
+          top: scrollContainer.scrollHeight,
+          behavior: 'smooth'
+        });
+        setTimeout(() => {
+          isProgrammaticScrollRef.current = false;
+        }, 300);
+      }
+    };
 
+    doScrollToBottom();
+
+    // Reduced interval frequency and only if not user scrolling
     const scrollInterval = setInterval(() => {
-      scrollContainer.scrollTo({
-        top: scrollContainer.scrollHeight,
-        behavior: 'smooth'
-      });
-    }, 100);
+      if (!isUserScrollingRef.current) {
+        isProgrammaticScrollRef.current = true;
+        scrollContainer.scrollTo({
+          top: scrollContainer.scrollHeight,
+          behavior: 'smooth'
+        });
+        setTimeout(() => {
+          isProgrammaticScrollRef.current = false;
+        }, 300);
+      }
+    }, 300);
 
     return () => clearInterval(scrollInterval);
-  }, [streamingId, lastContentLength]);
+  }, [streamingId]);
 
   if (isSessionLoading) {
     return (
@@ -140,6 +207,7 @@ export default function FileExplainerList({
                 data={item}
                 isNew={item.id === streamingId}
                 onStreamComplete={item.id === streamingId ? onStreamComplete : undefined}
+                onDelete={onDelete}
               />
             ))}
             {isLoading && (

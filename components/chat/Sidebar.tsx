@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { MessageSquarePlus, PanelLeftClose, LogOut, User } from 'lucide-react';
+import { MessageSquarePlus, PanelLeftClose, LogOut, User, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { t, LanguageCode } from '@/lib/translations';
 import { supabase } from '@/lib/supabase-auth';
@@ -13,6 +13,7 @@ interface SidebarProps {
   toggleSidebar: () => void;
   currentSessionId?: string;
   onLoadSession?: (id: string) => void;
+  onDeleteSession?: (id: string) => void;
   refreshTrigger?: number;
   language?: LanguageCode;
   user?: SupabaseUser | null;
@@ -29,6 +30,7 @@ export default function Sidebar({
   toggleSidebar, 
   currentSessionId, 
   onLoadSession, 
+  onDeleteSession,
   refreshTrigger,
   language = 'en',
   user,
@@ -122,15 +124,12 @@ export default function Sidebar({
                 <div className="text-xs font-medium text-gray-500 mb-3 px-2">{t('recent', language)}</div>
                 <div className="space-y-1">
                   {sessions.length === 0 ? (
-                    <div className="px-3 py-4 text-sm text-gray-500 text-center">
-                      No chats yet. Start a new conversation!
-                    </div>
+                    <></>
                   ) : (
                     sessions.map((session, index) => (
                       <div 
                         key={session.id}
-                        onClick={() => onLoadSession?.(session.id)}
-                        className={`px-3 py-2 text-sm rounded-lg cursor-pointer truncate transition-all duration-150 hover:translate-x-1 active:scale-[0.98] ${
+                        className={`group flex items-center justify-between px-3 py-2 text-sm rounded-lg cursor-pointer transition-all duration-150 hover:translate-x-1 active:scale-[0.98] ${
                           currentSessionId === session.id 
                             ? 'bg-[#2A2A2A] text-white font-medium' 
                             : 'text-gray-300 hover:bg-[#2A2A2A] hover:text-white'
@@ -141,7 +140,24 @@ export default function Sidebar({
                           transform: isOpen ? 'translateX(0)' : 'translateX(-20px)'
                         }}
                       >
-                        {session.title || `${session.mode || 'chat'}: ${new Date(session.created_at).toLocaleDateString()}`}
+                        <span 
+                          className="truncate flex-1"
+                          onClick={() => onLoadSession?.(session.id)}
+                        >
+                          {session.title || `${session.mode || 'chat'}: ${new Date(session.created_at).toLocaleDateString()}`}
+                        </span>
+                        {onDeleteSession && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteSession(session.id);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-all duration-150"
+                            title="Delete session"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                       </div>
                     ))
                   )}

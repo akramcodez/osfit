@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { FileExplanation } from '@/types';
-import { Check, Copy, ChevronLeft, ChevronRight, ExternalLink, FileCode, ChevronsDown, ChevronsUp } from 'lucide-react';
+import { Check, Copy, ChevronLeft, ChevronRight, ExternalLink, FileCode, ChevronsDown, ChevronsUp, Trash2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -14,6 +14,7 @@ interface FileExplainerCardProps {
   data: FileExplanation;
   isNew?: boolean;
   onStreamComplete?: () => void;
+  onDelete?: (id: string) => void;
 }
 
 // Language display names
@@ -103,7 +104,7 @@ export async function post<T>(url: string, data?: object): Promise<T> {
   return client.post(url, data);
 }`;
 
-export default function FileExplainerCard({ data, isNew = false, onStreamComplete }: FileExplainerCardProps) {
+export default function FileExplainerCard({ data, isNew = false, onStreamComplete, onDelete }: FileExplainerCardProps) {
   const [isCodeExpanded, setIsCodeExpanded] = useState(true);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
@@ -245,6 +246,15 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                 </>
               )}
             </button>
+            {onDelete && (
+              <button
+                onClick={() => onDelete(data.id)}
+                className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                title="Delete explanation"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </div>
 
