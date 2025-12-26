@@ -116,76 +116,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { message, mode, language = 'en', conversationHistory = [], sessionId } = body;
 
-    // --- SMART TITLE GENERATION START ---
-    if (sessionId) {
-      console.log('[TITLE DEBUG] sessionId received:', sessionId);
-      const supabase = getSupabase();
-      // Check if session has a title
-      const { data: session, error: sessionError } = await supabase
-        .from('chat_sessions')
-        .select('title, mode')
-        .eq('id', sessionId)
-        .maybeSingle();
-      
-      console.log('[TITLE DEBUG] Session lookup result:', { session, error: sessionError?.message });
-      
-      // Generate title if session exists and has no title
-      if (session) {
-        if (!session.title) {
-          console.log('[TITLE DEBUG] Generating title for mode:', mode);
-          let title = '';
-          
-          // Generate title based on mode (no AI needed - simple extraction)
-          if (mode === 'file_explainer') {
-            // Extract filename from URL: file: main.js
-            const fileMatch = message.match(/github\.com\/[^\/]+\/[^\/]+\/blob\/[^\/]+\/(.+)/);
-            if (fileMatch) {
-              const fullPath = fileMatch[1];
-              const fileName = fullPath.split('/').pop() || 'unknown';
-              title = `file: ${fileName}`;
-            } else {
-              title = 'file: explanation';
-            }
-          } else if (mode === 'issue_solver') {
-            // Extract first 3 words: issue: how to center...
-            const words = message.trim().split(/\s+/).slice(0, 3).join(' ');
-            title = `issue: ${words}${message.split(/\s+/).length > 3 ? '...' : ''}`;
-          } else {
-            // Mentor/default mode: chat: what is os...
-            const words = message.trim().split(/\s+/).slice(0, 4).join(' ');
-            title = `chat: ${words}${message.split(/\s+/).length > 4 ? '...' : ''}`;
-          }
-          
-          // Ensure title is not too long
-          if (title.length > 40) {
-            title = title.substring(0, 37) + '...';
-          }
-          
-          if (title) {
-             console.log('[TITLE DEBUG] Generated title:', title);
-             // Update both title and mode
-             const { data: updateData, error: updateError } = await supabase
-              .from('chat_sessions')
-              .update({ title: title, mode: mode })
-              .eq('id', sessionId)
-              .select();
-             
-             if (updateError) {
-                 console.error('[TITLE DEBUG] DB update failed:', updateError);
-             } else {
-                 console.log('[TITLE DEBUG] Title saved successfully!', updateData);
-             }
-          }
-        } else {
-          console.log('[TITLE DEBUG] Session already has title:', session.title);
-        }
-      } else {
-        console.log('[TITLE DEBUG] Session not found for id:', sessionId);
-      }
-    } else {
-      console.log('[TITLE DEBUG] No sessionId provided');
-    }
-    // --- SMART TITLE GENERATION END ---
+    // Title is now generated when session is created (in ChatInterface.tsx)
+    // No need to generate it here anymore
 
     // Return mock response if enabled
     if (USE_MOCK_AI) {

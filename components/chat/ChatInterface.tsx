@@ -199,15 +199,30 @@ export default function ChatInterface() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Initialize session when user is authenticated
-  useEffect(() => {
-    if (user && !sessionId) {
-      initSession();
-    }
-  }, [user]);
+  // No longer auto-create session on login - wait until first message
+  // This prevents creating empty sessions
 
-  const initSession = async (): Promise<string | null> => {
+  const initSession = async (firstMessage: string, mode: AssistantMode): Promise<string | null> => {
     if (!user) return null;
+    
+    // Generate title from first message
+    let title = '';
+    if (mode === 'file_explainer') {
+      const fileMatch = firstMessage.match(/github\.com\/[^\/]+\/[^\/]+\/blob\/[^\/]+\/(.+)/);
+      if (fileMatch) {
+        const fileName = fileMatch[1].split('/').pop() || 'unknown';
+        title = `file: ${fileName}`;
+      } else {
+        title = 'file: explanation';
+      }
+    } else if (mode === 'issue_solver') {
+      const words = firstMessage.trim().split(/\s+/).slice(0, 3).join(' ');
+      title = `issue: ${words}${firstMessage.split(/\s+/).length > 3 ? '...' : ''}`;
+    } else {
+      const words = firstMessage.trim().split(/\s+/).slice(0, 4).join(' ');
+      title = `chat: ${words}${firstMessage.split(/\s+/).length > 4 ? '...' : ''}`;
+    }
+    if (title.length > 40) title = title.substring(0, 37) + '...';
     
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -217,7 +232,7 @@ export default function ChatInterface() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session?.access_token}`
         },
-        body: JSON.stringify({ mode: currentMode })
+        body: JSON.stringify({ mode, title })
       });
       const { session: newSession, error } = await response.json();
       
@@ -229,9 +244,7 @@ export default function ChatInterface() {
       
       console.log('[SESSION] Created new session:', newSession.id);
       setSessionId(newSession.id);
-      setMessages([]);
-      setFileExplanations([]);
-      setShowUserSettings(false);
+      setRefreshSidebarTrigger(prev => prev + 1); // Refresh sidebar to show new session
       return newSession.id;
     } catch (err) {
       console.error('Failed to initialize session:', err);
@@ -283,8 +296,8 @@ export default function ChatInterface() {
     let activeSessionId: string | null = sessionId;
     
     if (!activeSessionId) {
-      // Create session and get the ID directly
-      activeSessionId = await initSession();
+      // Create session with title from first message
+      activeSessionId = await initSession(content, currentMode);
       if (!activeSessionId) {
         setApiError('Failed to create session. Please try again.');
         return;
@@ -566,7 +579,13 @@ export default function ChatInterface() {
       />
       
       <Sidebar 
-        onNewChat={initSession} 
+        onNewChat={() => {
+          // Just reset UI state - don't create session until first message
+          setSessionId('');
+          setMessages([]);
+          setFileExplanations([]);
+          setShowUserSettings(false);
+        }} 
         isOpen={isSidebarOpen} 
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} 
         currentSessionId={sessionId}

@@ -38,13 +38,15 @@ export async function POST(request: Request) {
   const supabase = getSupabase();
   const sessionToken = uuidv4();
   
-  // Get mode from request body if provided
+  // Get mode and title from request body
   let mode = 'mentor';
+  let title = null;
   try {
     const body = await request.json();
     mode = body.mode || 'mentor';
+    title = body.title || null;
   } catch {
-    // No body provided, use default
+    // No body provided, use defaults
   }
   
   const { data, error } = await supabase
@@ -52,7 +54,8 @@ export async function POST(request: Request) {
     .insert({ 
       session_token: sessionToken,
       user_id: user.id,
-      mode: mode
+      mode: mode,
+      title: title
     })
     .select()
     .single();
