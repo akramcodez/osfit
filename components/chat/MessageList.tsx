@@ -40,9 +40,12 @@ export default function MessageList({
   onStreamComplete
 }: MessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const hasInitialScrolledForStreamRef = useRef<string | null>(null);
 
   // Scroll to bottom when mode changes (component mounts/switches)
   useEffect(() => {
+    hasInitialScrolledForStreamRef.current = null; // Reset tracking on mode change
+    
     const timeoutId = setTimeout(() => {
       const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
       if (scrollContainer) {
@@ -51,7 +54,7 @@ export default function MessageList({
           behavior: 'smooth'
         });
       }
-    }, 100);
+    }, 200); // Increased delay to ensure data has loaded
 
     return () => clearTimeout(timeoutId);
   }, [currentMode]);
@@ -72,32 +75,29 @@ export default function MessageList({
     return () => clearTimeout(timeoutId);
   }, [messages.length, isLoading]);
 
-  // Also scroll when message content changes (for streaming)
-  const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
-  const lastMessageContent = lastMessage ? getContent(lastMessage).length : 0;
-  
+  // Scroll once when streaming starts - no continuous scrolling
   useEffect(() => {
-    if (!streamingMessageId) return;
+    // Reset tracking when streaming ends
+    if (!streamingMessageId) {
+      hasInitialScrolledForStreamRef.current = null;
+      return;
+    }
+    
+    // Skip if already scrolled for this streaming message
+    if (hasInitialScrolledForStreamRef.current === streamingMessageId) return;
 
     const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
     if (!scrollContainer) return;
 
-    // Smooth scroll immediately
+    // Mark as scrolled for this streaming message
+    hasInitialScrolledForStreamRef.current = streamingMessageId;
+    
+    // Single scroll when streaming starts
     scrollContainer.scrollTo({
       top: scrollContainer.scrollHeight,
       behavior: 'smooth'
     });
-
-    // Keep smooth scrolling during streaming (faster interval for responsiveness)
-    const scrollInterval = setInterval(() => {
-      scrollContainer.scrollTo({
-        top: scrollContainer.scrollHeight,
-        behavior: 'smooth'
-      });
-    }, 100); // Every 100ms during streaming
-
-    return () => clearInterval(scrollInterval);
-  }, [streamingMessageId, lastMessageContent]);
+  }, [streamingMessageId]);
 
   // Show centered spinner when loading a session
   if (isSessionLoading) {

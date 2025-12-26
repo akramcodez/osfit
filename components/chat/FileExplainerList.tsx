@@ -35,6 +35,7 @@ export default function FileExplainerList({
   const scrollRef = useRef<HTMLDivElement>(null);
   const isUserScrollingRef = useRef(false);
   const isProgrammaticScrollRef = useRef(false);
+  const hasInitialScrolledForStreamRef = useRef<string | null>(null);
 
   // Detect user scrolling (but ignore programmatic scrolls)
   useEffect(() => {
@@ -74,13 +75,14 @@ export default function FileExplainerList({
   // Reset scroll flag and scroll to bottom when mode changes
   useEffect(() => {
     isUserScrollingRef.current = false; // Reset flag on mode change
+    hasInitialScrolledForStreamRef.current = null; // Reset streaming scroll tracking
     
     const timeoutId = setTimeout(() => {
       const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
       if (scrollContainer) {
         scrollToBottom(scrollContainer);
       }
-    }, 100);
+    }, 200); // Increased delay to ensure data has loaded
 
     return () => clearTimeout(timeoutId);
   }, [currentMode]);
@@ -99,44 +101,25 @@ export default function FileExplainerList({
     return () => clearTimeout(timeoutId);
   }, [explanations.length]);
 
-  // Scroll during streaming - but less aggressively
+  // Scroll once when streaming starts - no continuous scrolling
   useEffect(() => {
-    if (!streamingId || isUserScrollingRef.current) return;
+    // Reset tracking when streaming ends
+    if (!streamingId) {
+      hasInitialScrolledForStreamRef.current = null;
+      return;
+    }
+    
+    // Skip if already scrolled for this streaming session or user is scrolling
+    if (hasInitialScrolledForStreamRef.current === streamingId || isUserScrollingRef.current) return;
 
     const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
     if (!scrollContainer) return;
 
-    // Only scroll if user hasn't manually scrolled up
-    const doScrollToBottom = () => {
-      if (!isUserScrollingRef.current) {
-        isProgrammaticScrollRef.current = true;
-        scrollContainer.scrollTo({
-          top: scrollContainer.scrollHeight,
-          behavior: 'smooth'
-        });
-        setTimeout(() => {
-          isProgrammaticScrollRef.current = false;
-        }, 300);
-      }
-    };
-
-    doScrollToBottom();
-
-    // Reduced interval frequency and only if not user scrolling
-    const scrollInterval = setInterval(() => {
-      if (!isUserScrollingRef.current) {
-        isProgrammaticScrollRef.current = true;
-        scrollContainer.scrollTo({
-          top: scrollContainer.scrollHeight,
-          behavior: 'smooth'
-        });
-        setTimeout(() => {
-          isProgrammaticScrollRef.current = false;
-        }, 300);
-      }
-    }, 300);
-
-    return () => clearInterval(scrollInterval);
+    // Mark as scrolled for this streaming session
+    hasInitialScrolledForStreamRef.current = streamingId;
+    
+    // Single initial scroll when streaming starts
+    scrollToBottom(scrollContainer);
   }, [streamingId]);
 
   if (isSessionLoading) {
