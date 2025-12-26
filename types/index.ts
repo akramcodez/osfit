@@ -25,10 +25,25 @@ export interface FileExplanation {
   created_at: string;
 }
 
-// Issue Solver mode (issue_solutions table) - placeholder for future
+// Issue Solver mode (issue_solutions table)
 export interface IssueSolution {
   id: string;
   session_id: string;
+  role: MessageRole;
+  issue_url?: string;
+  issue_title?: string;
+  issue_body?: string;
+  issue_labels?: string;
+  explanation?: string;
+  solution_plan?: string;
+  git_diff?: string;
+  pr_title?: string;
+  pr_description?: string;
+  pr_solution?: string;
+  pr_files_changed?: string;
+  current_step: 'issue_input' | 'explanation' | 'awaiting_plan' | 'solution_plan' | 'awaiting_diff' | 'pr_generation' | 'completed';
+  status: 'in_progress' | 'completed';
+  metadata?: Record<string, unknown>;
   created_at: string;
 }
 

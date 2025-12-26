@@ -114,7 +114,7 @@ export async function POST(request: Request) {
     const USE_MOCK_AI = isDevelopment && !forceRealAI && !userHasKeys(userKeys);
 
     const body = await request.json();
-    const { message, mode, language = 'en', conversationHistory = [], sessionId } = body;
+    const { message, mode, language = 'en', conversationHistory = [], sessionId, metadata } = body;
 
     // Title is now generated when session is created (in ChatInterface.tsx)
     // No need to generate it here anymore
@@ -156,7 +156,7 @@ export async function POST(request: Request) {
           response = await handleIdleMode(message, conversationHistory, effectiveKeys);
           break;
         case 'issue_solver':
-          response = await handleIssueSolver(message, conversationHistory, effectiveKeys);
+          response = await handleIssueSolver(message, conversationHistory, effectiveKeys, metadata);
           break;
         case 'file_explainer':
           const fileResult = await handleFileExplainer(message, conversationHistory, effectiveKeys);
@@ -249,169 +249,158 @@ Current mode: General Chat
 async function handleIssueSolver(
   message: string,
   history: unknown[],
-  effectiveKeys: EffectiveKeys
+  effectiveKeys: EffectiveKeys,
+  metadata?: { currentStep?: string; issueData?: Record<string, unknown> }
 ): Promise<string> {
-  // Check if message contains a GitHub issue URL
+  const currentStep = metadata?.currentStep || 'issue_input';
+  const issueData = metadata?.issueData || {};
+
+  // Step 1: Check for GitHub issue URL (initial input)
   const issueUrlMatch = message.match(/github\.com\/[^\/]+\/[^\/]+\/issues\/\d+/);
 
-  if (issueUrlMatch) {
-    let issueUrl = issueUrlMatch[0];
-    if (!issueUrl.startsWith('http')) {
-      issueUrl = 'https://' + issueUrl;
-    }
-
-    try {
-      // Fetch the issue
-      const issue = await fetchGitHubIssue(issueUrl);
-
-      // Check what user is asking for
-      const askingForSolution = message.toLowerCase().includes('solution') || 
-                                message.toLowerCase().includes('how to solve') ||
-                                message.toLowerCase().includes('approach') ||
-                                message.toLowerCase().includes('fix');
-
-      const askingForPR = message.toLowerCase().includes('pull request') || 
-                          message.toLowerCase().includes('pr ') ||
-                          message.toLowerCase().includes('commit message') ||
-                          message.toLowerCase().includes('branch');
-
-      let systemPrompt: string;
-      
-      if (askingForPR) {
-        systemPrompt = `You are OSFIT Issue Solver - PR Mode.
-
-Rules:
-- Be concise, no emojis
-- Provide copy-paste ready content
-
-MARKDOWN FORMAT (REQUIRED):
-- Use ## for section headings
-- Use \`code\` for branch names, commands
-- Use \`\`\` for multi-line content
-
-STRUCTURE (follow exactly):
-## Branch Name
-\`\`\`
-feature/description or bugfix/description
-\`\`\`
-
-## Commit Message
-\`\`\`
-type(scope): description
-\`\`\`
-
-## PR Title
-\`\`\`
-type(scope): description
-\`\`\`
-
-## PR Description
-\`\`\`markdown
-### Problem
-[description]
-
-### Solution
-[description]
-
-### Testing
-- [ ] Test case 1
-\`\`\``;
-      } else if (askingForSolution) {
-        systemPrompt = `You are OSFIT Issue Solver - Solution Mode.
-
-Rules:
-- Be concise, no emojis
-- Focus on actionable steps
-
-MARKDOWN FORMAT (REQUIRED):
-- Use ## for section headings
-- Use **bold** for key terms
-- Use \`code\` for file names, functions, commands
-- Use \`\`\`language for code blocks
-- Use numbered lists for steps
-
-STRUCTURE (follow exactly):
-## Problem Summary
-[1-2 sentence overview]
-
-## Implementation Steps
-1. Step one
-2. Step two
-
-## Files to Modify
-- \`path/to/file.ts\` - what to change
-
-## Edge Cases
-- Case 1
-- Case 2`;
-      } else {
-        systemPrompt = `You are OSFIT Issue Solver - Analysis Mode.
-
-Rules:
-- Be concise, no emojis
-- Clear, simple language
-
-MARKDOWN FORMAT (REQUIRED):
-- Use ## for section headings
-- Use **bold** for key terms
-- Use \`code\` for technical terms, file names
-- Use bullet/numbered lists
-- Use > for tips
-
-STRUCTURE (follow exactly):
-## Issue Summary
-[Brief problem description]
-
-## Technical Details
-- Key aspect 1
-- Key aspect 2
-
-## Difficulty
-**[Easy/Medium/Hard]** - [reason]
-
-## Suggested Approach
-1. First step
-2. Second step`;
+  if (issueUrlMatch || currentStep === 'issue_input') {
+    if (issueUrlMatch) {
+      let issueUrl = issueUrlMatch[0];
+      if (!issueUrl.startsWith('http')) {
+        issueUrl = 'https://' + issueUrl;
       }
 
-      const context = `
-GitHub Issue: ${issue.title}
-Issue Number: #${issue.number}
-URL: ${issue.url}
-State: ${issue.state}
-Labels: ${issue.labels.join(', ') || 'None'}
+      try {
+        // Fetch the issue
+        const issue = await fetchGitHubIssue(issueUrl);
 
-Description:
-${issue.body || 'No description provided'}
+        // Generate short explanation (Step 2)
+        const explanationPrompt = `You are OSFIT Issue Solver. Give a SHORT, DIRECT explanation of this issue.
 
-${issue.comments && issue.comments.length > 0 ? `Recent Comments (${issue.comments.length}):
-${issue.comments.slice(0, 3).map(c => `- ${c.author}: ${c.body.substring(0, 300)}...`).join('\n\n')}` : ''}
-`;
+RULES:
+1. Maximum 80 words
+2. Be direct - no fluff
+3. Format as markdown
 
-      const analysis = await analyzeWithContext(systemPrompt, message, context, effectiveKeys.gemini.key);
-      
-      if (!askingForSolution && !askingForPR) {
-        return `${analysis}
+FORMAT:
+**Problem:** [1-2 sentences]
+**What to do:** [1 sentence]
+**Difficulty:** [Easy/Medium/Hard]`;
 
----
-💡 **Need more help?** Ask me to:
-- Generate a **solution approach**
-- Create a **PR template** (branch name, commit message, description)`;
+        const context = `
+Issue: ${issue.title}
+#${issue.number}
+
+${issue.body || 'No description'}
+
+Labels: ${issue.labels.join(', ') || 'None'}`;
+
+        const explanation = await analyzeWithContext(explanationPrompt, 'Analyze this issue', context, effectiveKeys.gemini.key);
+
+        // Return explanation with metadata for frontend to track step
+        return JSON.stringify({
+          type: 'issue_explanation',
+          issueUrl,
+          issueTitle: issue.title,
+          issueNumber: issue.number,
+          issueBody: issue.body,
+          issueLabels: issue.labels,
+          explanation,
+          nextStep: 'awaiting_plan'
+        });
+      } catch (error) {
+        console.error('Issue fetch error:', error);
+        return `I found the URL but had trouble fetching the issue. Make sure the repository is public.`;
       }
-
-      return analysis;
-    } catch (error) {
-      console.error('Issue fetch error:', error);
-      return `I found the URL but had trouble fetching the issue details. The issue is at: ${issueUrl}\n\nPlease make sure the repository is public and the issue exists.`;
     }
+
+    // No URL provided - guide user
+    return `Share a GitHub issue URL to get started!
+
+**Example:** https://github.com/owner/repo/issues/123
+
+I'll analyze it and help you create a solution.`;
   }
 
-  // If no URL, guide the user
+  // Step 3→4: User wants solution plan
+  if (currentStep === 'awaiting_plan' || message.toLowerCase().includes('solution') || message.toLowerCase().includes('plan')) {
+    const solutionPrompt = `You are OSFIT Issue Solver. Create a step-by-step solution plan.
+
+RULES:
+1. Be specific and actionable
+2. Number each step
+3. Include file paths when possible
+4. Keep it practical
+
+FORMAT:
+### Solution Plan
+
+1. **Step 1:** [action]
+2. **Step 2:** [action]
+3. **Step 3:** [action]
+
+### Files to Modify
+- \`file.ts\` - what to change`;
+
+    const context = `
+Issue: ${issueData.issueTitle || 'Unknown'}
+Previous analysis: ${issueData.explanation || message}`;
+
+    const solutionPlan = await analyzeWithContext(solutionPrompt, 'Create solution plan', context, effectiveKeys.gemini.key);
+
+    return JSON.stringify({
+      type: 'solution_plan',
+      solutionPlan,
+      nextStep: 'awaiting_diff'
+    });
+  }
+
+  // Step 5→6: User submitted git diff - generate PR
+  if (currentStep === 'awaiting_diff' || message.includes('diff --git') || message.includes('@@')) {
+    const prPrompt = `You are OSFIT Issue Solver. Generate a professional Pull Request.
+
+RULES:
+1. Clear conventional title (fix:, feat:, refactor:)
+2. Concise description
+3. List file changes
+
+FORMAT:
+## PR Title
+\`fix: description\`
+
+## Description
+[2-3 sentences]
+
+## Solution
+[brief technical summary]
+
+## Changes
+- \`file1.ts\`: what changed
+- \`file2.ts\`: what changed
+
+## Closes
+#[issue_number]`;
+
+    const context = `
+Issue: ${issueData.issueTitle || 'Unknown'}
+Issue Number: ${issueData.issueNumber || '?'}
+Solution Plan: ${issueData.solutionPlan || 'N/A'}
+
+Git Diff:
+\`\`\`diff
+${message.substring(0, 3000)}
+\`\`\``;
+
+    const prContent = await analyzeWithContext(prPrompt, 'Generate PR', context, effectiveKeys.gemini.key);
+
+    return JSON.stringify({
+      type: 'pr_generated',
+      prContent,
+      nextStep: 'completed'
+    });
+  }
+
+  // Default: guide user
   return `I'm in Issue Solver mode! Share a GitHub issue URL and I'll help you:
 
-1. **Understand the issue** - Summary and technical details
-2. **Plan the solution** - Step-by-step approach
-3. **Prepare your PR** - Branch name, commit message, description
+1. **Understand the issue** - Quick summary
+2. **Plan the solution** - Step-by-step approach  
+3. **Generate PR** - Title, description, and changes
 
 **Example:** https://github.com/owner/repo/issues/123`;
 }

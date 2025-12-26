@@ -6,6 +6,7 @@ import { Message, AssistantMode, FileExplanation } from '@/types';
 import { LanguageCode } from '@/lib/translations';
 import MessageList from './MessageList';
 import FileExplainerList from './FileExplainerList';
+import IssueSolverBanner from './IssueSolverBanner';
 import MessageInput from './MessageInput';
 import ModeSelector from './ModeSelector';
 import LanguageSelector from './LanguageSelector';
@@ -177,6 +178,11 @@ export default function ChatInterface() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [refreshSidebarTrigger, setRefreshSidebarTrigger] = useState(0);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
+  
+  // Issue Solver step tracking
+  const [issueSolverStep, setIssueSolverStep] = useState<string>('issue_input');
+  const [issueSolverData, setIssueSolverData] = useState<Record<string, unknown>>({});
+  const [currentIssueId, setCurrentIssueId] = useState<string | null>(null);
 
   // Check auth state on mount
   useEffect(() => {
@@ -309,9 +315,8 @@ export default function ChatInterface() {
       await handleMentorMessage(content, activeSessionId);
     } else if (currentMode === 'file_explainer') {
       await handleFileExplainerMessage(content, activeSessionId);
-    } else {
-      // Issue solver - placeholder
-      setApiError('Issue Solver mode is coming soon!');
+    } else if (currentMode === 'issue_solver') {
+      await handleIssueSolverMessage(content, activeSessionId);
     }
   };
 
@@ -534,6 +539,231 @@ export default function ChatInterface() {
     }
   };
 
+  // Handle Issue Solver mode - initial issue URL submission
+  const handleIssueSolverMessage = async (content: string, activeSessionId: string) => {
+    // Check if content is a GitHub issue URL
+    const issueUrlMatch = content.match(/github\.com\/[^\/]+\/[^\/]+\/issues\/\d+/);
+    
+    if (!issueUrlMatch) {
+      // Not a valid issue URL, show guide message as local message
+      const guideMessage: Message = {
+        id: Date.now().toString(),
+        session_id: activeSessionId,
+        role: 'assistant',
+        content: `Please paste a GitHub issue URL to get started!\n\n**Example:** https://github.com/owner/repo/issues/123`,
+        metadata: {},
+        created_at: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, guideMessage]);
+      return;
+    }
+
+    let issueUrl = issueUrlMatch[0];
+    if (!issueUrl.startsWith('http')) {
+      issueUrl = 'https://' + issueUrl;
+    }
+
+    setIsLoading(true);
+    setApiError('');
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const authHeader = { 'Authorization': `Bearer ${session?.access_token}` };
+
+      // Call new issue-solver API to create row and analyze
+      const response = await fetch('/api/issue-solver', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeader },
+        body: JSON.stringify({
+          session_id: activeSessionId,
+          issue_url: issueUrl
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.error) {
+        setApiError(data.error);
+        return;
+      }
+
+      // Update state with issue data
+      const issue = data.issue;
+      setCurrentIssueId(issue.id);
+      setIssueSolverStep(issue.current_step);
+      setIssueSolverData({
+        issueUrl: issue.issue_url,
+        issueTitle: issue.issue_title,
+        issueBody: issue.issue_body,
+        explanation: issue.explanation
+      });
+
+      // Show explanation as assistant message
+      const assistantMessage: Message = {
+        id: issue.id,
+        session_id: activeSessionId,
+        role: 'assistant',
+        content: `**${issue.issue_title}**\n\n${issue.explanation}`,
+        metadata: { step: issue.current_step },
+        created_at: new Date().toISOString()
+      };
+      
+      setStreamingMessageId(assistantMessage.id);
+      setMessages(prev => [...prev, assistantMessage]);
+      setRefreshSidebarTrigger(prev => prev + 1);
+
+    } catch (err: unknown) {
+      console.error('Issue Solver error:', err);
+      setApiError(err instanceof Error ? err.message : 'Failed to analyze issue');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handler for "Yes" button - generate solution plan
+  const handleIssueSolverYes = async () => {
+    if (!currentIssueId) return;
+    
+    setIsLoading(true);
+    setApiError('');
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const authHeader = { 'Authorization': `Bearer ${session?.access_token}` };
+
+      const response = await fetch('/api/issue-solver', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...authHeader },
+        body: JSON.stringify({
+          issue_id: currentIssueId,
+          action: 'solution'
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.error) {
+        setApiError(data.error);
+        return;
+      }
+
+      const issue = data.issue;
+      setIssueSolverStep(issue.current_step);
+      setIssueSolverData(prev => ({ ...prev, solutionPlan: issue.solution_plan }));
+
+      // Show solution plan as new message
+      const solutionMessage: Message = {
+        id: Date.now().toString(),
+        session_id: sessionId,
+        role: 'assistant',
+        content: issue.solution_plan,
+        metadata: { step: 'pr_context' },
+        created_at: new Date().toISOString()
+      };
+      
+      setStreamingMessageId(solutionMessage.id);
+      setMessages(prev => [...prev, solutionMessage]);
+
+    } catch (err: unknown) {
+      console.error('Solution error:', err);
+      setApiError(err instanceof Error ? err.message : 'Failed to generate solution');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handler for "No" or "Discard" - complete without continuing
+  const handleIssueSolverNo = async () => {
+    await handleIssueSolverDiscard();
+  };
+
+  const handleIssueSolverDiscard = async () => {
+    if (!currentIssueId) {
+      // Just reset if no issue
+      resetIssueSolver();
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const authHeader = { 'Authorization': `Bearer ${session?.access_token}` };
+
+      await fetch('/api/issue-solver', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...authHeader },
+        body: JSON.stringify({
+          issue_id: currentIssueId,
+          action: 'discard'
+        })
+      });
+    } catch (err) {
+      console.error('Discard error:', err);
+    }
+
+    resetIssueSolver();
+  };
+
+  // Handler for git diff submission - generate PR
+  const handleIssueSolverSubmitDiff = async (gitDiff: string) => {
+    if (!currentIssueId) return;
+
+    setIsLoading(true);
+    setApiError('');
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const authHeader = { 'Authorization': `Bearer ${session?.access_token}` };
+
+      const response = await fetch('/api/issue-solver', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...authHeader },
+        body: JSON.stringify({
+          issue_id: currentIssueId,
+          action: 'pr',
+          git_diff: gitDiff
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.error) {
+        setApiError(data.error);
+        return;
+      }
+
+      const issue = data.issue;
+
+      // Show PR content as final message
+      const prMessage: Message = {
+        id: Date.now().toString(),
+        session_id: sessionId,
+        role: 'assistant',
+        content: `## 🎉 PR Ready!\n\n${issue.pr_solution}`,
+        metadata: { step: 'completed' },
+        created_at: new Date().toISOString()
+      };
+      
+      setStreamingMessageId(prMessage.id);
+      setMessages(prev => [...prev, prMessage]);
+      
+      // Reset for next issue
+      resetIssueSolver();
+
+    } catch (err: unknown) {
+      console.error('PR error:', err);
+      setApiError(err instanceof Error ? err.message : 'Failed to generate PR');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Reset issue solver state
+  const resetIssueSolver = () => {
+    setCurrentIssueId(null);
+    setIssueSolverStep('issue_input');
+    setIssueSolverData({});
+  };
+
   const handleAuthSuccess = () => {
     // If there was a pending message, send it after auth
     if (pendingMessage) {
@@ -753,7 +983,24 @@ export default function ChatInterface() {
                       )}
                   </div>
 
-                  <div className="absolute bottom-0 left-0 right-0 w-full flex justify-center p-4 bg-gradient-to-t from-[#1C1C1C] from-50% via-[#1C1C1C]/80 to-transparent pt-20 pb-6 z-10">
+                  {/* Issue Solver Banner - shows step prompts, replaces input when visible */}
+                  {currentMode === 'issue_solver' && (issueSolverStep === 'solution_step' || issueSolverStep === 'pr_context') ? (
+                    <div className="absolute bottom-0 left-0 right-0 w-full flex justify-center p-4 bg-gradient-to-t from-[#1C1C1C] from-50% via-[#1C1C1C]/80 to-transparent pt-20 pb-6 z-10">
+                      <div className="w-full max-w-3xl">
+                        <IssueSolverBanner
+                          currentStep={issueSolverStep}
+                          isLoading={isLoading}
+                          issueTitle={issueSolverData.issueTitle as string || 'GitHub Issue'}
+                          issueUrl={issueSolverData.issueUrl as string}
+                          onYes={handleIssueSolverYes}
+                          onNo={handleIssueSolverNo}
+                          onSubmitGitDiff={handleIssueSolverSubmitDiff}
+                          onDiscard={handleIssueSolverDiscard}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="absolute bottom-0 left-0 right-0 w-full flex justify-center p-4 bg-gradient-to-t from-[#1C1C1C] from-50% via-[#1C1C1C]/80 to-transparent pt-20 pb-6 z-10">
                       <MessageInput 
                         onSend={handleSendMessage} 
                         disabled={isLoading} 
@@ -762,7 +1009,8 @@ export default function ChatInterface() {
                         error={apiError}
                         onClearError={() => setApiError('')}
                       />
-                  </div>
+                    </div>
+                  )}
               </div>
             </motion.div>
           )}

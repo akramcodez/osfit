@@ -93,9 +93,30 @@ export async function POST(request: Request) {
       metadata: metadata || {}
     };
   } else if (mode === 'issue_solver') {
-    // Issue solutions - placeholder for now
+    // Issue solutions table structure
+    const { 
+      issue_url, issue_title, issue_body, issue_labels,
+      current_step, explanation: issueExplanation, solution_plan, 
+      git_diff, pr_title, pr_description, pr_solution, pr_files_changed, status
+    } = body;
+    
     insertData = {
-      session_id
+      session_id,
+      role,
+      issue_url: issue_url || null,
+      issue_title: issue_title || null,
+      issue_body: issue_body || null,
+      issue_labels: issue_labels || null,
+      explanation: issueExplanation || content || null,
+      solution_plan: solution_plan || null,
+      git_diff: git_diff || null,
+      pr_title: pr_title || null,
+      pr_description: pr_description || null,
+      pr_solution: pr_solution || null,
+      pr_files_changed: pr_files_changed || null,
+      current_step: current_step || 'issue_input',
+      status: status || 'in_progress',
+      metadata: metadata || {}
     };
   } else {
     // Mentor messages table structure
