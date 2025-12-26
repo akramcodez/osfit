@@ -189,9 +189,30 @@ export async function GET(request: Request) {
       // So we have rows with role='user' AND rows with role='assistant'.
 
       if (row.role === 'user') {
-        expandedMessages.push(row);
+        // Format the user message nicely if it's an issue URL
+        if (row.issue_url) {
+          // Just show the URL as a link, to look like user input
+          expandedMessages.push({
+            ...row,
+            content: row.issue_url
+          });
+        } else {
+          expandedMessages.push(row);
+        }
       } else if (row.role === 'assistant') {
         // This is an issue row. Expand it based on what data is present.
+        
+        // 0. Synthesize User Message (Issue URL) from this assistant row
+        // This ensures the input is shown even if we didn't save a separate user row
+        if (row.issue_url) {
+          expandedMessages.push({
+            ...row,
+            id: `${row.id}-user-input`,
+            role: 'user',
+            content: row.issue_url,
+            created_at: new Date(new Date(row.created_at).getTime() - 1000).toISOString() // Appearing slightly before
+          });
+        }
         
         // 2. Explanation Message
         if (row.explanation) {

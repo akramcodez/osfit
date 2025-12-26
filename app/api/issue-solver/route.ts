@@ -40,71 +40,78 @@ async function verifySessionOwnership(supabase: ReturnType<typeof getSupabase>, 
 
 // AI Prompts
 const PROMPTS = {
-  explanation: `You are OSFIT Issue Solver. Give a SHORT, DIRECT explanation of this issue.
-
-RULES:
-1. Maximum 80 words
-2. Be direct - no fluff
-3. Format as markdown
+  explanation: `You are OSFIT Issue Solver. Give a SHORT, DIRECT explanation.
+RULES: Max 80 words. Be direct. Use Markdown.
 
 FORMAT:
-**Problem:** [1-2 sentences]
-**What to do:** [1 sentence]  
-**Difficulty:** [Easy/Medium/Hard]`,
+**PROBLEM**
+
+> [1-3 sentences]
+
+**WHAT TO DO**
+
+> [1-3 sentence]
+
+**DIFFICULTY**
+
+> [Easy/Medium/Hard]`,
 
   solution: `You are OSFIT Issue Solver. Create a step-by-step solution plan.
-
-RULES:
-1. Be specific and actionable
-2. Number each step
-3. Include file paths when possible
-4. Keep it practical
+RULES: Specific, actionable, practical.
 
 FORMAT:
-### Solution Plan
+**SOLUTION PLAN**
 
 1. **Step 1:** [action]
 2. **Step 2:** [action]
-3. **Step 3:** [action]
+3. **Step 3:** [action
+...
 
-### Files to Modify
-- \`file.ts\` - what to change`,
+**FILES TO MODIFY**
+
+- \`file.ts\`: what to change`,
 
   pr: `You are OSFIT Issue Solver. Generate a professional Pull Request.
 
-RULES:
-1. Clear conventional title (fix:, feat:, refactor:)
-2. Concise description
-3. List file changes from the diff
-
 FORMAT:
-## PR Title
-\`fix: description\`
+**PR TITLE**
 
-## Description
-[2-3 sentences]
+> \`fix: description\`
 
-## Solution
-[brief technical summary]
+**DESCRIPTION**
 
-## Changes
+> [2-4 sentences]
+
+**SOLUTION**
+
+> [brief technical summary]
+
+**CHANGES**
+
 - \`file1.ts\`: what changed
 
-## Closes
-#[issue_number]`
+**CLOSES**
+
+> #[issue_number]`
 };
 
 // Development: Use mock data when Gemini keys are exhausted
 const USE_MOCK = process.env.NODE_ENV === 'development' && !process.env.GEMINI_API_KEY;
 
 const MOCK_RESPONSES = {
-  explanation: `**Problem:** This issue reports a bug that needs to be fixed. The user has identified an edge case.
+  explanation: `**PROBLEM**
 
-**What to do:** Review the affected code and apply the suggested fix or implement a proper solution.
+> This issue reports a bug that needs to be fixed. The user has identified an edge case where the component crashes.
 
-**Difficulty:** Medium`,
+**WHAT TO DO**
 
-  solution: `### Solution Plan
+> Review the affected code and apply the suggested fix or implement a proper solution.
+
+**DIFFICULTY**
+
+> **Medium**`,
+
+  solution: `**SOLUTION PLAN**
 
 1. **Step 1:** Locate the affected file mentioned in the issue
 2. **Step 2:** Reproduce the bug locally to understand the root cause
@@ -112,25 +119,31 @@ const MOCK_RESPONSES = {
 4. **Step 4:** Add unit tests to prevent regression
 5. **Step 5:** Test the fix manually
 
-### Files to Modify
-- \`src/components/affected-file.ts\` - Fix the edge case handling
-- \`tests/affected-file.test.ts\` - Add regression test`,
+**FILES TO MODIFY**
 
-  pr: `## PR Title
-\`fix: resolve edge case bug in component\`
+- \`src/components/affected-file.ts\`: Fix the edge case handling
+- \`tests/affected-file.test.ts\`: Add regression test`,
 
-## Description
-This PR fixes the bug reported in the issue. The root cause was improper handling of edge cases. This fix adds proper validation and error handling.
+  pr: `**PR TITLE**
 
-## Solution
-Added null checks and proper error handling to prevent the crash in edge cases.
+> \`fix: resolve edge case bug in component\`
 
-## Changes
+**DESCRIPTION**
+
+> This PR fixes the bug reported in the issue. The root cause was improper handling of edge cases. This fix adds proper validation and error handling.
+
+**SOLUTION**
+
+> Added null checks and proper error handling to prevent the crash in edge cases.
+
+**CHANGES**
+
 - \`src/components/affected-file.ts\`: Added null checks
 - \`tests/affected-file.test.ts\`: Added regression tests
 
-## Closes
-#123`
+**CLOSES**
+
+> #123`
 };
 
 // Helper to get AI response (mock or real)

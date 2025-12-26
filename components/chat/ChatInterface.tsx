@@ -566,6 +566,16 @@ export default function ChatInterface() {
     setIsLoading(true);
     setApiError('');
 
+    // Optimistically add user message to chat for instant feedback
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      session_id: activeSessionId,
+      role: 'user',
+      content: issueUrl,
+      created_at: new Date().toISOString()
+    };
+    setMessages(prev => [...prev, userMessage]);
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const authHeader = { 'Authorization': `Bearer ${session?.access_token}` };
