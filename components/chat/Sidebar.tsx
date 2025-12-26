@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import Spinner from '@/components/ui/spinner';
 import { MessageSquarePlus, PanelLeftClose, LogOut, User, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { t, LanguageCode } from '@/lib/translations';
@@ -13,7 +14,7 @@ interface SidebarProps {
   toggleSidebar: () => void;
   currentSessionId?: string;
   onLoadSession?: (id: string) => void;
-  onDeleteSession?: (id: string) => void;
+  onDeleteSession?: (id: string) => Promise<void> | void;
   refreshTrigger?: number;
   language?: LanguageCode;
   user?: SupabaseUser | null;
@@ -41,6 +42,7 @@ export default function Sidebar({
   hideToggleButton = false
 }: SidebarProps) {
   const [sessions, setSessions] = useState<any[]>([]);
+  const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -148,14 +150,31 @@ export default function Sidebar({
                         </span>
                         {onDeleteSession && (
                           <button
-                            onClick={(e) => {
+                            onClick={async (e) => {
                               e.stopPropagation();
-                              onDeleteSession(session.id);
+                              if (deletingSessionId) return;
+                              
+                              setDeletingSessionId(session.id);
+                              try {
+                                await onDeleteSession(session.id);
+                              } catch (error) {
+                                console.error('Delete failed:', error);
+                                setDeletingSessionId(null);
+                              }
                             }}
-                            className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-all duration-150"
+                            className={`p-1 rounded transition-all duration-150 ${
+                                deletingSessionId === session.id 
+                                ? 'opacity-100 cursor-wait' 
+                                : 'opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-400 hover:bg-red-500/10'
+                            }`}
                             title="Delete session"
+                            disabled={!!deletingSessionId}
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            {deletingSessionId === session.id ? (
+                                <Spinner size="sm" className="text-red-500" />
+                            ) : (
+                                <Trash2 className="h-3.5 w-3.5" />
+                            )}
                           </button>
                         )}
                       </div>

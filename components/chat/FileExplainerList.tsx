@@ -18,7 +18,7 @@ interface FileExplainerListProps {
   language?: LanguageCode;
   streamingId?: string | null;
   onStreamComplete?: () => void;
-  onDelete?: (id: string) => void;
+  onDelete?: (id: string) => Promise<void> | void;
 }
 
 export default function FileExplainerList({

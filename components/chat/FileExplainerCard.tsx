@@ -17,7 +17,7 @@ interface FileExplainerCardProps {
   data: FileExplanation;
   isNew?: boolean;
   onStreamComplete?: () => void;
-  onDelete?: (id: string) => void;
+  onDelete?: (id: string) => Promise<void> | void;
 }
 
 // Language display names
@@ -121,6 +121,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
   const [lineExplanation, setLineExplanation] = useState<string>('');
   const [isExplainingLine, setIsExplainingLine] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'line' | 'diagram'>('overview');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Diagram/Flowchart state
   const [flowchart, setFlowchart] = useState<string | null>(null);
@@ -297,11 +298,25 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
             </button>
             {onDelete && (
               <button
-                onClick={() => onDelete(data.id)}
-                className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                onClick={async () => {
+                   if (isDeleting) return;
+                   setIsDeleting(true);
+                   try {
+                     await onDelete(data.id);
+                   } catch (e) {
+                     console.error(e);
+                     setIsDeleting(false);
+                   }
+                }}
+                className={`p-2 rounded-lg transition-colors ${
+                  isDeleting 
+                    ? 'cursor-wait opacity-100 text-red-500/80 bg-red-500/10' 
+                    : 'text-gray-400 hover:text-red-400 hover:bg-red-500/10'
+                }`}
                 title="Delete explanation"
+                disabled={isDeleting}
               >
-                <Trash2 className="h-4 w-4" />
+                {isDeleting ? <Spinner size="sm" className="text-red-500 h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
               </button>
             )}
           </div>
