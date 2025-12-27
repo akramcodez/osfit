@@ -8,5 +8,9 @@
     "templateId": "ts-crawlee-cheerio"
   },
   "input": "./input_schema.json",
-  "dockerfile": "./Dockerfile"
+  "dockerfile": "./Dockerfile",
+  "environmentVariables": {
+    "GROQ_API_KEY": "@GROQ_API_KEY",
+    "LINGO_API_KEY": "@LINGO_API_KEY"
+  }
 }
