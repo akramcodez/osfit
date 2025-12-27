@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { analyzeWithAI, AIProvider } from '@/lib/ai-client';
-import { translateText } from '@/lib/lingo-client';
 import { getUserApiKeys } from '@/app/api/user/keys/route';
 
 interface EffectiveKeys {
@@ -72,7 +71,8 @@ export async function POST(request: Request) {
     const useMock = useMockData === true || !hasAIKey;
     
     if (useMock) {
-      let explanation = `**Line ${lineNumber}: \`${(lineContent || '').trim()}\`**
+      // Return mock explanation in English (no translation for mocks)
+      const explanation = `**Line ${lineNumber}: \`${(lineContent || '').trim()}\`**
 
 This line ${getLineExplanation(lineContent || '', lineNumber)}.
 
@@ -80,16 +80,6 @@ This line ${getLineExplanation(lineContent || '', lineNumber)}.
 This is part of the surrounding code block that ${getContextExplanation(codeLang)}.
 
 > 💡 **Tip:** ${getTip(codeLang)}`;
-      
-      if (targetLanguage !== 'en') {
-        explanation = await translateText({
-          text: explanation,
-          targetLanguage,
-          sourceLanguage: 'en',
-          userLingoKey: effectiveKeys.lingo.key,
-          userGeminiKey: effectiveKeys.gemini.key,
-        });
-      }
       
       return NextResponse.json({ 
         explanation,
@@ -124,21 +114,13 @@ LANGUAGE: ${codeLang || 'unknown'}`;
 
     const userMessage = `Explain line ${lineNumber}:\n\n\`\`\`${codeLang || 'code'}\n${contextWithLineNumbers}\n\`\`\``;
 
-    let explanation = await analyzeWithAI(systemPrompt, userMessage, undefined, {
+    // AI generates directly in target language via targetLanguage parameter
+    const explanation = await analyzeWithAI(systemPrompt, userMessage, undefined, {
       provider,
       geminiKey: effectiveKeys.gemini.key,
       groqKey: effectiveKeys.groq.key,
+      targetLanguage,
     });
-
-    if (targetLanguage !== 'en') {
-      explanation = await translateText({
-        text: explanation,
-        targetLanguage,
-        sourceLanguage: 'en',
-        userLingoKey: effectiveKeys.lingo.key,
-        userGeminiKey: effectiveKeys.gemini.key,
-      });
-    }
 
     return NextResponse.json({ 
       explanation,

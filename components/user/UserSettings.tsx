@@ -19,12 +19,11 @@ interface UserSettingsProps {
   onLanguageChange: (lang: string) => void;
 }
 
-type KeyType = 'gemini' | 'apify' | 'lingo' | 'groq';
+type KeyType = 'gemini' | 'apify' | 'groq';
 
 interface KeyStatus {
   has_gemini: boolean;
   has_apify: boolean;
-  has_lingo: boolean;
   has_groq: boolean;
   ai_provider: 'gemini' | 'groq';
 }
@@ -33,7 +32,6 @@ export default function UserSettings({ user, username, onBack, language, onLangu
   const [keyStatus, setKeyStatus] = useState<KeyStatus>({
     has_gemini: false,
     has_apify: false,
-    has_lingo: false,
     has_groq: false,
     ai_provider: 'gemini',
   });
@@ -44,13 +42,11 @@ export default function UserSettings({ user, username, onBack, language, onLangu
   // Input values
   const [geminiKey, setGeminiKey] = useState('');
   const [apifyKey, setApifyKey] = useState('');
-  const [lingoKey, setLingoKey] = useState('');
   const [groqKey, setGroqKey] = useState('');
   
   // Visibility toggles
   const [showGemini, setShowGemini] = useState(false);
   const [showApify, setShowApify] = useState(false);
-  const [showLingo, setShowLingo] = useState(false);
   const [showGroq, setShowGroq] = useState(false);
   
   // AI Provider selection
@@ -106,7 +102,6 @@ export default function UserSettings({ user, username, onBack, language, onLangu
       // Clear input and refresh status
       if (keyType === 'gemini') setGeminiKey('');
       if (keyType === 'apify') setApifyKey('');
-      if (keyType === 'lingo') setLingoKey('');
       if (keyType === 'groq') setGroqKey('');
       
       await fetchKeyStatus();
@@ -165,17 +160,6 @@ export default function UserSettings({ user, username, onBack, language, onLangu
       hasKey: keyStatus.has_apify,
     },
     {
-      type: 'lingo' as KeyType,
-      label: t('lingoApiKey', language) || 'Lingo API Key',
-      description: t('lingoApiKeyDesc', language) || 'Enables translation features',
-      docsUrl: 'https://lingo.dev/en/app',
-      value: lingoKey,
-      setValue: setLingoKey,
-      show: showLingo,
-      setShow: setShowLingo,
-      hasKey: keyStatus.has_lingo,
-    },
-    {
       type: 'groq' as KeyType,
       label: t('groqApiKey', language) || 'Groq API Key',
       description: t('groqApiKeyDesc', language) || 'Powers OSS AI model (GPT-OSS-120B)',
@@ -188,17 +172,16 @@ export default function UserSettings({ user, username, onBack, language, onLangu
     },
   ];
 
-  // Filter to show only the selected AI provider's key (Gemini OR Groq), but always show Apify and Lingo
-  // Order: AI Key first, then Apify, then Lingo
+  // Filter to show only the selected AI provider's key (Gemini OR Groq), plus Apify
+  // Order: AI Key first, then Apify
   const filteredKeyConfigs = [
     // First: the selected AI provider's key
     ...keyConfigs.filter(config => 
       (config.type === 'gemini' && selectedProvider === 'gemini') ||
       (config.type === 'groq' && selectedProvider === 'groq')
     ),
-    // Then: other services
+    // Then: Apify
     ...keyConfigs.filter(config => config.type === 'apify'),
-    ...keyConfigs.filter(config => config.type === 'lingo'),
   ];
 
   if (isLoading) {

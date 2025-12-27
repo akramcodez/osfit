@@ -42,6 +42,8 @@ export default function Sidebar({
   hideToggleButton = false
 }: SidebarProps) {
   const [sessions, setSessions] = useState<any[]>([]);
+  const [translatedTitles, setTranslatedTitles] = useState<Record<string, string>>({});
+  const [isTranslating, setIsTranslating] = useState(false);
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -51,6 +53,38 @@ export default function Sidebar({
       setSessions([]);
     }
   }, [currentSessionId, refreshTrigger, user]);
+
+  // Translate session titles when language changes or sessions load
+  useEffect(() => {
+    const translateTitles = async () => {
+      if (sessions.length === 0 || language === 'en') {
+        setTranslatedTitles({});
+        setIsTranslating(false);
+        return;
+      }
+
+      setIsTranslating(true);
+      const translations: Record<string, string> = {};
+      for (const session of sessions) {
+        const title = session.title || `${session.mode || 'chat'}: ${new Date(session.created_at).toLocaleDateString()}`;
+        try {
+          const res = await fetch('/api/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: title, targetLanguage: language }),
+          });
+          const data = await res.json();
+          translations[session.id] = data.translated || title;
+        } catch {
+          translations[session.id] = title;
+        }
+      }
+      setTranslatedTitles(translations);
+      setIsTranslating(false);
+    };
+
+    translateTitles();
+  }, [sessions, language]);
 
   const fetchSessions = async () => {
     try {
@@ -146,7 +180,11 @@ export default function Sidebar({
                           className="truncate flex-1"
                           onClick={() => onLoadSession?.(session.id)}
                         >
-                          {session.title || `${session.mode || 'chat'}: ${new Date(session.created_at).toLocaleDateString()}`}
+                          {isTranslating && language !== 'en' ? (
+                            <span className="inline-block h-4 w-24 bg-gray-700/50 rounded animate-pulse" />
+                          ) : (
+                            translatedTitles[session.id] || session.title || `${session.mode || 'chat'}: ${new Date(session.created_at).toLocaleDateString()}`
+                          )}
                         </span>
                         {onDeleteSession && (
                           <button

@@ -188,7 +188,13 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [fileExplanations, setFileExplanations] = useState<FileExplanation[]>([]);
   const [currentMode, setCurrentMode] = useState<AssistantMode>('mentor');
-  const [currentLanguage, setCurrentLanguage] = useState('en');
+  // Load language from localStorage on init, default to 'en'
+  const [currentLanguage, setCurrentLanguage] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('osfit-language') || 'en';
+    }
+    return 'en';
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [isSessionLoading, setIsSessionLoading] = useState(false);
   const [apiError, setApiError] = useState<string>(''); // API errors - shown inline above input
@@ -202,21 +208,77 @@ export default function ChatInterface() {
   const [issueSolverData, setIssueSolverData] = useState<Record<string, unknown>>({});
   const [currentIssueId, setCurrentIssueId] = useState<string | null>(null);
 
+  // Persist language to localStorage and database when it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('osfit-language', currentLanguage);
+      
+      // Also save to database for cross-device sync (if user is logged in)
+      if (user) {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session?.access_token) {
+            fetch('/api/user/keys', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+              },
+              body: JSON.stringify({ preferred_language: currentLanguage })
+            }).catch(err => console.warn('Failed to save language to DB:', err));
+          }
+        });
+      }
+    }
+  }, [currentLanguage, user]);
+
   // Check auth state on mount
   useEffect(() => {
     const checkAuth = async () => {
       const { session } = await getSession();
       setUser(session?.user || null);
       setIsAuthLoading(false);
+      
+      // Load language from database if user is logged in
+      if (session?.user && session?.access_token) {
+        try {
+          const res = await fetch('/api/user/keys', {
+            headers: { 'Authorization': `Bearer ${session.access_token}` }
+          });
+          const data = await res.json();
+          if (data.preferred_language && data.preferred_language !== 'en') {
+            setCurrentLanguage(data.preferred_language);
+            localStorage.setItem('osfit-language', data.preferred_language);
+          }
+        } catch (err) {
+          console.warn('Failed to load language from DB:', err);
+        }
+      }
     };
     checkAuth();
 
     // Listen for auth changes
-    const { data: { subscription } } = onAuthStateChange((authUser) => {
+    const { data: { subscription } } = onAuthStateChange(async (authUser) => {
       setUser(authUser);
       if (authUser) {
-        // User just logged in, refresh sessions
+        // User just logged in, refresh sessions and load language
         setRefreshSidebarTrigger(prev => prev + 1);
+        
+        // Load language from database on login
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.access_token) {
+            const res = await fetch('/api/user/keys', {
+              headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+            const data = await res.json();
+            if (data.preferred_language) {
+              setCurrentLanguage(data.preferred_language);
+              localStorage.setItem('osfit-language', data.preferred_language);
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to load language from DB on login:', err);
+        }
       }
     });
 

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { analyzeWithAI, AIProvider } from '@/lib/ai-client';
-import { translateText } from '@/lib/lingo-client';
 import { fetchGitHubIssue, fetchGitHubFile } from '@/lib/apify-client';
 import { MOCK_RESPONSES } from '@/lib/mock-responses';
 import { createClient } from '@supabase/supabase-js';
@@ -94,7 +93,8 @@ async function analyzeWithProvider(
   userMessage: string,
   context: string | undefined,
   userKeys: UserKeysWithProvider,
-  effectiveKeys: EffectiveKeys
+  effectiveKeys: EffectiveKeys,
+  targetLanguage: string = 'en'
 ): Promise<string> {
   const provider: AIProvider = userKeys.ai_provider || 'gemini';
   
@@ -102,6 +102,7 @@ async function analyzeWithProvider(
     provider,
     geminiKey: effectiveKeys.gemini.key,
     groqKey: effectiveKeys.groq.key,
+    targetLanguage,
   });
 }
 
@@ -182,18 +183,18 @@ export async function POST(request: Request) {
     try {
       switch (mode) {
         case 'idle':
-          response = await handleIdleMode(message, conversationHistory, effectiveKeys, userKeys);
+          response = await handleIdleMode(message, conversationHistory, effectiveKeys, userKeys, language);
           break;
         case 'issue_solver':
-          response = await handleIssueSolver(message, conversationHistory, effectiveKeys, metadata, userKeys);
+          response = await handleIssueSolver(message, conversationHistory, effectiveKeys, metadata, userKeys, language);
           break;
         case 'file_explainer':
-          const fileResult = await handleFileExplainer(message, conversationHistory, effectiveKeys, userKeys);
+          const fileResult = await handleFileExplainer(message, conversationHistory, effectiveKeys, userKeys, language);
           response = fileResult.response;
           fileInfo = fileResult.fileInfo;
           break;
         case 'mentor':
-          response = await handleMentor(message, conversationHistory, effectiveKeys, userKeys);
+          response = await handleMentor(message, conversationHistory, effectiveKeys, userKeys, language);
           break;
         default:
           response = 'Mode not recognized. Please select a valid mode.';
@@ -207,26 +208,8 @@ export async function POST(request: Request) {
       throw modeError;
     }
 
-    // Translate response if needed
-    if (language !== 'en') {
-      try {
-        response = await translateText({
-          text: response,
-          targetLanguage: language,
-          sourceLanguage: 'en',
-          userLingoKey: effectiveKeys.lingo.key,
-          userGeminiKey: effectiveKeys.gemini.key,
-        });
-      } catch (translateError) {
-        // Check if this is a Lingo API error
-        if (isQuotaError(translateError)) {
-          throw new ApiKeyError('lingo', effectiveKeys.lingo.source as 'user' | 'system',
-            translateError instanceof Error ? translateError.message : 'Translation API quota exceeded');
-        }
-        // If translation fails, just return English response
-        console.error('Translation failed, returning English:', translateError);
-      }
-    }
+    // Language is now handled directly by AI via targetLanguage parameter
+    // No separate translation step needed - AI generates in target language
 
     return NextResponse.json({ response, fileInfo });
   } catch (error: unknown) {
@@ -250,7 +233,7 @@ export async function POST(request: Request) {
   }
 }
 
-async function handleIdleMode(message: string, history: unknown[], effectiveKeys: EffectiveKeys, userKeys: UserKeysWithProvider): Promise<string> {
+async function handleIdleMode(message: string, history: unknown[], effectiveKeys: EffectiveKeys, userKeys: UserKeysWithProvider, targetLanguage: string = 'en'): Promise<string> {
   const systemPrompt = `You are OSFIT, an AI assistant for open source developers.
 
 Rules:
@@ -274,7 +257,7 @@ Current mode: General Chat
 - If user shares a file URL, suggest File Explainer mode
 - Keep responses focused and actionable`;
 
-  return await analyzeWithProvider(systemPrompt, message, formatHistory(history), userKeys, effectiveKeys);
+  return await analyzeWithProvider(systemPrompt, message, formatHistory(history), userKeys, effectiveKeys, targetLanguage);
 }
 
 async function handleIssueSolver(
@@ -282,7 +265,8 @@ async function handleIssueSolver(
   history: unknown[],
   effectiveKeys: EffectiveKeys,
   metadata?: { currentStep?: string; issueData?: Record<string, unknown> },
-  userKeys?: UserKeysWithProvider
+  userKeys?: UserKeysWithProvider,
+  targetLanguage: string = 'en'
 ): Promise<string> {
   const currentStep = metadata?.currentStep || 'issue_input';
   const issueData = metadata?.issueData || {};
@@ -322,7 +306,7 @@ ${issue.body || 'No description'}
 
 Labels: ${issue.labels.join(', ') || 'None'}`;
 
-        const explanation = await analyzeWithProvider(explanationPrompt, 'Analyze this issue', context, userKeys!, effectiveKeys);
+        const explanation = await analyzeWithProvider(explanationPrompt, 'Analyze this issue', context, userKeys!, effectiveKeys, targetLanguage);
 
         // Return explanation with metadata for frontend to track step
         return JSON.stringify({
@@ -373,7 +357,7 @@ FORMAT:
 Issue: ${issueData.issueTitle || 'Unknown'}
 Previous analysis: ${issueData.explanation || message}`;
 
-    const solutionPlan = await analyzeWithProvider(solutionPrompt, 'Create solution plan', context, userKeys!, effectiveKeys);
+    const solutionPlan = await analyzeWithProvider(solutionPrompt, 'Create solution plan', context, userKeys!, effectiveKeys, targetLanguage);
 
     return JSON.stringify({
       type: 'solution_plan',
@@ -418,7 +402,7 @@ Git Diff:
 ${message.substring(0, 3000)}
 \`\`\``;
 
-    const prContent = await analyzeWithProvider(prPrompt, 'Generate PR', context, userKeys!, effectiveKeys);
+    const prContent = await analyzeWithProvider(prPrompt, 'Generate PR', context, userKeys!, effectiveKeys, targetLanguage);
 
     return JSON.stringify({
       type: 'pr_generated',
@@ -446,7 +430,8 @@ async function handleFileExplainer(
   message: string,
   history: unknown[],
   effectiveKeys: EffectiveKeys,
-  userKeys: UserKeysWithProvider
+  userKeys: UserKeysWithProvider,
+  targetLanguage: string = 'en'
 ): Promise<FileExplainerResult> {
   // Check if message contains a GitHub file URL
   const fileUrlMatch = message.match(/github\.com\/[^\/]+\/[^\/]+\/blob\/[^\s]+/);
@@ -504,7 +489,7 @@ ${file.content.substring(0, 4000)}${file.content.length > 4000 ? '\n... (truncat
 \`\`\`
 `;
 
-      const explanation = await analyzeWithProvider(systemPrompt, message, context, userKeys, effectiveKeys);
+      const explanation = await analyzeWithProvider(systemPrompt, message, context, userKeys, effectiveKeys, targetLanguage);
       
       return {
         response: explanation,
@@ -542,7 +527,8 @@ async function handleMentor(
   message: string,
   history: unknown[],
   effectiveKeys: EffectiveKeys,
-  userKeys: UserKeysWithProvider
+  userKeys: UserKeysWithProvider,
+  targetLanguage: string = 'en'
 ): Promise<string> {
   const systemPrompt = `You are OSFIT Open Source Mentor.
 
@@ -610,7 +596,7 @@ COMMUNICATION:
 
 Answer user questions using this knowledge. Be direct and helpful.`;
 
-  return await analyzeWithProvider(systemPrompt, message, formatHistory(history), userKeys, effectiveKeys);
+  return await analyzeWithProvider(systemPrompt, message, formatHistory(history), userKeys, effectiveKeys, targetLanguage);
 }
 
 function formatHistory(history: unknown[]): string {

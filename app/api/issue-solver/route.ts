@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { analyzeWithAI, AIProvider } from '@/lib/ai-client';
-import { translateText } from '@/lib/lingo-client';
 import { fetchGitHubIssue } from '@/lib/apify-client';
 import { getUserApiKeys } from '@/app/api/user/keys/route';
 
@@ -170,52 +169,24 @@ async function getAIResponse(
   const hasAIKey = keys.gemini || keys.groq;
   
   if (!hasAIKey) {
-    let response = MOCK_RESPONSES[type];
-    
-    if (targetLanguage !== 'en') {
-      response = await translateText({
-        text: response,
-        targetLanguage,
-        sourceLanguage: 'en',
-        userLingoKey: keys.lingo,
-        userGeminiKey: keys.gemini,
-      });
-    }
-    return response;
+    // Return mock response in English when no AI key available
+    return MOCK_RESPONSES[type];
   }
   
   try {
-    let response = await analyzeWithAI(PROMPTS[type], 'Analyze', context, {
+    // AI generates directly in target language via targetLanguage parameter
+    const response = await analyzeWithAI(PROMPTS[type], 'Analyze', context, {
       provider: keys.provider,
       geminiKey: keys.gemini,
       groqKey: keys.groq,
+      targetLanguage,
     });
-    
-    if (targetLanguage !== 'en') {
-      response = await translateText({
-        text: response,
-        targetLanguage,
-        sourceLanguage: 'en',
-        userLingoKey: keys.lingo,
-        userGeminiKey: keys.gemini,
-      });
-    }
     
     return response;
   } catch (error) {
     console.error('Issue solver AI error:', error);
-    let response = MOCK_RESPONSES[type];
-    
-    if (targetLanguage !== 'en') {
-      response = await translateText({
-        text: response,
-        targetLanguage,
-        sourceLanguage: 'en',
-        userLingoKey: keys.lingo,
-        userGeminiKey: keys.gemini,
-      });
-    }
-    return response;
+    // Return mock response on error
+    return MOCK_RESPONSES[type];
   }
 }
 
