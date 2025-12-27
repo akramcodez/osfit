@@ -1,0 +1,74 @@
+{
+  "actorSpecification": 1,
+  "fields": {
+    "success": {
+      "type": "boolean",
+      "description": "Whether the operation was successful",
+      "label": "Success"
+    },
+    "mode": {
+      "type": "string",
+      "description": "The operation mode (file_explainer or issue_solver)",
+      "label": "Mode"
+    },
+    "explanation": {
+      "type": "string",
+      "description": "The AI-generated explanation of the file or issue",
+      "label": "Explanation (Markdown)"
+    },
+    "flowchart": {
+      "type": "string",
+      "description": "Mermaid.js flowchart code",
+      "label": "Flowchart Code"
+    },
+    "solutionPlan": {
+      "type": "string",
+      "description": "The step-by-step solution plan for the issue",
+      "label": "Solution Plan"
+    },
+    "file": {
+      "type": "object",
+      "description": "Details of the analyzed file",
+      "label": "File Details",
+      "properties": {
+        "path": { "type": "string", "label": "File Path" },
+        "detectedLanguage": { "type": "string", "label": "Language" },
+        "url": { "type": "string", "label": "URL" }
+      }
+    },
+    "issue": {
+      "type": "object",
+      "description": "Details of the analyzed issue",
+      "label": "Issue Details",
+      "properties": {
+        "number": { "type": "integer", "label": "#" },
+        "title": { "type": "string", "label": "Title" },
+        "state": { "type": "string", "label": "State" },
+        "url": { "type": "string", "label": "URL" }
+      }
+    }
+  },
+  "views": {
+    "overview": {
+      "title": "Results Overview",
+      "description": "Key analysis results",
+      "transforms": {
+        "columns": ["mode", "success", "file.path", "issue.title", "explanation", "solutionPlan", "flowchart"]
+      }
+    },
+    "files": {
+      "title": "File Analysis",
+      "description": "File explanations and flowcharts",
+      "transforms": {
+        "columns": ["file.path", "explanation", "flowchart"]
+      }
+    },
+    "issues": {
+      "title": "Issue Solutions",
+      "description": "Issue analysis and solution plans",
+      "transforms": {
+        "columns": ["issue.number", "issue.title", "issueExplanation", "solutionPlan"]
+      }
+    }
+  }
+}
