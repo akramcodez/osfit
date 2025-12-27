@@ -20,9 +20,11 @@
     "language": {
       "title": "Output Language",
       "type": "string",
-      "description": "Language code for the output (en, es, fr, de, bn, hi, ar, ja, ko, zh, ru, pt)",
+      "description": "Language for the explanation and solution.",
       "default": "en",
-      "editor": "textfield"
+      "editor": "select",
+      "enum": ["en", "es", "fr", "de", "bn", "hi", "ar", "ja", "ko", "zh", "ru", "pt", "it", "nl", "tr", "vi", "th", "id", "ms"],
+      "enumTitles": ["English", "Spanish", "French", "German", "Bengali", "Hindi", "Arabic", "Japanese", "Korean", "Chinese", "Russian", "Portuguese", "Italian", "Dutch", "Turkish", "Vietnamese", "Thai", "Indonesian", "Malay"]
     },
     "useLingoTranslation": {
       "title": "Use Lingo Translation",
