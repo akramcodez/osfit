@@ -7,17 +7,19 @@ import { Input } from '@/components/ui/input';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import { signUp, signIn } from '@/lib/supabase-auth';
 import Spinner from '@/components/ui/spinner';
-import { User, Lock, Sparkles, ArrowRight } from 'lucide-react';
+import { User, Lock, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { t, LanguageCode } from '@/lib/translations';
 
 interface AuthDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   initialMode?: 'signin' | 'signup';
+  language?: LanguageCode;
 }
 
-export default function AuthDialog({ isOpen, onClose, onSuccess, initialMode = 'signin' }: AuthDialogProps) {
+export default function AuthDialog({ isOpen, onClose, onSuccess, initialMode = 'signin', language = 'en' }: AuthDialogProps) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -45,9 +47,9 @@ export default function AuthDialog({ isOpen, onClose, onSuccess, initialMode = '
   };
 
   const validateUsername = (name: string): string | null => {
-    if (name.length < 3) return 'Username must be at least 3 characters';
-    if (name.length > 20) return 'Username must be 20 characters or less';
-    if (!/^[a-zA-Z0-9_]+$/.test(name)) return 'Only letters, numbers, and underscores allowed';
+    if (name.length < 3) return t('usernameMinLength', language) || 'Username must be at least 3 characters';
+    if (name.length > 20) return t('usernameMaxLength', language) || 'Username must be 20 characters or less';
+    if (!/^[a-zA-Z0-9_]+$/.test(name)) return t('usernameInvalidChars', language) || 'Only letters, numbers, and underscores allowed';
     return null;
   };
 
@@ -56,7 +58,7 @@ export default function AuthDialog({ isOpen, onClose, onSuccess, initialMode = '
     setError('');
 
     if (!username || !password) {
-      setError('Please fill in all fields');
+      setError(t('fillAllFields', language) || 'Please fill in all fields');
       return;
     }
 
@@ -67,11 +69,11 @@ export default function AuthDialog({ isOpen, onClose, onSuccess, initialMode = '
         return;
       }
       if (password.length < 6) {
-        setError('Password must be at least 6 characters');
+        setError(t('passwordMinLength', language) || 'Password must be at least 6 characters');
         return;
       }
       if (password !== confirmPassword) {
-        setError('Passwords do not match');
+        setError(t('passwordsDontMatch', language) || 'Passwords do not match');
         return;
       }
     }
@@ -82,7 +84,7 @@ export default function AuthDialog({ isOpen, onClose, onSuccess, initialMode = '
     setIsLoading(false);
 
     if (authError) {
-      setError(authError.message || 'Authentication failed');
+      setError(authError.message || t('authFailed', language) || 'Authentication failed');
       return;
     }
 
@@ -110,10 +112,10 @@ export default function AuthDialog({ isOpen, onClose, onSuccess, initialMode = '
                 className="text-center"
               >
                 <h2 className="text-xl font-semibold text-white">
-                  {isSignUp ? 'Create account' : 'Welcome back'}
+                  {isSignUp ? t('createAccount', language) : t('welcomeBack', language)}
                 </h2>
                 <p className="text-sm text-gray-500 mt-1">
-                  {isSignUp ? 'Join the community' : 'Enter your credentials'}
+                  {isSignUp ? t('joinCommunity', language) : t('enterCredentials', language)}
                 </p>
               </motion.div>
             </AnimatePresence>
@@ -123,7 +125,7 @@ export default function AuthDialog({ isOpen, onClose, onSuccess, initialMode = '
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
               <Input
-                placeholder="Username"
+                placeholder={t('username', language) || 'Username'}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="pl-10 bg-[#1A1A1A] border-[#2A2A2A] text-white placeholder:text-gray-500 h-10 rounded-lg focus-visible:ring-0 focus-visible:border-[#3ECF8E] transition-colors"
@@ -134,7 +136,7 @@ export default function AuthDialog({ isOpen, onClose, onSuccess, initialMode = '
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
               <Input
                 type="password"
-                placeholder="Password"
+                placeholder={t('password', language) || 'Password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-10 bg-[#1A1A1A] border-[#2A2A2A] text-white placeholder:text-gray-500 h-10 rounded-lg focus-visible:ring-0 focus-visible:border-[#3ECF8E] transition-colors"
@@ -153,7 +155,7 @@ export default function AuthDialog({ isOpen, onClose, onSuccess, initialMode = '
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                     <Input
                       type="password"
-                      placeholder="Confirm Password"
+                      placeholder={t('confirmPassword', language) || 'Confirm Password'}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       className="pl-10 bg-[#1A1A1A] border-[#2A2A2A] text-white placeholder:text-gray-500 h-10 rounded-lg focus-visible:ring-0 focus-visible:border-[#3ECF8E] transition-colors"
@@ -185,7 +187,7 @@ export default function AuthDialog({ isOpen, onClose, onSuccess, initialMode = '
                 <Spinner size="sm" className="border-black/30 border-t-black" />
               ) : (
                 <span className="flex items-center gap-2">
-                  {isSignUp ? 'Create Account' : 'Sign In'}
+                  {isSignUp ? t('createAccount', language) : t('signIn', language)}
                   <ArrowRight className="h-4 w-4" />
                 </span>
               )}
@@ -194,12 +196,12 @@ export default function AuthDialog({ isOpen, onClose, onSuccess, initialMode = '
 
           <div className="mt-5 pt-5 border-t border-[#222222] text-center">
             <p className="text-xs text-gray-500">
-              {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+              {isSignUp ? t('alreadyHaveAccount', language) : t('dontHaveAccount', language)}{' '}
               <button
                 onClick={toggleMode}
                 className="text-[#3ECF8E] font-medium hover:underline"
               >
-                {isSignUp ? 'Sign in' : 'Sign up'}
+                {isSignUp ? t('signIn', language) : t('signUp', language)}
               </button>
             </p>
           </div>

@@ -328,9 +328,8 @@ export default function ChatInterface() {
         return null;
       }
       
-      console.log('[SESSION] Created new session:', newSession.id);
       setSessionId(newSession.id);
-      setRefreshSidebarTrigger(prev => prev + 1); // Refresh sidebar to show new session
+      setRefreshSidebarTrigger(prev => prev + 1);
       return newSession.id;
     } catch (err) {
       console.error('Failed to initialize session:', err);
@@ -887,9 +886,6 @@ export default function ChatInterface() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
-      console.log('[DELETE] Attempting to delete ID:', id);
-      
-      // Delete from database
       const response = await fetch('/api/chat', {
         method: 'DELETE',
         headers: {
@@ -900,7 +896,6 @@ export default function ChatInterface() {
       });
 
       const result = await response.json();
-      console.log('[DELETE] Response:', response.status, result);
 
       if (response.ok) {
         // Remove from local state
@@ -975,6 +970,7 @@ export default function ChatInterface() {
         onClose={() => setShowAuthDialog(false)}
         onSuccess={handleAuthSuccess}
         initialMode={authMode}
+        language={currentLanguage as any}
       />
       
       <Sidebar 

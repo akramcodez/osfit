@@ -89,17 +89,14 @@ export default function Sidebar({
   const fetchSessions = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('[SIDEBAR] Auth session:', session?.access_token ? 'Has token' : 'No token');
       const res = await fetch('/api/session', {
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
         }
       });
       const data = await res.json();
-      console.log('[SIDEBAR] Sessions response:', data);
       if (data.sessions) {
         setSessions(data.sessions);
-        console.log('[SIDEBAR] Set sessions count:', data.sessions.length);
       }
     } catch (e) {
       console.error('Failed to fetch sessions', e);
@@ -226,9 +223,9 @@ export default function Sidebar({
                 <div className="h-12 w-12 bg-[#1A1A1A] rounded-xl flex items-center justify-center mb-3 border border-[#2A2A2A]">
                   <User className="h-6 w-6 text-gray-400" />
                 </div>
-                <h3 className="text-sm font-medium text-white mb-1">Welcome to OSFIT</h3>
+                <h3 className="text-sm font-medium text-white mb-1">{t('welcomeToOsfit', language) || 'Welcome to OSFIT'}</h3>
                 <p className="text-xs text-gray-500">
-                  Sign in to save your chats
+                  {t('signInToSave', language) || 'Sign in to save your chats'}
                 </p>
               </div>
             )}
@@ -266,7 +263,7 @@ export default function Sidebar({
                   className="w-full bg-[#166534] border border-[#22c55e] text-white hover:bg-[#15803d] text-xs font-medium h-8 transition-colors"
                   onClick={() => onAuthRequest?.('signup')}
                 >
-                  Sign Up
+                  {t('signUp', language) || 'Sign Up'}
                 </Button>
                 <Button 
                   variant="outline" 
@@ -274,7 +271,7 @@ export default function Sidebar({
                   className="w-full border-[#2A2A2A] bg-transparent text-gray-400 hover:text-white hover:border-[#4A4A4A] text-xs h-8 transition-colors"
                   onClick={() => onAuthRequest?.('signin')}
                 >
-                  Sign In
+                  {t('signIn', language) || 'Sign In'}
                 </Button>
               </div>
             )}

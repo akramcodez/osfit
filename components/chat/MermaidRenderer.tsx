@@ -56,7 +56,6 @@ export default function MermaidRenderer({ chart, className = '' }: MermaidRender
           .replace(/```\n?/g, '')
           .trim();
 
-        console.log('[MermaidRenderer] Rendering chart:', cleanChart.substring(0, 100));
 
         if (!cleanChart) {
           setError('Empty chart content');
@@ -69,7 +68,6 @@ export default function MermaidRenderer({ chart, className = '' }: MermaidRender
         
         // Render the chart
         const { svg: renderedSvg } = await mermaid.render(id, cleanChart);
-        console.log('[MermaidRenderer] Render success, svg length:', renderedSvg?.length);
         
         setSvg(renderedSvg);
         setError(null);
