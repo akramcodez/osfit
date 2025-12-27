@@ -1,9 +1,9 @@
 {
   "actorSpecification": 1,
-  "name": "osfit-github-scraper",
-  "title": "OSFIT GitHub Scraper",
-  "description": "Fetches GitHub issues and file content for the OSFIT open-source assistant",
-  "version": "0.1",
+  "name": "multilingual-github-scraper",
+  "title": "Multilingual GitHub Scraper",
+  "description": "Standalone AI-powered GitHub file explainer and issue solver with multilingual support",
+  "version": "1.0",
   "meta": {
     "templateId": "ts-crawlee-cheerio"
   },

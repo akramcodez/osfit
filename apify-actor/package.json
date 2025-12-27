@@ -1,7 +1,7 @@
 {
-  "name": "osfit-github-scraper",
-  "version": "0.1.0",
-  "description": "OSFIT GitHub Scraper - Fetches GitHub issues and file content",
+  "name": "multilingual-github-scraper",
+  "version": "1.0.0",
+  "description": "Multilingual GitHub Scraper - File Explainer & Issue Solver with AI analysis",
   "main": "dist/main.js",
   "scripts": {
     "start": "npx tsx src/main.ts",
@@ -12,6 +12,8 @@
   "dependencies": {
     "@crawlee/cheerio": "^3.15.3",
     "apify": "^3.2.0",
+    "groq-sdk": "^0.8.0",
+    "lingo.dev": "^0.117.23",
     "typescript": "^5.0.0"
   },
   "devDependencies": {

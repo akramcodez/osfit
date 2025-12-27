@@ -1,22 +1,41 @@
 {
-  "title": "OSFIT GitHub Scraper Input",
+  "title": "Multilingual GitHub Scraper Input",
   "type": "object",
   "schemaVersion": 1,
   "properties": {
+    "mode": {
+      "title": "Mode",
+      "type": "string",
+      "description": "Operation mode: file_explainer (explain a file), issue_solver (analyze issue + solution), or legacy types (issue, file)",
+      "enum": ["file_explainer", "issue_solver", "issue", "file"],
+      "default": "file_explainer",
+      "editor": "select"
+    },
     "url": {
       "title": "GitHub URL",
       "type": "string",
-      "description": "GitHub issue or file URL to fetch",
+      "description": "GitHub file URL (for file_explainer/file) or issue URL (for issue_solver/issue)",
       "editor": "textfield"
     },
-    "type": {
-      "title": "Content Type",
+    "language": {
+      "title": "Output Language",
       "type": "string",
-      "description": "Type of content to fetch: 'issue' or 'file'",
-      "enum": ["issue", "file"],
-      "default": "issue",
-      "editor": "select"
+      "description": "Language code for the output (en, es, fr, de, bn, hi, ar, ja, ko, zh, ru, pt)",
+      "default": "en",
+      "editor": "textfield"
+    },
+    "useLingoTranslation": {
+      "title": "Use Lingo Translation",
+      "type": "boolean",
+      "description": "If true, uses Lingo for high-quality translation. If false (default), AI responds directly in target language.",
+      "default": false
+    },
+    "includeFlowchart": {
+      "title": "Include Flowchart",
+      "type": "boolean",
+      "description": "If true (default), generates a Mermaid.js flowchart explaining the code.",
+      "default": true
     }
   },
-  "required": ["url", "type"]
+  "required": ["url"]
 }
