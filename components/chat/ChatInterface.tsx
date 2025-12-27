@@ -1024,6 +1024,7 @@ export default function ChatInterface() {
                           isLoading={isLoading}
                           issueTitle={issueSolverData.issueTitle as string || 'GitHub Issue'}
                           issueUrl={issueSolverData.issueUrl as string}
+                          language={currentLanguage as LanguageCode}
                           onYes={handleIssueSolverYes}
                           onNo={handleIssueSolverNo}
                           onSubmitGitDiff={handleIssueSolverSubmitDiff}

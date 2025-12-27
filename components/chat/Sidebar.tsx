@@ -159,6 +159,7 @@ export default function Sidebar({
                                 await onDeleteSession(session.id);
                               } catch (error) {
                                 console.error('Delete failed:', error);
+                              } finally {
                                 setDeletingSessionId(null);
                               }
                             }}
