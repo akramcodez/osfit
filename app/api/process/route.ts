@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { analyzeWithContext } from '@/lib/gemini-client';
 import { analyzeWithAI, AIProvider } from '@/lib/ai-client';
 import { translateText } from '@/lib/lingo-client';
 import { fetchGitHubIssue, fetchGitHubFile } from '@/lib/apify-client';

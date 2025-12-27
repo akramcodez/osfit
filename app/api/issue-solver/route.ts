@@ -5,7 +5,6 @@ import { translateText } from '@/lib/lingo-client';
 import { fetchGitHubIssue } from '@/lib/apify-client';
 import { getUserApiKeys } from '@/app/api/user/keys/route';
 
-// Get Supabase client with service role
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,7 +12,6 @@ function getSupabase() {
   );
 }
 
-// Helper to get user from auth header
 async function getUserFromRequest(request: Request) {
   const authHeader = request.headers.get('Authorization');
   if (!authHeader?.startsWith('Bearer ')) return null;
@@ -28,7 +26,6 @@ async function getUserFromRequest(request: Request) {
   return error ? null : user;
 }
 
-// Verify session ownership
 async function verifySessionOwnership(supabase: ReturnType<typeof getSupabase>, sessionId: string, userId: string) {
   const { data } = await supabase
     .from('chat_sessions')
@@ -39,7 +36,6 @@ async function verifySessionOwnership(supabase: ReturnType<typeof getSupabase>, 
   return !!data;
 }
 
-// Effective keys interface
 interface EffectiveKeys {
   gemini: string | null;
   groq: string | null;
@@ -47,7 +43,6 @@ interface EffectiveKeys {
   provider: AIProvider;
 }
 
-// Get effective API keys (user > system)
 function getEffectiveKeys(userKeys: { 
   gemini_key: string | null; 
   groq_key: string | null; 
@@ -62,7 +57,6 @@ function getEffectiveKeys(userKeys: {
   };
 }
 
-// AI Prompts
 const PROMPTS = {
   explanation: `You are OSFIT Issue Solver. Give a SHORT, DIRECT explanation.
 RULES: Max 80 words. Be direct. Use Markdown.
@@ -167,21 +161,17 @@ const MOCK_RESPONSES = {
 > #123`
 };
 
-// Helper to get AI response with proper key detection
 async function getAIResponse(
   type: 'explanation' | 'solution' | 'pr',
   context: string,
   keys: EffectiveKeys,
   targetLanguage: string = 'en'
 ): Promise<string> {
-  // Check if we have ANY AI key available
   const hasAIKey = keys.gemini || keys.groq;
   
   if (!hasAIKey) {
-    console.log('[Issue Solver] No AI key available, using mock for:', type);
     let response = MOCK_RESPONSES[type];
     
-    // Translate mock response if needed
     if (targetLanguage !== 'en') {
       response = await translateText({
         text: response,
@@ -195,15 +185,12 @@ async function getAIResponse(
   }
   
   try {
-    console.log('[Issue Solver] Using', keys.provider, 'for:', type);
-    
     let response = await analyzeWithAI(PROMPTS[type], 'Analyze', context, {
       provider: keys.provider,
       geminiKey: keys.gemini,
       groqKey: keys.groq,
     });
     
-    // Translate response if needed
     if (targetLanguage !== 'en') {
       response = await translateText({
         text: response,
@@ -216,10 +203,9 @@ async function getAIResponse(
     
     return response;
   } catch (error) {
-    console.error('[Issue Solver] AI error, falling back to mock:', error);
+    console.error('Issue solver AI error:', error);
     let response = MOCK_RESPONSES[type];
     
-    // Translate mock response if needed
     if (targetLanguage !== 'en') {
       response = await translateText({
         text: response,
@@ -233,10 +219,6 @@ async function getAIResponse(
   }
 }
 
-/**
- * POST - Create new issue and run initial analysis
- * Body: { session_id, issue_url, language? }
- */
 export async function POST(request: Request) {
   const user = await getUserFromRequest(request);
   if (!user) {
@@ -251,20 +233,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'session_id and issue_url required' }, { status: 400 });
   }
 
-  // Verify session ownership
   const owns = await verifySessionOwnership(supabase, session_id, user.id);
   if (!owns) {
     return NextResponse.json({ error: 'Session not found' }, { status: 404 });
   }
 
   try {
-    // Get user keys and effective keys
     const userKeys = await getUserApiKeys(user.id);
     const keys = getEffectiveKeys(userKeys);
-    
-    console.log('[Issue Solver POST] User:', user.id, 'Provider:', keys.provider, 'Language:', language, 'HasGemini:', !!keys.gemini, 'HasGroq:', !!keys.groq);
 
-    // Step 1: Create row with issue_url and language metadata
     const { data: row, error: createError } = await supabase
       .from('issue_solutions')
       .insert({
@@ -280,10 +257,8 @@ export async function POST(request: Request) {
 
     if (createError) throw createError;
 
-    // Step 2: Fetch issue from GitHub via Apify
     const issue = await fetchGitHubIssue(issue_url);
 
-    // Update row with fetched data
     await supabase
       .from('issue_solutions')
       .update({
@@ -294,7 +269,6 @@ export async function POST(request: Request) {
       })
       .eq('id', row.id);
 
-    // Step 3: Generate explanation with AI
     const context = `
 Issue: ${issue.title}
 #${issue.number}
@@ -305,7 +279,6 @@ Labels: ${issue.labels?.join(', ') || 'None'}`;
 
     const explanation = await getAIResponse('explanation', context, keys, language);
 
-    // Update row with explanation, move to solution_step
     const { data: updated, error: updateError } = await supabase
       .from('issue_solutions')
       .update({
@@ -331,10 +304,6 @@ Labels: ${issue.labels?.join(', ') || 'None'}`;
   }
 }
 
-/**
- * PATCH - Update issue based on action
- * Body: { issue_id, action: 'solution' | 'pr' | 'discard', git_diff?: string, language?: string }
- */
 export async function PATCH(request: Request) {
   const user = await getUserFromRequest(request);
   if (!user) {
@@ -350,7 +319,6 @@ export async function PATCH(request: Request) {
   }
 
   try {
-    // Get current issue
     const { data: issue, error: fetchError } = await supabase
       .from('issue_solutions')
       .select('*, chat_sessions!inner(user_id)')
@@ -361,21 +329,14 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
     }
 
-    // Verify ownership
     if (issue.chat_sessions.user_id !== user.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    // Get user keys and effective keys
     const userKeys = await getUserApiKeys(user.id);
     const keys = getEffectiveKeys(userKeys);
-    
-    // Use language from metadata if not provided in request
     const targetLanguage = language || issue.metadata?.language || 'en';
-    
-    console.log('[Issue Solver PATCH] Action:', action, 'Provider:', keys.provider, 'Language:', targetLanguage);
 
-    // Handle actions
     if (action === 'discard') {
       const { data: updated } = await supabase
         .from('issue_solutions')
@@ -454,10 +415,6 @@ ${git_diff.substring(0, 5000)}
   }
 }
 
-/**
- * GET - Get active issue for session
- * Query: ?session_id=...
- */
 export async function GET(request: Request) {
   const user = await getUserFromRequest(request);
   if (!user) {
@@ -472,13 +429,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'session_id required' }, { status: 400 });
   }
 
-  // Verify ownership
   const owns = await verifySessionOwnership(supabase, sessionId, user.id);
   if (!owns) {
     return NextResponse.json({ error: 'Session not found' }, { status: 404 });
   }
 
-  // Get latest active issue for session
   const { data: issues } = await supabase
     .from('issue_solutions')
     .select('*')

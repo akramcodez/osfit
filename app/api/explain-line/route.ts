@@ -4,7 +4,6 @@ import { analyzeWithAI, AIProvider } from '@/lib/ai-client';
 import { translateText } from '@/lib/lingo-client';
 import { getUserApiKeys } from '@/app/api/user/keys/route';
 
-// Get effective keys with priority: user > system
 interface EffectiveKeys {
   gemini: { key: string | null; source: 'user' | 'system' | 'none' };
   groq: { key: string | null; source: 'user' | 'system' | 'none' };
@@ -61,7 +60,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get user and their API keys
     const user = await getUserFromRequest(request);
     let userKeys = { gemini_key: null as string | null, groq_key: null as string | null, lingo_key: null as string | null, ai_provider: 'gemini' };
     if (user) {
@@ -70,14 +68,10 @@ export async function POST(request: Request) {
     const effectiveKeys = getEffectiveKeys(userKeys);
     const provider: AIProvider = (userKeys.ai_provider as AIProvider) || 'gemini';
 
-    // Force mock mode if requested or if no AI key available
     const hasAIKey = effectiveKeys.gemini.key || effectiveKeys.groq.key;
     const useMock = useMockData === true || !hasAIKey;
     
-    console.log('[explain-line] useMock:', useMock, 'lineNumber:', lineNumber, 'provider:', provider);
-    
     if (useMock) {
-      // Mock response for development
       let explanation = `**Line ${lineNumber}: \`${(lineContent || '').trim()}\`**
 
 This line ${getLineExplanation(lineContent || '', lineNumber)}.
@@ -87,7 +81,6 @@ This is part of the surrounding code block that ${getContextExplanation(codeLang
 
 > 💡 **Tip:** ${getTip(codeLang)}`;
       
-      // Translate if needed
       if (targetLanguage !== 'en') {
         explanation = await translateText({
           text: explanation,
@@ -105,7 +98,6 @@ This is part of the surrounding code block that ${getContextExplanation(codeLang
       });
     }
 
-    // Get context lines (5 before and after)
     const lines = fullFileContent.split('\n');
     const startLine = Math.max(0, lineNumber - 6);
     const endLine = Math.min(lines.length - 1, lineNumber + 5);
@@ -118,7 +110,6 @@ This is part of the surrounding code block that ${getContextExplanation(codeLang
       })
       .join('\n');
 
-    // Build the prompt
     const systemPrompt = `You are a code explanation expert. Explain the specific line of code marked with ">>>" in context.
 
 RULES:
@@ -139,7 +130,6 @@ LANGUAGE: ${codeLang || 'unknown'}`;
       groqKey: effectiveKeys.groq.key,
     });
 
-    // Translate if needed
     if (targetLanguage !== 'en') {
       explanation = await translateText({
         text: explanation,
@@ -167,7 +157,6 @@ LANGUAGE: ${codeLang || 'unknown'}`;
   }
 }
 
-// Helper functions for mock responses
 function getLineExplanation(line: string, num: number): string {
   if (line.includes('import')) return 'imports a module or library dependency';
   if (line.includes('export')) return 'exports this item for use in other files';

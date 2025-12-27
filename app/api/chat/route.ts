@@ -264,14 +264,12 @@ export async function DELETE(request: Request) {
   const body = await request.json();
   const { id, mode = 'file_explainer' } = body;
 
-  console.log('[DELETE API] Deleting:', { id, mode, userId: user.id });
 
   if (!id) {
     return NextResponse.json({ error: 'No ID provided' }, { status: 400 });
   }
 
   const table = getTableForMode(mode as Mode);
-  console.log('[DELETE API] Using table:', table);
 
   // First, verify the record exists and get its session_id
   const { data: record, error: fetchError } = await supabase
@@ -280,7 +278,6 @@ export async function DELETE(request: Request) {
     .eq('id', id)
     .maybeSingle();
 
-  console.log('[DELETE API] Record lookup:', { record, error: fetchError?.message });
 
   if (fetchError || !record) {
     return NextResponse.json({ error: 'Record not found', details: fetchError?.message }, { status: 404 });
@@ -288,7 +285,6 @@ export async function DELETE(request: Request) {
 
   // Verify user owns the session this record belongs to
   const ownsSession = await verifySessionOwnership(supabase, record.session_id, user.id);
-  console.log('[DELETE API] Owns session:', ownsSession);
   
   if (!ownsSession) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
@@ -305,6 +301,5 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: deleteError.message }, { status: 500 });
   }
 
-  console.log('[DELETE API] Successfully deleted');
   return NextResponse.json({ success: true });
 }

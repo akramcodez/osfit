@@ -107,10 +107,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ sessions: [] });
   }
 
-  console.log('[SESSION API] Fetching sessions for user:', user.id);
-  console.log('[SESSION API] Found sessions:', sessions?.length, sessions);
-  
-  // Return all sessions - show title or fallback to mode/date
   return NextResponse.json({ sessions: sessions?.slice(0, 20) || [] });
 }
 export async function DELETE(request: Request) {

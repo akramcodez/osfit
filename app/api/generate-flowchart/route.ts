@@ -3,14 +3,12 @@ import { createClient } from '@supabase/supabase-js';
 import { analyzeWithAI, AIProvider } from '@/lib/ai-client';
 import { getUserApiKeys } from '@/app/api/user/keys/route';
 
-// Language names for prompt
 const LANGUAGE_NAMES: Record<string, string> = {
   en: 'English', es: 'Spanish', fr: 'French', de: 'German',
   pt: 'Portuguese', it: 'Italian', zh: 'Chinese', ja: 'Japanese',
   ko: 'Korean', hi: 'Hindi', ar: 'Arabic', ru: 'Russian', bn: 'Bengali',
 };
 
-// Get effective keys with priority: user > system
 interface EffectiveKeys {
   gemini: { key: string | null; source: 'user' | 'system' | 'none' };
   groq: { key: string | null; source: 'user' | 'system' | 'none' };
@@ -31,7 +29,6 @@ function getEffectiveKeys(userKeys: { gemini_key: string | null; groq_key: strin
   };
 }
 
-// Get Supabase client for DB operations
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -69,7 +66,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get user and their API keys
     const user = await getUserFromRequest(request);
     let userKeys = { gemini_key: null as string | null, groq_key: null as string | null, ai_provider: 'gemini' };
     if (user) {
@@ -78,17 +74,11 @@ export async function POST(request: Request) {
     const effectiveKeys = getEffectiveKeys(userKeys);
     const provider: AIProvider = (userKeys.ai_provider as AIProvider) || 'gemini';
 
-    // Force mock mode if requested or if no AI key available
     const hasAIKey = effectiveKeys.gemini.key || effectiveKeys.groq.key;
     const useMock = useMockData === true || !hasAIKey;
-    
-    console.log('[generate-flowchart] useMock:', useMock, 'provider:', provider, 'targetLanguage:', targetLanguage);
-    
-    // Get target language name for prompt
     const targetLangName = LANGUAGE_NAMES[targetLanguage] || 'English';
     
     if (useMock) {
-      // Mock flowchart for development - generate in target language
       const mockFlowchart = targetLanguage === 'en' 
         ? `flowchart TD
     A[File Start] --> B[Import Dependencies]
@@ -126,7 +116,6 @@ export async function POST(request: Request) {
       });
     }
 
-    // Check if we already have a cached flowchart
     if (explanationId) {
       try {
         const supabase = getSupabase();
@@ -142,12 +131,11 @@ export async function POST(request: Request) {
             cached: true 
           });
         }
-      } catch (dbError) {
-        console.log('Flowchart cache check skipped:', dbError);
+      } catch {
+        // Cache check skipped
       }
     }
 
-    // Generate flowchart using AI - with node labels in target language
     const systemPrompt = `You are a code visualization expert. Generate a Mermaid.js flowchart that shows how this code file works.
 
 RULES:
@@ -182,13 +170,11 @@ ${fileContent.substring(0, 6000)}
       groqKey: effectiveKeys.groq.key,
     });
 
-    // Clean up the response
     const cleanFlowchart = flowchart
       .replace(/```mermaid\n?/g, '')
       .replace(/```\n?/g, '')
       .trim();
 
-    // Save to database if we have an explanationId
     if (explanationId) {
       try {
         const supabase = getSupabase();
@@ -196,8 +182,8 @@ ${fileContent.substring(0, 6000)}
           .from('file_explanations')
           .update({ flowchart: cleanFlowchart })
           .eq('id', explanationId);
-      } catch (dbError) {
-        console.log('Flowchart save skipped:', dbError);
+      } catch {
+        // Save skipped
       }
     }
 
