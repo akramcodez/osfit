@@ -8,6 +8,10 @@
     "templateId": "ts-crawlee-cheerio"
   },
   "input": "./input_schema.json",
+  "output": "./output_schema.json",
+  "storages": {
+    "dataset": "./dataset_schema.json"
+  },
   "dockerfile": "./Dockerfile",
   "environmentVariables": {
     "GROQ_API_KEY": "@GROQ_API_KEY",

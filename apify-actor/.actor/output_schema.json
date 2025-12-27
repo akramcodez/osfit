@@ -1,0 +1,31 @@
+{
+    "actorOutputSchemaVersion": 1,
+    "title": "Multilingual GitHub Scraper Output",
+    "description": "Output links for File Explainer and Issue Solver results.",
+    "properties": {
+        "overview": {
+            "type": "string",
+            "title": "Results Overview",
+            "description": "View key results including success status and mode.",
+            "template": "{{links.apiDefaultDatasetUrl}}/items?view=overview"
+        },
+        "fileAnalysis": {
+            "type": "string",
+            "title": "File Analysis",
+            "description": "View file explanations and flowcharts.",
+            "template": "{{links.apiDefaultDatasetUrl}}/items?view=files"
+        },
+        "issueSolutions": {
+            "type": "string",
+            "title": "Issue Solutions",
+            "description": "View issue analysis and solution plans.",
+            "template": "{{links.apiDefaultDatasetUrl}}/items?view=issues"
+        },
+        "allData": {
+            "type": "string",
+            "title": "Full Dataset",
+            "description": "Access all raw data items.",
+            "template": "{{links.apiDefaultDatasetUrl}}/items"
+        }
+    }
+}

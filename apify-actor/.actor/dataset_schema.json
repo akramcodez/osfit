@@ -52,22 +52,31 @@
     "overview": {
       "title": "Results Overview",
       "description": "Key analysis results",
-      "transforms": {
-        "columns": ["mode", "success", "file.path", "issue.title", "explanation", "solutionPlan", "flowchart"]
+      "transformation": {
+        "fields": ["mode", "success", "file.path", "issue.title", "explanation", "solutionPlan", "flowchart"]
+      },
+      "display": {
+        "component": "table"
       }
     },
     "files": {
       "title": "File Analysis",
       "description": "File explanations and flowcharts",
-      "transforms": {
-        "columns": ["file.path", "explanation", "flowchart"]
+      "transformation": {
+        "fields": ["file.path", "explanation", "flowchart"]
+      },
+      "display": {
+        "component": "table"
       }
     },
     "issues": {
       "title": "Issue Solutions",
       "description": "Issue analysis and solution plans",
-      "transforms": {
-        "columns": ["issue.number", "issue.title", "issueExplanation", "solutionPlan"]
+      "transformation": {
+        "fields": ["issue.number", "issue.title", "issueExplanation", "solutionPlan"]
+      },
+      "display": {
+        "component": "table"
       }
     }
   }
