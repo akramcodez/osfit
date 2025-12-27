@@ -36,7 +36,7 @@ Analyzes a single source code file and provides a technical breakdown with a vis
 このファイルは、TypeScriptコンパイラの設定（tsconfig.json）を解析し、ビルドプロセスを初期化するためのロジックを含んでいます。
 
 ## フローチャート
-![alt text](image.png)
+<img width="1403" height="1027" alt="image" src="https://github.com/user-attachments/assets/dd969a79-00e3-41e8-97aa-5a6e212b925f" />
 
 **Full Output JSON Structure:**
 ```json
