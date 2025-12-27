@@ -24,6 +24,11 @@ const SERVICE_NAMES: Record<string, Record<string, string>> = {
     hi: 'Gemini AI', zh: 'Gemini AI', ja: 'Gemini AI', ko: 'Gemini AI',
     pt: 'Gemini AI', ru: 'Gemini AI', ar: 'Gemini AI', bn: 'Gemini AI'
   },
+  groq: {
+    en: 'Groq AI', es: 'Groq AI', fr: 'Groq AI', de: 'Groq AI',
+    hi: 'Groq AI', zh: 'Groq AI', ja: 'Groq AI', ko: 'Groq AI',
+    pt: 'Groq AI', ru: 'Groq AI', ar: 'Groq AI', bn: 'Groq AI'
+  },
   apify: {
     en: 'Apify', es: 'Apify', fr: 'Apify', de: 'Apify',
     hi: 'Apify', zh: 'Apify', ja: 'Apify', ko: 'Apify',
@@ -156,6 +161,19 @@ function parseSimpleError(error: string, language: string = 'en'): string {
     return error.substring(0, 100) + '...';
   }
   return error;
+}
+
+function parseAnyError(data: { error?: string; errorType?: string; service?: string; source?: string } | string, language: string = 'en'): string {
+  if (typeof data === 'string') {
+    return parseSimpleError(data, language);
+  }
+  if (data.errorType || data.service) {
+    return parseApiErrorResponse(data as ApiErrorResponse, language);
+  }
+  if (data.error) {
+    return parseSimpleError(data.error, language);
+  }
+  return 'An unexpected error occurred. Please try again.';
 }
 
 export default function ChatInterface() {
@@ -594,7 +612,7 @@ export default function ChatInterface() {
       const data = await response.json();
       
       if (data.error) {
-        setApiError(data.error);
+        setApiError(parseAnyError(data, currentLanguage));
         return;
       }
 
@@ -655,7 +673,7 @@ export default function ChatInterface() {
       const data = await response.json();
       
       if (data.error) {
-        setApiError(data.error);
+        setApiError(parseAnyError(data, currentLanguage));
         return;
       }
 
@@ -741,7 +759,7 @@ export default function ChatInterface() {
       const data = await response.json();
       
       if (data.error) {
-        setApiError(data.error);
+        setApiError(parseAnyError(data, currentLanguage));
         return;
       }
 
