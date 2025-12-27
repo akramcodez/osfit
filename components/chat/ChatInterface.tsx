@@ -586,7 +586,8 @@ export default function ChatInterface() {
         headers: { 'Content-Type': 'application/json', ...authHeader },
         body: JSON.stringify({
           session_id: activeSessionId,
-          issue_url: issueUrl
+          issue_url: issueUrl,
+          language: currentLanguage
         })
       });
 
@@ -646,7 +647,8 @@ export default function ChatInterface() {
         headers: { 'Content-Type': 'application/json', ...authHeader },
         body: JSON.stringify({
           issue_id: currentIssueId,
-          action: 'solution'
+          action: 'solution',
+          language: currentLanguage
         })
       });
 
@@ -703,7 +705,8 @@ export default function ChatInterface() {
         headers: { 'Content-Type': 'application/json', ...authHeader },
         body: JSON.stringify({
           issue_id: currentIssueId,
-          action: 'discard'
+          action: 'discard',
+          language: currentLanguage
         })
       });
     } catch (err) {
@@ -730,7 +733,8 @@ export default function ChatInterface() {
         body: JSON.stringify({
           issue_id: currentIssueId,
           action: 'pr',
-          git_diff: gitDiff
+          git_diff: gitDiff,
+          language: currentLanguage
         })
       });
 

@@ -191,6 +191,7 @@ export default function FileExplainerList({
                 isNew={item.id === streamingId}
                 onStreamComplete={item.id === streamingId ? onStreamComplete : undefined}
                 onDelete={onDelete}
+                uiLanguage={language}
               />
             ))}
             {isLoading && (

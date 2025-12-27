@@ -12,12 +12,15 @@ import { CodeBlock } from './CodeBlock';
 import InteractiveCodeViewer from './InteractiveCodeViewer';
 import MermaidRenderer from './MermaidRenderer';
 import Spinner from '@/components/ui/spinner';
+import { LanguageCode } from '@/lib/translations';
+import { supabase } from '@/lib/supabase-auth';
 
 interface FileExplainerCardProps {
   data: FileExplanation;
   isNew?: boolean;
   onStreamComplete?: () => void;
   onDelete?: (id: string) => Promise<void> | void;
+  uiLanguage?: LanguageCode;
 }
 
 // Language display names
@@ -107,7 +110,7 @@ export async function post<T>(url: string, data?: object): Promise<T> {
   return client.post(url, data);
 }`;
 
-export default function FileExplainerCard({ data, isNew = false, onStreamComplete, onDelete }: FileExplainerCardProps) {
+export default function FileExplainerCard({ data, isNew = false, onStreamComplete, onDelete, uiLanguage = 'en' }: FileExplainerCardProps) {
   const [isCodeExpanded, setIsCodeExpanded] = useState(true);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
@@ -197,16 +200,23 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
     setLineExplanation('');
 
     try {
+      // Get auth token for user key access
+      const { data: { session } } = await supabase.auth.getSession();
+      
       const response = await fetch('/api/explain-line', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(session?.access_token && { 'Authorization': `Bearer ${session.access_token}` })
+        },
         body: JSON.stringify({
           lineNumber,
           lineContent,
           fullFileContent: fileContent,
           language,
           filePath: fileName,
-          useMockData: true // Enable for testing
+          targetLanguage: uiLanguage,
+          useMockData: false // Use real AI
         })
       });
 
@@ -399,15 +409,22 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                         setIsGeneratingFlowchart(true);
                         setFlowchartError(null);
                         try {
+                          // Get auth token for user key access
+                          const { data: { session: authSession } } = await supabase.auth.getSession();
+                          
                           const response = await fetch('/api/generate-flowchart', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: { 
+                              'Content-Type': 'application/json',
+                              ...(authSession?.access_token && { 'Authorization': `Bearer ${authSession.access_token}` })
+                            },
                             body: JSON.stringify({
                               fileContent,
                               language,
                               filePath: fileName,
                               explanationId: data.id,
-                              useMockData: true // Enable for testing
+                              targetLanguage: uiLanguage,
+                              useMockData: false // Use real AI
                             })
                           });
                           const result = await response.json();

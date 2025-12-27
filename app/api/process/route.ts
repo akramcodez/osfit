@@ -214,7 +214,9 @@ export async function POST(request: Request) {
         response = await translateText({
           text: response,
           targetLanguage: language,
-          sourceLanguage: 'en'
+          sourceLanguage: 'en',
+          userLingoKey: effectiveKeys.lingo.key,
+          userGeminiKey: effectiveKeys.gemini.key,
         });
       } catch (translateError) {
         // Check if this is a Lingo API error

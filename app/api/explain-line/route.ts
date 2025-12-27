@@ -1,10 +1,58 @@
 import { NextResponse } from 'next/server';
-import { analyzeWithContext } from '@/lib/gemini-client';
+import { createClient } from '@supabase/supabase-js';
+import { analyzeWithAI, AIProvider } from '@/lib/ai-client';
+import { translateText } from '@/lib/lingo-client';
+import { getUserApiKeys } from '@/app/api/user/keys/route';
+
+// Get effective keys with priority: user > system
+interface EffectiveKeys {
+  gemini: { key: string | null; source: 'user' | 'system' | 'none' };
+  groq: { key: string | null; source: 'user' | 'system' | 'none' };
+  lingo: { key: string | null; source: 'user' | 'system' | 'none' };
+}
+
+const SYSTEM_GEMINI_KEY = process.env.GEMINI_API_KEY || null;
+const SYSTEM_LINGO_KEY = process.env.LINGO_API_KEY || null;
+
+function getEffectiveKeys(userKeys: { gemini_key: string | null; groq_key: string | null; lingo_key: string | null; ai_provider: string }): EffectiveKeys {
+  return {
+    gemini: {
+      key: userKeys.gemini_key || SYSTEM_GEMINI_KEY || null,
+      source: userKeys.gemini_key ? 'user' : (SYSTEM_GEMINI_KEY ? 'system' : 'none')
+    },
+    groq: {
+      key: userKeys.groq_key || null,
+      source: userKeys.groq_key ? 'user' : 'none'
+    },
+    lingo: {
+      key: userKeys.lingo_key || SYSTEM_LINGO_KEY || null,
+      source: userKeys.lingo_key ? 'user' : (SYSTEM_LINGO_KEY ? 'system' : 'none')
+    },
+  };
+}
+
+async function getUserFromRequest(request: Request) {
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return null;
+  }
+  
+  const token = authHeader.split(' ')[1];
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+  
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) return null;
+  
+  return user;
+}
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { lineNumber, lineContent, fullFileContent, language, filePath, useMockData } = body;
+    const { lineNumber, lineContent, fullFileContent, language: codeLang, filePath, useMockData, targetLanguage = 'en' } = body;
 
     if (!lineNumber || !fullFileContent) {
       return NextResponse.json(
@@ -13,21 +61,42 @@ export async function POST(request: Request) {
       );
     }
 
-    // Force mock mode if requested or if API key is missing/empty
-    const useMock = useMockData === true || !process.env.GEMINI_API_KEY?.trim();
+    // Get user and their API keys
+    const user = await getUserFromRequest(request);
+    let userKeys = { gemini_key: null as string | null, groq_key: null as string | null, lingo_key: null as string | null, ai_provider: 'gemini' };
+    if (user) {
+      userKeys = await getUserApiKeys(user.id);
+    }
+    const effectiveKeys = getEffectiveKeys(userKeys);
+    const provider: AIProvider = (userKeys.ai_provider as AIProvider) || 'gemini';
+
+    // Force mock mode if requested or if no AI key available
+    const hasAIKey = effectiveKeys.gemini.key || effectiveKeys.groq.key;
+    const useMock = useMockData === true || !hasAIKey;
     
-    console.log('[explain-line] useMock:', useMock, 'lineNumber:', lineNumber);
+    console.log('[explain-line] useMock:', useMock, 'lineNumber:', lineNumber, 'provider:', provider);
     
     if (useMock) {
-      // Mock response for development - return immediately
-      const explanation = `**Line ${lineNumber}: \`${(lineContent || '').trim()}\`**
+      // Mock response for development
+      let explanation = `**Line ${lineNumber}: \`${(lineContent || '').trim()}\`**
 
 This line ${getLineExplanation(lineContent || '', lineNumber)}.
 
 ### Context
-This is part of the surrounding code block that ${getContextExplanation(language)}.
+This is part of the surrounding code block that ${getContextExplanation(codeLang)}.
 
-> 💡 **Tip:** ${getTip(language)}`;
+> 💡 **Tip:** ${getTip(codeLang)}`;
+      
+      // Translate if needed
+      if (targetLanguage !== 'en') {
+        explanation = await translateText({
+          text: explanation,
+          targetLanguage,
+          sourceLanguage: 'en',
+          userLingoKey: effectiveKeys.lingo.key,
+          userGeminiKey: effectiveKeys.gemini.key,
+        });
+      }
       
       return NextResponse.json({ 
         explanation,
@@ -60,11 +129,26 @@ RULES:
 5. Use markdown formatting
 
 FILE: ${filePath || 'unknown'}
-LANGUAGE: ${language || 'unknown'}`;
+LANGUAGE: ${codeLang || 'unknown'}`;
 
-    const userMessage = `Explain line ${lineNumber}:\n\n\`\`\`${language || 'code'}\n${contextWithLineNumbers}\n\`\`\``;
+    const userMessage = `Explain line ${lineNumber}:\n\n\`\`\`${codeLang || 'code'}\n${contextWithLineNumbers}\n\`\`\``;
 
-    const explanation = await analyzeWithContext(systemPrompt, userMessage);
+    let explanation = await analyzeWithAI(systemPrompt, userMessage, undefined, {
+      provider,
+      geminiKey: effectiveKeys.gemini.key,
+      groqKey: effectiveKeys.groq.key,
+    });
+
+    // Translate if needed
+    if (targetLanguage !== 'en') {
+      explanation = await translateText({
+        text: explanation,
+        targetLanguage,
+        sourceLanguage: 'en',
+        userLingoKey: effectiveKeys.lingo.key,
+        userGeminiKey: effectiveKeys.gemini.key,
+      });
+    }
 
     return NextResponse.json({ 
       explanation,

@@ -1,20 +1,12 @@
 import { LingoDotDevEngine } from 'lingo.dev/sdk';
 import { generateResponse } from './gemini-client';
 
-// Use Lingo.dev only in production, Gemini in development
-const USE_LINGO = process.env.NODE_ENV === 'production';
-
-let lingoDotDev: LingoDotDevEngine | null = null;
-if (USE_LINGO && process.env.LINGO_API_KEY) {
-  lingoDotDev = new LingoDotDevEngine({
-    apiKey: process.env.LINGO_API_KEY,
-  });
-}
-
 export interface TranslateRequest {
   text: string;
   targetLanguage: string;
   sourceLanguage?: string;
+  userLingoKey?: string | null; // User-provided Lingo API key from DB
+  userGeminiKey?: string | null; // User-provided Gemini key for fallback translation
 }
 
 export const SUPPORTED_LANGUAGES = [
@@ -41,8 +33,8 @@ const languageNames: Record<string, string> = {
 
 /**
  * Translate text
- * - In production: uses Lingo.dev SDK (uses credits)
- * - In development: uses Gemini AI (free, uses your Gemini quota)
+ * - Uses Lingo.dev SDK if a Lingo key is available (user key or system key)
+ * - Falls back to Gemini AI for translation if no Lingo key
  */
 export async function translateText(request: TranslateRequest): Promise<string> {
   // Skip translation if target is English
@@ -52,17 +44,24 @@ export async function translateText(request: TranslateRequest): Promise<string> 
 
   const targetLang = languageNames[request.targetLanguage] || request.targetLanguage;
 
+  // Determine which Lingo key to use: user key > system key
+  const effectiveLingoKey = request.userLingoKey || process.env.LINGO_API_KEY;
+
   try {
-    if (USE_LINGO && lingoDotDev) {
-      // Production: use Lingo.dev SDK
+    if (effectiveLingoKey) {
+      // Use Lingo.dev SDK with the effective key
+      const lingoClient = new LingoDotDevEngine({
+        apiKey: effectiveLingoKey,
+      });
+      
       const content = { text: request.text };
-      const translated = await lingoDotDev.localizeObject(content, {
+      const translated = await lingoClient.localizeObject(content, {
         sourceLocale: request.sourceLanguage || 'en',
         targetLocale: request.targetLanguage,
       });
       return translated.text || request.text;
     } else {
-      // Development: use Gemini for translation (free)
+      // Fallback: use Gemini for translation
       const prompt = `Translate the following text to ${targetLang}. 
 Maintain the same formatting (markdown, bullet points, code blocks, etc.).
 Only output the translated text, nothing else.
@@ -70,7 +69,7 @@ Only output the translated text, nothing else.
 Text:
 ${request.text}`;
 
-      const translated = await generateResponse(prompt);
+      const translated = await generateResponse(prompt, request.userGeminiKey);
       return translated.trim();
     }
   } catch (error) {

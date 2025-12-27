@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { analyzeWithContext } from '@/lib/gemini-client';
+import { analyzeWithAI, AIProvider } from '@/lib/ai-client';
+import { translateText } from '@/lib/lingo-client';
 import { fetchGitHubIssue } from '@/lib/apify-client';
 import { getUserApiKeys } from '@/app/api/user/keys/route';
 
@@ -36,6 +37,29 @@ async function verifySessionOwnership(supabase: ReturnType<typeof getSupabase>, 
     .eq('user_id', userId)
     .maybeSingle();
   return !!data;
+}
+
+// Effective keys interface
+interface EffectiveKeys {
+  gemini: string | null;
+  groq: string | null;
+  lingo: string | null;
+  provider: AIProvider;
+}
+
+// Get effective API keys (user > system)
+function getEffectiveKeys(userKeys: { 
+  gemini_key: string | null; 
+  groq_key: string | null; 
+  lingo_key: string | null;
+  ai_provider: string;
+}): EffectiveKeys {
+  return {
+    gemini: userKeys.gemini_key || process.env.GEMINI_API_KEY || null,
+    groq: userKeys.groq_key || null,
+    lingo: userKeys.lingo_key || process.env.LINGO_API_KEY || null,
+    provider: (userKeys.ai_provider as AIProvider) || 'gemini',
+  };
 }
 
 // AI Prompts
@@ -95,9 +119,6 @@ FORMAT:
 > #[issue_number]`
 };
 
-// Development: Use mock data when Gemini keys are exhausted
-const USE_MOCK = process.env.NODE_ENV === 'development' && !process.env.GEMINI_API_KEY;
-
 const MOCK_RESPONSES = {
   explanation: `**PROBLEM**
 
@@ -146,28 +167,75 @@ const MOCK_RESPONSES = {
 > #123`
 };
 
-// Helper to get AI response (mock or real)
+// Helper to get AI response with proper key detection
 async function getAIResponse(
   type: 'explanation' | 'solution' | 'pr',
   context: string,
-  geminiKey: string | null
+  keys: EffectiveKeys,
+  targetLanguage: string = 'en'
 ): Promise<string> {
-  if (USE_MOCK || !geminiKey) {
-    console.log('[Issue Solver] Using mock response for:', type);
-    return MOCK_RESPONSES[type];
+  // Check if we have ANY AI key available
+  const hasAIKey = keys.gemini || keys.groq;
+  
+  if (!hasAIKey) {
+    console.log('[Issue Solver] No AI key available, using mock for:', type);
+    let response = MOCK_RESPONSES[type];
+    
+    // Translate mock response if needed
+    if (targetLanguage !== 'en') {
+      response = await translateText({
+        text: response,
+        targetLanguage,
+        sourceLanguage: 'en',
+        userLingoKey: keys.lingo,
+        userGeminiKey: keys.gemini,
+      });
+    }
+    return response;
   }
   
   try {
-    return await analyzeWithContext(PROMPTS[type], 'Analyze', context, geminiKey);
+    console.log('[Issue Solver] Using', keys.provider, 'for:', type);
+    
+    let response = await analyzeWithAI(PROMPTS[type], 'Analyze', context, {
+      provider: keys.provider,
+      geminiKey: keys.gemini,
+      groqKey: keys.groq,
+    });
+    
+    // Translate response if needed
+    if (targetLanguage !== 'en') {
+      response = await translateText({
+        text: response,
+        targetLanguage,
+        sourceLanguage: 'en',
+        userLingoKey: keys.lingo,
+        userGeminiKey: keys.gemini,
+      });
+    }
+    
+    return response;
   } catch (error) {
-    console.error('[Issue Solver] Gemini error, falling back to mock:', error);
-    return MOCK_RESPONSES[type];
+    console.error('[Issue Solver] AI error, falling back to mock:', error);
+    let response = MOCK_RESPONSES[type];
+    
+    // Translate mock response if needed
+    if (targetLanguage !== 'en') {
+      response = await translateText({
+        text: response,
+        targetLanguage,
+        sourceLanguage: 'en',
+        userLingoKey: keys.lingo,
+        userGeminiKey: keys.gemini,
+      });
+    }
+    return response;
   }
 }
 
 /**
  * POST - Create new issue and run initial analysis
- * Body: { session_id, issue_url }
+ * Body: { session_id, issue_url, language? }
  */
 export async function POST(request: Request) {
   const user = await getUserFromRequest(request);
@@ -177,7 +245,7 @@ export async function POST(request: Request) {
 
   const supabase = getSupabase();
   const body = await request.json();
-  const { session_id, issue_url } = body;
+  const { session_id, issue_url, language = 'en' } = body;
 
   if (!session_id || !issue_url) {
     return NextResponse.json({ error: 'session_id and issue_url required' }, { status: 400 });
@@ -190,7 +258,13 @@ export async function POST(request: Request) {
   }
 
   try {
-    // Step 1: Create row with issue_url
+    // Get user keys and effective keys
+    const userKeys = await getUserApiKeys(user.id);
+    const keys = getEffectiveKeys(userKeys);
+    
+    console.log('[Issue Solver POST] User:', user.id, 'Provider:', keys.provider, 'Language:', language, 'HasGemini:', !!keys.gemini, 'HasGroq:', !!keys.groq);
+
+    // Step 1: Create row with issue_url and language metadata
     const { data: row, error: createError } = await supabase
       .from('issue_solutions')
       .insert({
@@ -198,7 +272,8 @@ export async function POST(request: Request) {
         role: 'assistant',
         issue_url,
         current_step: 'fetching',
-        status: 'in_progress'
+        status: 'in_progress',
+        metadata: { language }
       })
       .select()
       .single();
@@ -219,10 +294,7 @@ export async function POST(request: Request) {
       })
       .eq('id', row.id);
 
-    // Step 3: Generate explanation with Gemini
-    const userKeys = await getUserApiKeys(user.id);
-    const geminiKey = userKeys.gemini_key || process.env.GEMINI_API_KEY || null;
-
+    // Step 3: Generate explanation with AI
     const context = `
 Issue: ${issue.title}
 #${issue.number}
@@ -231,7 +303,7 @@ ${issue.body || 'No description'}
 
 Labels: ${issue.labels?.join(', ') || 'None'}`;
 
-    const explanation = await getAIResponse('explanation', context, geminiKey);
+    const explanation = await getAIResponse('explanation', context, keys, language);
 
     // Update row with explanation, move to solution_step
     const { data: updated, error: updateError } = await supabase
@@ -261,7 +333,7 @@ Labels: ${issue.labels?.join(', ') || 'None'}`;
 
 /**
  * PATCH - Update issue based on action
- * Body: { issue_id, action: 'solution' | 'pr' | 'discard', git_diff?: string }
+ * Body: { issue_id, action: 'solution' | 'pr' | 'discard', git_diff?: string, language?: string }
  */
 export async function PATCH(request: Request) {
   const user = await getUserFromRequest(request);
@@ -271,7 +343,7 @@ export async function PATCH(request: Request) {
 
   const supabase = getSupabase();
   const body = await request.json();
-  const { issue_id, action, git_diff } = body;
+  const { issue_id, action, git_diff, language = 'en' } = body;
 
   if (!issue_id || !action) {
     return NextResponse.json({ error: 'issue_id and action required' }, { status: 400 });
@@ -294,6 +366,15 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
+    // Get user keys and effective keys
+    const userKeys = await getUserApiKeys(user.id);
+    const keys = getEffectiveKeys(userKeys);
+    
+    // Use language from metadata if not provided in request
+    const targetLanguage = language || issue.metadata?.language || 'en';
+    
+    console.log('[Issue Solver PATCH] Action:', action, 'Provider:', keys.provider, 'Language:', targetLanguage);
+
     // Handle actions
     if (action === 'discard') {
       const { data: updated } = await supabase
@@ -307,10 +388,6 @@ export async function PATCH(request: Request) {
     }
 
     if (action === 'solution') {
-      // Generate solution plan
-      const userKeys = await getUserApiKeys(user.id);
-      const geminiKey = userKeys.gemini_key || process.env.GEMINI_API_KEY || null;
-
       const context = `
 Issue: ${issue.issue_title}
 ${issue.issue_body || 'No description'}
@@ -318,7 +395,7 @@ ${issue.issue_body || 'No description'}
 Previous Analysis:
 ${issue.explanation}`;
 
-      const solutionPlan = await getAIResponse('solution', context, geminiKey);
+      const solutionPlan = await getAIResponse('solution', context, keys, targetLanguage);
 
       const { data: updated } = await supabase
         .from('issue_solutions')
@@ -338,10 +415,6 @@ ${issue.explanation}`;
         return NextResponse.json({ error: 'git_diff required for PR generation' }, { status: 400 });
       }
 
-      // Generate PR content
-      const userKeys = await getUserApiKeys(user.id);
-      const geminiKey = userKeys.gemini_key || process.env.GEMINI_API_KEY || null;
-
       const context = `
 Issue: ${issue.issue_title}
 Issue Number: #${issue.issue_url?.match(/\/issues\/(\d+)/)?.[1] || '?'}
@@ -354,7 +427,7 @@ Git Diff:
 ${git_diff.substring(0, 5000)}
 \`\`\``;
 
-      const prSolution = await getAIResponse('pr', context, geminiKey);
+      const prSolution = await getAIResponse('pr', context, keys, targetLanguage);
 
       const { data: updated } = await supabase
         .from('issue_solutions')
