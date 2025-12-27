@@ -48,6 +48,8 @@ export interface TranslationStrings {
   apifyApiKeyDesc?: string;
   lingoApiKey?: string;
   lingoApiKeyDesc?: string;
+  groqApiKey?: string;
+  groqApiKeyDesc?: string;
 }
 
 export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
@@ -84,6 +86,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     apifyApiKeyDesc: 'Fetches GitHub issues and files',
     lingoApiKey: 'Lingo API Key',
     lingoApiKeyDesc: 'Enables translation features',
+    groqApiKey: 'Groq API Key',
+    groqApiKeyDesc: 'Powers OSS AI model (GPT-OSS-120B)',
   },
   es: {
     newChat: 'Nuevo chat',
@@ -118,6 +122,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     apifyApiKeyDesc: 'Obtiene issues y archivos de GitHub',
     lingoApiKey: 'Clave API de Lingo',
     lingoApiKeyDesc: 'Habilita funciones de traducción',
+    groqApiKey: 'Clave API de Groq',
+    groqApiKeyDesc: 'Potencia el modelo AI OSS (GPT-OSS-120B)',
   },
   fr: {
     newChat: 'Nouveau chat',
@@ -152,6 +158,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     apifyApiKeyDesc: 'Récupère les issues et fichiers GitHub',
     lingoApiKey: 'Clé API Lingo',
     lingoApiKeyDesc: 'Active les fonctions de traduction',
+    groqApiKey: 'Clé API Groq',
+    groqApiKeyDesc: 'Alimente le modèle AI OSS (GPT-OSS-120B)',
   },
   de: {
     newChat: 'Neuer Chat',
@@ -186,6 +194,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     apifyApiKeyDesc: 'Ruft GitHub-Issues und Dateien ab',
     lingoApiKey: 'Lingo API-Schlüssel',
     lingoApiKeyDesc: 'Aktiviert Übersetzungsfunktionen',
+    groqApiKey: 'Groq API-Schlüssel',
+    groqApiKeyDesc: 'Betreibt das OSS-AI-Modell (GPT-OSS-120B)',
   },
   hi: {
     newChat: 'नई चैट',
@@ -220,6 +230,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     apifyApiKeyDesc: 'GitHub issues और फ़ाइलें प्राप्त करता है',
     lingoApiKey: 'Lingo API कुंजी',
     lingoApiKeyDesc: 'अनुवाद सुविधाएं सक्षम करता है',
+    groqApiKey: 'Groq API कुंजी',
+    groqApiKeyDesc: 'OSS AI मॉडल (GPT-OSS-120B) को सक्षम करता है',
   },
   zh: {
     newChat: '新对话',
@@ -254,6 +266,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     apifyApiKeyDesc: '获取 GitHub 问题和文件',
     lingoApiKey: 'Lingo API 密钥',
     lingoApiKeyDesc: '启用翻译功能',
+    groqApiKey: 'Groq API 密钥',
+    groqApiKeyDesc: '驱动 OSS AI 模型 (GPT-OSS-120B)',
   },
   ja: {
     newChat: '新しいチャット',
@@ -288,6 +302,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     apifyApiKeyDesc: 'GitHubのissueとファイルを取得',
     lingoApiKey: 'Lingo APIキー',
     lingoApiKeyDesc: '翻訳機能を有効化',
+    groqApiKey: 'Groq APIキー',
+    groqApiKeyDesc: 'OSS AIモデル (GPT-OSS-120B) を実行',
   },
   ko: {
     newChat: '새 대화',
@@ -322,6 +338,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     apifyApiKeyDesc: 'GitHub 이슈 및 파일 가져오기',
     lingoApiKey: 'Lingo API 키',
     lingoApiKeyDesc: '번역 기능 활성화',
+    groqApiKey: 'Groq API 키',
+    groqApiKeyDesc: 'OSS AI 모델 (GPT-OSS-120B) 지원',
   },
   pt: {
     newChat: 'Novo chat',
@@ -356,6 +374,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     apifyApiKeyDesc: 'Busca issues e arquivos do GitHub',
     lingoApiKey: 'Chave API Lingo',
     lingoApiKeyDesc: 'Habilita recursos de tradução',
+    groqApiKey: 'Chave API Groq',
+    groqApiKeyDesc: 'Alimenta o modelo AI OSS (GPT-OSS-120B)',
   },
   ru: {
     newChat: 'Новый чат',
@@ -390,6 +410,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     apifyApiKeyDesc: 'Получает issues и файлы из GitHub',
     lingoApiKey: 'API-ключ Lingo',
     lingoApiKeyDesc: 'Включает функции перевода',
+    groqApiKey: 'API-ключ Groq',
+    groqApiKeyDesc: 'Обеспечивает модель OSS AI (GPT-OSS-120B)',
   },
   ar: {
     newChat: 'محادثة جديدة',
@@ -424,6 +446,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     apifyApiKeyDesc: 'يجلب مشاكل وملفات GitHub',
     lingoApiKey: 'مفتاح API لـ Lingo',
     lingoApiKeyDesc: 'يفعل ميزات الترجمة',
+    groqApiKey: 'مفتاح API لـ Groq',
+    groqApiKeyDesc: 'يشغل نموذج AI OSS (GPT-OSS-120B)',
   },
   bn: {
     newChat: 'নতুন চ্যাট',
@@ -458,6 +482,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     apifyApiKeyDesc: 'GitHub সমস্যা এবং ফাইল নিয়ে আসে',
     lingoApiKey: 'Lingo API কী',
     lingoApiKeyDesc: 'অনুবাদ বৈশিষ্ট্য সক্ষম করে',
+    groqApiKey: 'Groq API কী',
+    groqApiKeyDesc: 'OSS AI মডেল (GPT-OSS-120B) চালায়',
   },
 };
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Key, Eye, EyeOff, Check, X, ArrowLeft, Save, Trash2, ExternalLink } from 'lucide-react';
 import { supabase } from '@/lib/supabase-auth';
 import { User } from '@supabase/supabase-js';
@@ -18,12 +19,14 @@ interface UserSettingsProps {
   onLanguageChange: (lang: string) => void;
 }
 
-type KeyType = 'gemini' | 'apify' | 'lingo';
+type KeyType = 'gemini' | 'apify' | 'lingo' | 'groq';
 
 interface KeyStatus {
   has_gemini: boolean;
   has_apify: boolean;
   has_lingo: boolean;
+  has_groq: boolean;
+  ai_provider: 'gemini' | 'groq';
 }
 
 export default function UserSettings({ user, username, onBack, language, onLanguageChange }: UserSettingsProps) {
@@ -31,6 +34,8 @@ export default function UserSettings({ user, username, onBack, language, onLangu
     has_gemini: false,
     has_apify: false,
     has_lingo: false,
+    has_groq: false,
+    ai_provider: 'gemini',
   });
   const [isLoading, setIsLoading] = useState(true);
   const [savingKey, setSavingKey] = useState<KeyType | null>(null);
@@ -40,11 +45,16 @@ export default function UserSettings({ user, username, onBack, language, onLangu
   const [geminiKey, setGeminiKey] = useState('');
   const [apifyKey, setApifyKey] = useState('');
   const [lingoKey, setLingoKey] = useState('');
+  const [groqKey, setGroqKey] = useState('');
   
   // Visibility toggles
   const [showGemini, setShowGemini] = useState(false);
   const [showApify, setShowApify] = useState(false);
   const [showLingo, setShowLingo] = useState(false);
+  const [showGroq, setShowGroq] = useState(false);
+  
+  // AI Provider selection
+  const [selectedProvider, setSelectedProvider] = useState<'gemini' | 'groq'>('gemini');
   
   // Success/error messages
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -63,6 +73,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
       });
       const data = await res.json();
       setKeyStatus(data);
+      setSelectedProvider(data.ai_provider || 'gemini');
     } catch (e) {
       console.error('Failed to fetch key status', e);
     } finally {
@@ -96,6 +107,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
       if (keyType === 'gemini') setGeminiKey('');
       if (keyType === 'apify') setApifyKey('');
       if (keyType === 'lingo') setLingoKey('');
+      if (keyType === 'groq') setGroqKey('');
       
       await fetchKeyStatus();
     } catch (e) {
@@ -163,6 +175,30 @@ export default function UserSettings({ user, username, onBack, language, onLangu
       setShow: setShowLingo,
       hasKey: keyStatus.has_lingo,
     },
+    {
+      type: 'groq' as KeyType,
+      label: t('groqApiKey', language) || 'Groq API Key',
+      description: t('groqApiKeyDesc', language) || 'Powers OSS AI model (GPT-OSS-120B)',
+      docsUrl: 'https://console.groq.com/keys',
+      value: groqKey,
+      setValue: setGroqKey,
+      show: showGroq,
+      setShow: setShowGroq,
+      hasKey: keyStatus.has_groq,
+    },
+  ];
+
+  // Filter to show only the selected AI provider's key (Gemini OR Groq), but always show Apify and Lingo
+  // Order: AI Key first, then Apify, then Lingo
+  const filteredKeyConfigs = [
+    // First: the selected AI provider's key
+    ...keyConfigs.filter(config => 
+      (config.type === 'gemini' && selectedProvider === 'gemini') ||
+      (config.type === 'groq' && selectedProvider === 'groq')
+    ),
+    // Then: other services
+    ...keyConfigs.filter(config => config.type === 'apify'),
+    ...keyConfigs.filter(config => config.type === 'lingo'),
   ];
 
   if (isLoading) {
@@ -252,7 +288,46 @@ export default function UserSettings({ user, username, onBack, language, onLangu
               {t('apiKeysDescription', language)}
             </p>
 
-            {keyConfigs.map((config, index) => (
+            {/* AI Provider Selector */}
+            <div className="p-4 bg-[#161616] rounded-lg border border-[#2A2A2A] mb-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-medium text-white">AI Provider</h3>
+                  <p className="text-xs text-gray-500">Choose which AI model to use</p>
+                </div>
+                <Select 
+                  value={selectedProvider} 
+                  onValueChange={async (newProvider: 'gemini' | 'groq') => {
+                    setSelectedProvider(newProvider);
+                    try {
+                      const { data: { session } } = await supabase.auth.getSession();
+                      await fetch('/api/user/keys', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${session?.access_token}`
+                        },
+                        body: JSON.stringify({ ai_provider: newProvider }),
+                      });
+                      setMessage({ type: 'success', text: `Switched to ${newProvider === 'gemini' ? 'Gemini' : 'Groq (OSS)'}` });
+                      setTimeout(() => setMessage(null), 3000);
+                    } catch (e) {
+                      console.error('Failed to save provider', e);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="gemini">Gemini (Default)</SelectItem>
+                    <SelectItem value="groq">Groq (OSS)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {filteredKeyConfigs.map((config, index) => (
               <motion.div 
                 key={config.type} 
                 initial={{ opacity: 0, y: 10 }}

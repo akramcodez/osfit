@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { analyzeWithContext } from '@/lib/gemini-client';
+import { analyzeWithAI, AIProvider } from '@/lib/ai-client';
 import { translateText } from '@/lib/lingo-client';
 import { fetchGitHubIssue, fetchGitHubFile } from '@/lib/apify-client';
 import { MOCK_RESPONSES } from '@/lib/mock-responses';
@@ -19,19 +20,21 @@ const forceRealAI = process.env.USE_REAL_AI === 'true';
 const SYSTEM_GEMINI_KEY = process.env.GEMINI_API_KEY || '';
 const SYSTEM_APIFY_KEY = process.env.APIFY_API_KEY || '';
 const SYSTEM_LINGO_KEY = process.env.LINGO_API_KEY || '';
+const SYSTEM_GROQ_KEY = process.env.GROQ_API_KEY || '';
 
 // Type for tracking which keys are being used and their source
 interface EffectiveKeys {
   gemini: { key: string | null; source: 'user' | 'system' | 'none' };
   apify: { key: string | null; source: 'user' | 'system' | 'none' };
   lingo: { key: string | null; source: 'user' | 'system' | 'none' };
+  groq: { key: string | null; source: 'user' | 'system' | 'none' };
 }
 
 /**
  * Get effective keys with priority: user keys > system keys
  * Returns which key is being used and its source for proper error handling
  */
-function getEffectiveKeys(userKeys: { gemini_key: string | null; apify_key: string | null; lingo_key: string | null }): EffectiveKeys {
+function getEffectiveKeys(userKeys: { gemini_key: string | null; apify_key: string | null; lingo_key: string | null; groq_key: string | null }): EffectiveKeys {
   return {
     gemini: {
       key: userKeys.gemini_key || SYSTEM_GEMINI_KEY || null,
@@ -44,6 +47,10 @@ function getEffectiveKeys(userKeys: { gemini_key: string | null; apify_key: stri
     lingo: {
       key: userKeys.lingo_key || SYSTEM_LINGO_KEY || null,
       source: userKeys.lingo_key ? 'user' : (SYSTEM_LINGO_KEY ? 'system' : 'none')
+    },
+    groq: {
+      key: userKeys.groq_key || SYSTEM_GROQ_KEY || null,
+      source: userKeys.groq_key ? 'user' : (SYSTEM_GROQ_KEY ? 'system' : 'none')
     }
   };
 }
@@ -72,8 +79,31 @@ function isQuotaError(error: unknown): boolean {
 }
 
 // Helper to check if user has any keys configured
-function userHasKeys(userKeys: { gemini_key: string | null; apify_key: string | null; lingo_key: string | null }): boolean {
-  return !!(userKeys.gemini_key || userKeys.apify_key || userKeys.lingo_key);
+function userHasKeys(userKeys: { gemini_key: string | null; apify_key: string | null; lingo_key: string | null; groq_key: string | null }): boolean {
+  return !!(userKeys.gemini_key || userKeys.apify_key || userKeys.lingo_key || userKeys.groq_key);
+}
+
+// Helper to route AI calls to the correct provider based on user preference
+interface UserKeysWithProvider {
+  gemini_key: string | null;
+  groq_key: string | null;
+  ai_provider: 'gemini' | 'groq';
+}
+
+async function analyzeWithProvider(
+  systemPrompt: string,
+  userMessage: string,
+  context: string | undefined,
+  userKeys: UserKeysWithProvider,
+  effectiveKeys: EffectiveKeys
+): Promise<string> {
+  const provider: AIProvider = userKeys.ai_provider || 'gemini';
+  
+  return analyzeWithAI(systemPrompt, userMessage, context, {
+    provider,
+    geminiKey: effectiveKeys.gemini.key,
+    groqKey: effectiveKeys.groq.key,
+  });
 }
 
 // Helper to get user from auth header
@@ -153,18 +183,18 @@ export async function POST(request: Request) {
     try {
       switch (mode) {
         case 'idle':
-          response = await handleIdleMode(message, conversationHistory, effectiveKeys);
+          response = await handleIdleMode(message, conversationHistory, effectiveKeys, userKeys);
           break;
         case 'issue_solver':
-          response = await handleIssueSolver(message, conversationHistory, effectiveKeys, metadata);
+          response = await handleIssueSolver(message, conversationHistory, effectiveKeys, metadata, userKeys);
           break;
         case 'file_explainer':
-          const fileResult = await handleFileExplainer(message, conversationHistory, effectiveKeys);
+          const fileResult = await handleFileExplainer(message, conversationHistory, effectiveKeys, userKeys);
           response = fileResult.response;
           fileInfo = fileResult.fileInfo;
           break;
         case 'mentor':
-          response = await handleMentor(message, conversationHistory, effectiveKeys);
+          response = await handleMentor(message, conversationHistory, effectiveKeys, userKeys);
           break;
         default:
           response = 'Mode not recognized. Please select a valid mode.';
@@ -219,7 +249,7 @@ export async function POST(request: Request) {
   }
 }
 
-async function handleIdleMode(message: string, history: unknown[], effectiveKeys: EffectiveKeys): Promise<string> {
+async function handleIdleMode(message: string, history: unknown[], effectiveKeys: EffectiveKeys, userKeys: UserKeysWithProvider): Promise<string> {
   const systemPrompt = `You are OSFIT, an AI assistant for open source developers.
 
 Rules:
@@ -243,14 +273,15 @@ Current mode: General Chat
 - If user shares a file URL, suggest File Explainer mode
 - Keep responses focused and actionable`;
 
-  return await analyzeWithContext(systemPrompt, message, formatHistory(history), effectiveKeys.gemini.key);
+  return await analyzeWithProvider(systemPrompt, message, formatHistory(history), userKeys, effectiveKeys);
 }
 
 async function handleIssueSolver(
   message: string,
   history: unknown[],
   effectiveKeys: EffectiveKeys,
-  metadata?: { currentStep?: string; issueData?: Record<string, unknown> }
+  metadata?: { currentStep?: string; issueData?: Record<string, unknown> },
+  userKeys?: UserKeysWithProvider
 ): Promise<string> {
   const currentStep = metadata?.currentStep || 'issue_input';
   const issueData = metadata?.issueData || {};
@@ -290,7 +321,7 @@ ${issue.body || 'No description'}
 
 Labels: ${issue.labels.join(', ') || 'None'}`;
 
-        const explanation = await analyzeWithContext(explanationPrompt, 'Analyze this issue', context, effectiveKeys.gemini.key);
+        const explanation = await analyzeWithProvider(explanationPrompt, 'Analyze this issue', context, userKeys!, effectiveKeys);
 
         // Return explanation with metadata for frontend to track step
         return JSON.stringify({
@@ -341,7 +372,7 @@ FORMAT:
 Issue: ${issueData.issueTitle || 'Unknown'}
 Previous analysis: ${issueData.explanation || message}`;
 
-    const solutionPlan = await analyzeWithContext(solutionPrompt, 'Create solution plan', context, effectiveKeys.gemini.key);
+    const solutionPlan = await analyzeWithProvider(solutionPrompt, 'Create solution plan', context, userKeys!, effectiveKeys);
 
     return JSON.stringify({
       type: 'solution_plan',
@@ -386,7 +417,7 @@ Git Diff:
 ${message.substring(0, 3000)}
 \`\`\``;
 
-    const prContent = await analyzeWithContext(prPrompt, 'Generate PR', context, effectiveKeys.gemini.key);
+    const prContent = await analyzeWithProvider(prPrompt, 'Generate PR', context, userKeys!, effectiveKeys);
 
     return JSON.stringify({
       type: 'pr_generated',
@@ -413,7 +444,8 @@ interface FileExplainerResult {
 async function handleFileExplainer(
   message: string,
   history: unknown[],
-  effectiveKeys: EffectiveKeys
+  effectiveKeys: EffectiveKeys,
+  userKeys: UserKeysWithProvider
 ): Promise<FileExplainerResult> {
   // Check if message contains a GitHub file URL
   const fileUrlMatch = message.match(/github\.com\/[^\/]+\/[^\/]+\/blob\/[^\s]+/);
@@ -471,7 +503,7 @@ ${file.content.substring(0, 4000)}${file.content.length > 4000 ? '\n... (truncat
 \`\`\`
 `;
 
-      const explanation = await analyzeWithContext(systemPrompt, message, context, effectiveKeys.gemini.key);
+      const explanation = await analyzeWithProvider(systemPrompt, message, context, userKeys, effectiveKeys);
       
       return {
         response: explanation,
@@ -508,7 +540,8 @@ ${file.content.substring(0, 4000)}${file.content.length > 4000 ? '\n... (truncat
 async function handleMentor(
   message: string,
   history: unknown[],
-  effectiveKeys: EffectiveKeys
+  effectiveKeys: EffectiveKeys,
+  userKeys: UserKeysWithProvider
 ): Promise<string> {
   const systemPrompt = `You are OSFIT Open Source Mentor.
 
@@ -542,74 +575,41 @@ WAYS TO CONTRIBUTE (not just code):
 - Documentation: README, tutorials, translations
 - Design: UI/UX improvements, logos, style guides
 - Community: answer questions, organize events
-- Testing: find bugs, write test cases
-- Triage: organize issues, close duplicates
+- Learn from real production code
+- Build real portfolio
+- Network with professionals
+- Give back to tools you use
+- Some companies sponsor contributors
 
-ANATOMY OF A PROJECT:
-- Author: created the project
-- Owner: has admin access
-- Maintainers: drive vision, manage project
-- Contributors: anyone who contributed
-- Key files: LICENSE, README, CONTRIBUTING, CODE_OF_CONDUCT
+HOW TO START:
+1. Pick a project you use and like
+2. Read CONTRIBUTING.md
+3. Look for "good first issue" labels
+4. Start small (docs, typos, tests)
+5. Understand the codebase first
+6. Ask questions in discussions/issues
 
-FINDING PROJECTS:
-- Start with software you already use
-- Look for "good first issue" or "help wanted" labels
-- Use: GitHub Explore, First Timers Only, CodeTriage, Up For Grabs, OpenSauced
-- Check /contribute page (e.g., github.com/facebook/react/contribute)
+BEST PRACTICES:
+- Read all relevant documentation
+- Follow code style and conventions
+- Write clear commit messages
+- One change per pull request
+- Test your changes locally
+- Be responsive to feedback
 
-BEFORE CONTRIBUTING - CHECKLIST:
-- Has a LICENSE file? (required for open source)
-- Recent commits? (active project)
-- Issues get responses? (maintainers engaged)
-- PRs get reviewed and merged?
-- Friendly community? (check issue discussions)
-
-OPENING ISSUES:
-- Report bugs you cannot solve yourself
-- Discuss high-level ideas before implementing
-- Propose new features
-- Check if issue already exists first
-
-OPENING PULL REQUESTS:
-- Small fixes: typos, broken links, obvious errors
-- Work already discussed in an issue
-- Open as draft/WIP early for feedback
-- Reference related issues (e.g., "Closes #37")
-- Include screenshots for UI changes
-- Test your changes
-
-COMMUNICATION BEST PRACTICES:
+COMMUNICATION:
+- Be respectful and professional
 - Give context (what you tried, what happened)
 - Do homework first (search docs, issues, Stack Overflow)
 - Keep requests short and direct
 - Keep communication public (not private DMs)
 - Be patient when asking questions
-- Respect community decisions
-- Assume good intentions
-
-AFTER SUBMITTING:
-- No response? Wait a week, then politely follow up
-- Changes requested? Be responsive, don't abandon
-- Not accepted? Ask for feedback, respect decision, consider forking
-- Accepted? Celebrate and look for next contribution
-
-GIT WORKFLOW FOR CONTRIBUTIONS:
-1. Fork the repository
-2. Clone locally: git clone <your-fork-url>
-3. Add upstream: git remote add upstream <original-repo-url>
-4. Create branch: git checkout -b feature/your-feature
-5. Make changes and commit
-6. Push to your fork: git push origin feature/your-feature
-7. Open Pull Request from your fork to upstream
-8. Respond to review feedback
-9. Get merged!
 
 === END KNOWLEDGE BASE ===
 
 Answer user questions using this knowledge. Be direct and helpful.`;
 
-  return await analyzeWithContext(systemPrompt, message, formatHistory(history), effectiveKeys.gemini.key);
+  return await analyzeWithProvider(systemPrompt, message, formatHistory(history), userKeys, effectiveKeys);
 }
 
 function formatHistory(history: unknown[]): string {

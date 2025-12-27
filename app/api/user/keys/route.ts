@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
   
   const { data, error } = await supabase
     .from('user_api_keys')
-    .select('gemini_key_encrypted, apify_key_encrypted, lingo_key_encrypted')
+    .select('gemini_key_encrypted, apify_key_encrypted, lingo_key_encrypted, groq_key_encrypted, ai_provider')
     .eq('user_id', user.id)
     .single();
   
@@ -51,6 +51,8 @@ export async function GET(request: NextRequest) {
     has_gemini: !!data?.gemini_key_encrypted,
     has_apify: !!data?.apify_key_encrypted,
     has_lingo: !!data?.lingo_key_encrypted,
+    has_groq: !!data?.groq_key_encrypted,
+    ai_provider: data?.ai_provider || 'gemini',
   });
 }
 
@@ -71,7 +73,7 @@ export async function POST(request: NextRequest) {
   }
   
   const body = await request.json();
-  const { gemini_key, apify_key, lingo_key } = body;
+  const { gemini_key, apify_key, lingo_key, groq_key, ai_provider } = body;
   
   // Build update object with only provided keys
   const updateData: Record<string, string | null> = {
@@ -87,6 +89,12 @@ export async function POST(request: NextRequest) {
   }
   if (lingo_key !== undefined) {
     updateData.lingo_key_encrypted = lingo_key ? encryptApiKey(lingo_key) : null;
+  }
+  if (groq_key !== undefined) {
+    updateData.groq_key_encrypted = groq_key ? encryptApiKey(groq_key) : null;
+  }
+  if (ai_provider !== undefined) {
+    updateData.ai_provider = ai_provider;
   }
   
   // Check if user already has a row
@@ -133,7 +141,7 @@ export async function DELETE(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const keyType = searchParams.get('key_type');
   
-  if (!keyType || !['gemini', 'apify', 'lingo'].includes(keyType)) {
+  if (!keyType || !['gemini', 'apify', 'lingo', 'groq'].includes(keyType)) {
     return NextResponse.json({ error: 'Invalid key_type' }, { status: 400 });
   }
   
@@ -159,20 +167,24 @@ export async function getUserApiKeys(userId: string): Promise<{
   gemini_key: string | null;
   apify_key: string | null;
   lingo_key: string | null;
+  groq_key: string | null;
+  ai_provider: 'gemini' | 'groq';
 }> {
   const { data, error } = await supabase
     .from('user_api_keys')
-    .select('gemini_key_encrypted, apify_key_encrypted, lingo_key_encrypted')
+    .select('gemini_key_encrypted, apify_key_encrypted, lingo_key_encrypted, groq_key_encrypted, ai_provider')
     .eq('user_id', userId)
     .single();
   
   if (error || !data) {
-    return { gemini_key: null, apify_key: null, lingo_key: null };
+    return { gemini_key: null, apify_key: null, lingo_key: null, groq_key: null, ai_provider: 'gemini' };
   }
   
   return {
     gemini_key: data.gemini_key_encrypted ? decryptApiKey(data.gemini_key_encrypted) : null,
     apify_key: data.apify_key_encrypted ? decryptApiKey(data.apify_key_encrypted) : null,
     lingo_key: data.lingo_key_encrypted ? decryptApiKey(data.lingo_key_encrypted) : null,
+    groq_key: data.groq_key_encrypted ? decryptApiKey(data.groq_key_encrypted) : null,
+    ai_provider: (data.ai_provider as 'gemini' | 'groq') || 'gemini',
   };
 }
