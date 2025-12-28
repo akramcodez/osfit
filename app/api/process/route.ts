@@ -14,41 +14,39 @@ import { geminiClient, getGeminiClient } from '@/lib/gemini-client';
 const isDevelopment = process.env.NODE_ENV === 'development';
 const forceRealAI = process.env.USE_REAL_AI === 'true';
 
-// System API keys from environment
-const SYSTEM_GEMINI_KEY = process.env.GEMINI_API_KEY || '';
-const SYSTEM_APIFY_KEY = process.env.APIFY_API_KEY || '';
+// Lingo is provided by the app (system key fallback)
 const SYSTEM_LINGO_KEY = process.env.LINGO_API_KEY || '';
-const SYSTEM_GROQ_KEY = process.env.GROQ_API_KEY || '';
 
 // Type for tracking which keys are being used and their source
 interface EffectiveKeys {
-  gemini: { key: string | null; source: 'user' | 'system' | 'none' };
-  apify: { key: string | null; source: 'user' | 'system' | 'none' };
+  gemini: { key: string | null; source: 'user' | 'none' };
+  apify: { key: string | null; source: 'user' | 'none' };
   lingo: { key: string | null; source: 'user' | 'system' | 'none' };
-  groq: { key: string | null; source: 'user' | 'system' | 'none' };
+  groq: { key: string | null; source: 'user' | 'none' };
 }
 
 /**
- * Get effective keys with priority: user keys > system keys
- * Returns which key is being used and its source for proper error handling
+ * Get effective keys
+ * - Gemini/Groq/Apify: User keys only (no system fallback)
+ * - Lingo: App provides system key as fallback
  */
 function getEffectiveKeys(userKeys: { gemini_key: string | null; apify_key: string | null; lingo_key: string | null; groq_key: string | null }): EffectiveKeys {
   return {
     gemini: {
-      key: userKeys.gemini_key || SYSTEM_GEMINI_KEY || null,
-      source: userKeys.gemini_key ? 'user' : (SYSTEM_GEMINI_KEY ? 'system' : 'none')
+      key: userKeys.gemini_key || null,
+      source: userKeys.gemini_key ? 'user' : 'none'
     },
     apify: {
-      key: userKeys.apify_key || SYSTEM_APIFY_KEY || null,
-      source: userKeys.apify_key ? 'user' : (SYSTEM_APIFY_KEY ? 'system' : 'none')
+      key: userKeys.apify_key || null,
+      source: userKeys.apify_key ? 'user' : 'none'
     },
     lingo: {
       key: userKeys.lingo_key || SYSTEM_LINGO_KEY || null,
       source: userKeys.lingo_key ? 'user' : (SYSTEM_LINGO_KEY ? 'system' : 'none')
     },
     groq: {
-      key: userKeys.groq_key || SYSTEM_GROQ_KEY || null,
-      source: userKeys.groq_key ? 'user' : (SYSTEM_GROQ_KEY ? 'system' : 'none')
+      key: userKeys.groq_key || null,
+      source: userKeys.groq_key ? 'user' : 'none'
     }
   };
 }
@@ -133,14 +131,39 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Fetch user's API keys (will use these if available, else system keys)
+    // Fetch user's API keys
     const userKeys = await getUserApiKeys(user.id);
     
-    // Get effective keys with priority: user > system
+    // Get effective keys
     const effectiveKeys = getEffectiveKeys(userKeys);
     
-    // Determine if we should use mock AI
-    // In dev: use mocks UNLESS user has their own keys configured OR USE_REAL_AI is set
+    // Check if user has any AI keys configured
+    const hasAIKey = effectiveKeys.gemini.key || effectiveKeys.groq.key;
+    
+    // If no AI keys in production, return friendly guidance message
+    if (!hasAIKey && !isDevelopment) {
+      return NextResponse.json({ 
+        response: `## Welcome to OSFIT!
+
+To get started, please add your AI API key in **Settings**.
+
+### Quick Setup
+
+1. Click the **gear icon** in the sidebar
+2. Add your **Gemini API Key** (free from Google AI Studio)
+3. Or add your **Groq API Key** (free tier available)
+
+### Get Your Free API Key
+
+- **Gemini**: [ai.google.dev](https://ai.google.dev/) - Free tier available
+- **Groq**: [console.groq.com](https://console.groq.com/) - Free tier available
+
+Once configured, you can analyze files, solve issues, and chat with AI!`,
+        needsApiKey: true 
+      });
+    }
+    
+    // Determine if we should use mock AI (dev mode without keys)
     const USE_MOCK_AI = isDevelopment && !forceRealAI && !userHasKeys(userKeys);
 
     const body = await request.json();

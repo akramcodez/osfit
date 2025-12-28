@@ -42,6 +42,9 @@ interface EffectiveKeys {
   provider: AIProvider;
 }
 
+// Lingo is provided by the app
+const SYSTEM_LINGO_KEY = process.env.LINGO_API_KEY || null;
+
 function getEffectiveKeys(userKeys: { 
   gemini_key: string | null; 
   groq_key: string | null; 
@@ -49,9 +52,9 @@ function getEffectiveKeys(userKeys: {
   ai_provider: string;
 }): EffectiveKeys {
   return {
-    gemini: userKeys.gemini_key || process.env.GEMINI_API_KEY || null,
+    gemini: userKeys.gemini_key || null,
     groq: userKeys.groq_key || null,
-    lingo: userKeys.lingo_key || process.env.LINGO_API_KEY || null,
+    lingo: userKeys.lingo_key || SYSTEM_LINGO_KEY || null,
     provider: (userKeys.ai_provider as AIProvider) || 'gemini',
   };
 }

@@ -10,17 +10,15 @@ const LANGUAGE_NAMES: Record<string, string> = {
 };
 
 interface EffectiveKeys {
-  gemini: { key: string | null; source: 'user' | 'system' | 'none' };
-  groq: { key: string | null; source: 'user' | 'system' | 'none' };
+  gemini: { key: string | null; source: 'user' | 'none' };
+  groq: { key: string | null; source: 'user' | 'none' };
 }
-
-const SYSTEM_GEMINI_KEY = process.env.GEMINI_API_KEY || null;
 
 function getEffectiveKeys(userKeys: { gemini_key: string | null; groq_key: string | null; ai_provider: string }): EffectiveKeys {
   return {
     gemini: {
-      key: userKeys.gemini_key || SYSTEM_GEMINI_KEY || null,
-      source: userKeys.gemini_key ? 'user' : (SYSTEM_GEMINI_KEY ? 'system' : 'none')
+      key: userKeys.gemini_key || null,
+      source: userKeys.gemini_key ? 'user' : 'none'
     },
     groq: {
       key: userKeys.groq_key || null,

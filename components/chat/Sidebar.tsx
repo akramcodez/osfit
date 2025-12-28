@@ -237,13 +237,17 @@ export default function Sidebar({
                 {/* User info - clickable to open settings */}
                 <button 
                   onClick={onShowUserSettings}
-                  className="w-full flex items-center gap-3 px-2 py-2 mb-2 rounded-lg hover:bg-[#2A2A2A] transition-colors cursor-pointer"
+                  className="w-full flex items-center gap-3 px-2 py-2 mb-2 rounded-lg hover:bg-[#2A2A2A] transition-colors cursor-pointer group"
                 >
                   <div className="h-8 w-8 rounded-full bg-[#3ECF8E] flex items-center justify-center text-xs font-bold text-black">
                     {username?.charAt(0).toUpperCase() || 'U'}
                   </div>
                   <div className="flex-1 min-w-0 text-left">
                     <p className="text-sm font-medium text-white truncate">{username}</p>
+                  </div>
+                  {/* Settings badge */}
+                  <div className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#3ECF8E]/10 text-[#3ECF8E] border border-[#3ECF8E]/20 group-hover:bg-[#3ECF8E]/20 transition-colors">
+                    API Keys
                   </div>
                 </button>
                 

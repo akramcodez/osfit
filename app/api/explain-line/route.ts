@@ -4,19 +4,19 @@ import { analyzeWithAI, AIProvider } from '@/lib/ai-client';
 import { getUserApiKeys } from '@/app/api/user/keys/route';
 
 interface EffectiveKeys {
-  gemini: { key: string | null; source: 'user' | 'system' | 'none' };
-  groq: { key: string | null; source: 'user' | 'system' | 'none' };
+  gemini: { key: string | null; source: 'user' | 'none' };
+  groq: { key: string | null; source: 'user' | 'none' };
   lingo: { key: string | null; source: 'user' | 'system' | 'none' };
 }
 
-const SYSTEM_GEMINI_KEY = process.env.GEMINI_API_KEY || null;
+// Lingo is provided by the app
 const SYSTEM_LINGO_KEY = process.env.LINGO_API_KEY || null;
 
 function getEffectiveKeys(userKeys: { gemini_key: string | null; groq_key: string | null; lingo_key: string | null; ai_provider: string }): EffectiveKeys {
   return {
     gemini: {
-      key: userKeys.gemini_key || SYSTEM_GEMINI_KEY || null,
-      source: userKeys.gemini_key ? 'user' : (SYSTEM_GEMINI_KEY ? 'system' : 'none')
+      key: userKeys.gemini_key || null,
+      source: userKeys.gemini_key ? 'user' : 'none'
     },
     groq: {
       key: userKeys.groq_key || null,

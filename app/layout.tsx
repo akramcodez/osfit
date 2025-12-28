@@ -20,7 +20,7 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   metadataBase: new URL("https://osfit.akramcodez.tech"),
   title: {
-    default: "OSFIT - Open Source File Intelligence Tool",
+    default: "OSFIT",
     template: "%s | OSFIT",
   },
   description:
