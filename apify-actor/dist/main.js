@@ -189,7 +189,7 @@ async function generateFlowchart(fileContent, language, targetLanguage = 'en') {
     const systemPrompt = `You are a code visualization expert. Generate a Mermaid.js flowchart that shows how this code file works.
 
 RULES:
-1. USE ONLY mermaid syntax. Start with \`\`\`mermaid and end with \`\`\`
+1. USE ONLY valid mermaid syntax. Start with \`\`\`mermaid and end with \`\`\`
 2. Use top-down direction: flowchart TD
 3. Keep it simple and high-level (max 15-20 nodes)
 4. Focus on data flow and main logic steps
@@ -200,9 +200,17 @@ RULES:
    - [[subroutine]] for function calls
 6. Return ONLY the mermaid code, nothing else
 
+CRITICAL - AVOID SPECIAL CHARACTERS IN LABELS:
+- Do NOT use: @ * / \\ | # < > in node labels
+- Do NOT use arrows like → or ← in labels
+- Use simple text only, no code symbols
+- Use quotes around labels if needed: A["My Label"]
+- Example: Use "Route All" instead of "@/*"
+- Example: Use "Path Pattern" instead of "./*"
+
 IMPORTANT LANGUAGE REQUIREMENT:
-The flowchart syntax (graph TD, -->, etc.) MUST be in English.
-But the LABELS inside nodes (e.g. [Process Data], {Is Valid?}) MUST be in ${targetLangName}.`;
+The flowchart syntax (flowchart TD, -->, etc.) MUST be in English.
+But the LABELS inside nodes MUST be in ${targetLangName}.`;
     const userMessage = `Generate a flowchart for this ${language} file:\n\n${fileContent.substring(0, 3000)}`;
     try {
         const completion = await groq.chat.completions.create({
@@ -220,6 +228,12 @@ But the LABELS inside nodes (e.g. [Process Data], {Is Valid?}) MUST be in ${targ
         if (match) {
             code = match[1].trim();
         }
+        // Sanitize: Remove problematic characters from node labels
+        // Replace arrows in labels with text
+        code = code.replace(/→/g, ' to ');
+        code = code.replace(/←/g, ' from ');
+        // Wrap labels with @ or * or / in quotes to prevent parse errors
+        code = code.replace(/\[([^\]]*[@*\/][^\]]*)\]/g, '["$1"]');
         return code;
     }
     catch (error) {

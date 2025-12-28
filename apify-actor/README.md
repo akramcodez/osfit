@@ -54,6 +54,26 @@ Analyzes a single source code file and provides a technical breakdown with a vis
 }
 ```
 
+### How to Render Flowcharts
+
+The `flowchart` field contains [Mermaid.js](https://mermaid.js.org/) syntax. To visualize it:
+
+| Tool | How to Use |
+|------|------------|
+| **Mermaid Live Editor** | Paste at [mermaid.live](https://mermaid.live) |
+| **GitHub Markdown** | Wrap in ` ```mermaid ` code blocks in `.md` files |
+| **VS Code** | Install "Mermaid" extension |
+| **React/Web Apps** | Use `mermaid` npm package (see below) |
+
+**React Example:**
+```javascript
+import mermaid from 'mermaid';
+
+mermaid.initialize({ theme: 'dark' });
+const { svg } = await mermaid.render('chart-id', flowchartCode);
+// Render svg in your component
+```
+
 ---
 
 ### Mode: Issue Solver (`issue_solver`)

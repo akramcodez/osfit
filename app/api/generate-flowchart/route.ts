@@ -147,6 +147,14 @@ RULES:
 6. Return ONLY the mermaid code, nothing else
 7. IMPORTANT: Write all node labels in ${targetLangName} language
 
+CRITICAL - AVOID SPECIAL CHARACTERS IN LABELS:
+- Do NOT use: @ * / \\ | # < > in node labels
+- Do NOT use arrows like → or ← in labels
+- Use simple text only, no code symbols
+- Use quotes around labels if needed: A["My Label"]
+- Example: Use "Route All" instead of "@/*"
+- Example: Use "Path Pattern" instead of "./*"
+
 EXAMPLE OUTPUT (in English):
 flowchart TD
     A[Start] --> B{Check condition}
@@ -170,10 +178,17 @@ ${fileContent.substring(0, 6000)}
       groqKey: effectiveKeys.groq.key,
     });
 
-    const cleanFlowchart = flowchart
+    let cleanFlowchart = flowchart
       .replace(/```mermaid\n?/g, '')
       .replace(/```\n?/g, '')
       .trim();
+    
+    // Sanitize: Remove problematic characters from node labels
+    // Replace arrows in labels with text
+    cleanFlowchart = cleanFlowchart.replace(/→/g, ' to ');
+    cleanFlowchart = cleanFlowchart.replace(/←/g, ' from ');
+    // Wrap labels with @ or * in quotes to prevent parse errors
+    cleanFlowchart = cleanFlowchart.replace(/\[([^\]]*[@*\/][^\]]*)\]/g, '["$1"]');
 
     if (explanationId) {
       try {
