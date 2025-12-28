@@ -145,20 +145,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ 
         response: `## Welcome to OSFIT!
 
-To get started, please add your AI API key in **Settings**.
+To get started, please add your API keys in **Settings**.
+
+---
 
 ### Quick Setup
 
-1. Click the **gear icon** in the sidebar
-2. Add your **Gemini API Key** (free from Google AI Studio)
-3. Or add your **Groq API Key** (free tier available)
+| Step | Action |
+| :--- | :--- |
+| 1 | Click your **profile avatar** in the sidebar |
+| 2 | Add your **Gemini** or **Groq** API key |
+| 3 | Add your **Apify** API key for GitHub features |
 
-### Get Your Free API Key
+---
 
-- **Gemini**: [ai.google.dev](https://ai.google.dev/) - Free tier available
-- **Groq**: [console.groq.com](https://console.groq.com/) - Free tier available
+### Get Your Free API Keys
 
-Once configured, you can analyze files, solve issues, and chat with AI!`,
+| Service | Link | Notes |
+| :--- | :--- | :--- |
+| **Gemini** | [ai.google.dev](https://ai.google.dev/) | Free tier available |
+| **Groq** | [console.groq.com](https://console.groq.com/) | Free tier available |
+| **Apify** | [apify.com](https://apify.com/) | Free tier for GitHub scraping |
+
+---
+
+> Once configured, you can analyze files, solve issues, and chat with AI!`,
         needsApiKey: true 
       });
     }

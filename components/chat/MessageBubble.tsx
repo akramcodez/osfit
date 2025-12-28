@@ -112,32 +112,68 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
                 rehypePlugins={[rehypeHighlight]}
                 components={{
                   pre: CodeBlock,
-                  table: ({node, ...props}) => (
-                    <div className="overflow-x-auto my-4 rounded-lg border border-[#3E3E3E]">
-                      <table {...props} className="w-full text-left border-collapse" />
+                  code: ({ className, children, ...props }) => {
+                    const isInline = !className;
+                    if (isInline) {
+                      return (
+                        <code className="px-1.5 py-0.5 bg-white/10 rounded text-[#3ECF8E] text-sm" {...props}>
+                          {children}
+                        </code>
+                      );
+                    }
+                    return <code className={className} {...props}>{children}</code>;
+                  },
+                  h1: ({ children }) => (
+                    <h1 className="text-xl font-semibold text-white mb-3 mt-4 first:mt-0 tracking-tight">{children}</h1>
+                  ),
+                  h2: ({ children }) => (
+                    <h2 className="text-lg font-semibold text-white mb-2 mt-4 first:mt-0 tracking-tight">{children}</h2>
+                  ),
+                  h3: ({ children }) => (
+                    <h3 className="text-base font-semibold text-white mb-2 mt-3 first:mt-0">{children}</h3>
+                  ),
+                  p: ({ children }) => (
+                    <p className="text-gray-200 leading-relaxed mb-3">{children}</p>
+                  ),
+                  a: ({ children, href }) => (
+                    <a href={href as string} target="_blank" rel="noopener noreferrer" className="text-[#3ECF8E] hover:underline">{children}</a>
+                  ),
+                  blockquote: ({ children }) => (
+                    <blockquote className="border-l-2 border-[#3ECF8E] pl-3 py-1 text-gray-300 bg-[#0d0d0d]/40 rounded my-3">{children}</blockquote>
+                  ),
+                  hr: () => <hr className="border-[#2a2a2a] my-4" />,
+                  strong: ({ children }) => (
+                    <strong className="font-semibold text-white">{children}</strong>
+                  ),
+                  table: ({ children }) => (
+                    <div className="my-4 overflow-hidden rounded-lg border border-[#2a2a2a]">
+                      <table className="w-full text-left text-sm text-gray-200">{children}</table>
                     </div>
                   ),
-                  thead: ({node, ...props}) => (
-                    <thead {...props} className="bg-[#2A2A2A] text-gray-200 border-b border-[#3E3E3E]" />
+                  thead: ({ children }) => (
+                    <thead className="bg-[#0d0d0d] text-gray-300">{children}</thead>
                   ),
-                  tr: ({node, ...props}) => (
-                    <tr {...props} className="border-b border-[#2A2A2A] last:border-0" />
+                  tbody: ({ children }) => (
+                    <tbody className="bg-[#141414]">{children}</tbody>
                   ),
-                  th: ({node, ...props}) => (
-                    <th {...props} className="px-4 py-3 font-medium text-sm text-white border-r border-[#3E3E3E] last:border-r-0" />
+                  tr: ({ children }) => (
+                    <tr className="border-t border-[#2a2a2a]">{children}</tr>
                   ),
-                  td: ({node, ...props}) => (
-                    <td {...props} className="px-4 py-3 text-sm text-gray-300 border-r border-[#2A2A2A] last:border-r-0" />
+                  th: ({ children }) => (
+                    <th className="px-3 py-2 font-medium">{children}</th>
                   ),
-                  ul: ({node, ...props}) => (
-                    <ul {...props} className="list-disc pl-6 my-4 space-y-1" />
+                  td: ({ children }) => (
+                    <td className="px-3 py-2 align-top">{children}</td>
                   ),
-                  ol: ({node, ...props}) => (
-                    <ol {...props} className="list-decimal pl-6 my-4 space-y-1" />
+                  ul: ({ children }) => (
+                    <ul className="list-disc list-outside ml-6 space-y-1 mb-3">{children}</ul>
                   ),
-                  li: ({node, ...props}) => (
-                    <li {...props} className="pl-1" />
-                  )
+                  ol: ({ children }) => (
+                    <ol className="list-decimal list-outside ml-6 space-y-1 mb-3">{children}</ol>
+                  ),
+                  li: ({ children }) => (
+                    <li className="text-gray-200">{children}</li>
+                  ),
                 }}
               >
                 {displayedContent}
