@@ -54,61 +54,13 @@ const LANGUAGE_NAMES: Record<string, string> = {
 };
 
 // Demo code for testing when no file content is available
-const DEMO_CODE = `// Example: API Client Module
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-
-interface ClientConfig {
-  baseURL: string;
-  timeout?: number;
-  headers?: Record<string, string>;
-}
-
-export function createClient(config: ClientConfig): AxiosInstance {
-  const instance = axios.create({
-    baseURL: config.baseURL,
-    timeout: config.timeout || 10000,
-    headers: {
-      'Content-Type': 'application/json',
-      ...config.headers,
-    },
-  });
-
-  // Request interceptor
-  instance.interceptors.request.use(
-    (config) => {
-      const token = localStorage.getItem('auth_token');
-      if (token) {
-        config.headers.Authorization = \`Bearer \${token}\`;
-      }
-      return config;
-    },
-    (error) => Promise.reject(error)
-  );
-
-  // Response interceptor
-  instance.interceptors.response.use(
-    (response) => response.data,
-    (error) => {
-      if (error.response?.status === 401) {
-        // Handle unauthorized
-        window.location.href = '/login';
-      }
-      return Promise.reject(error);
-    }
-  );
-
-  return instance;
-}
-
-export async function get<T>(url: string, params?: object): Promise<T> {
-  const client = createClient({ baseURL: '/api' });
-  return client.get(url, { params });
-}
-
-export async function post<T>(url: string, data?: object): Promise<T> {
-  const client = createClient({ baseURL: '/api' });
-  return client.post(url, data);
-}`;
+const DEMO_CODE = `// API Key Required
+// 
+// To view file content, please configure your API keys:
+// 1. Click your profile avatar in the sidebar
+// 2. Add your Apify API key
+// 
+// Get your free key at: apify.com`;
 
 export default function FileExplainerCard({ data, isNew = false, onStreamComplete, onDelete, uiLanguage = 'en' }: FileExplainerCardProps) {
   const [isCodeExpanded, setIsCodeExpanded] = useState(true);

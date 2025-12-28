@@ -28,7 +28,9 @@ export default function InteractiveCodeViewer({
     // Try to highlight the full code first for better context
     let highlighted: string;
     try {
-      highlighted = hljs.highlight(code, { language: language || 'plaintext' }).value;
+      // Check if language is registered, fallback to plaintext if not
+      const langToUse = language && hljs.getLanguage(language) ? language : 'plaintext';
+      highlighted = hljs.highlight(code, { language: langToUse }).value;
     } catch {
       highlighted = hljs.highlightAuto(code).value;
     }

@@ -133,7 +133,7 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
                     <h3 className="text-base font-semibold text-white mb-2 mt-3 first:mt-0">{children}</h3>
                   ),
                   p: ({ children }) => (
-                    <p className="text-gray-200 leading-relaxed mb-3">{children}</p>
+                    <p className="text-gray-200 leading-relaxed mb-3 last:mb-0">{children}</p>
                   ),
                   a: ({ children, href }) => (
                     <a href={href as string} target="_blank" rel="noopener noreferrer" className="text-[#3ECF8E] hover:underline">{children}</a>
