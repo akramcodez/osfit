@@ -115,53 +115,29 @@ FORMAT:
 > #[issue_number]`
 };
 
+const WELCOME_MESSAGE = `## Welcome to OSFIT!
+
+To get started, please add your AI API key in **Settings**.
+
+### Quick Setup
+
+1. Click the **API Keys** badge in the sidebar
+2. Add your **Gemini API Key** (free from Google AI Studio)
+3. Or add your **Groq API Key** (free tier available)
+
+### Get Your Free API Key
+
+- **Gemini**: [ai.google.dev](https://ai.google.dev/) - Free tier available
+- **Groq**: [console.groq.com](https://console.groq.com/) - Free tier available
+
+Once configured, you can analyze files, solve issues, and chat with AI!`;
+
 const MOCK_RESPONSES = {
-  explanation: `**PROBLEM**
-
-> This issue reports a bug that needs to be fixed. The user has identified an edge case where the component crashes.
-
-**WHAT TO DO**
-
-> Review the affected code and apply the suggested fix or implement a proper solution.
-
-**DIFFICULTY**
-
-> **Medium**`,
-
-  solution: `**SOLUTION PLAN**
-
-1. **Step 1:** Locate the affected file mentioned in the issue
-2. **Step 2:** Reproduce the bug locally to understand the root cause
-3. **Step 3:** Implement the fix following the suggested approach
-4. **Step 4:** Add unit tests to prevent regression
-5. **Step 5:** Test the fix manually
-
-**FILES TO MODIFY**
-
-- \`src/components/affected-file.ts\`: Fix the edge case handling
-- \`tests/affected-file.test.ts\`: Add regression test`,
-
-  pr: `**PR TITLE**
-
-> \`fix: resolve edge case bug in component\`
-
-**DESCRIPTION**
-
-> This PR fixes the bug reported in the issue. The root cause was improper handling of edge cases. This fix adds proper validation and error handling.
-
-**SOLUTION**
-
-> Added null checks and proper error handling to prevent the crash in edge cases.
-
-**CHANGES**
-
-- \`src/components/affected-file.ts\`: Added null checks
-- \`tests/affected-file.test.ts\`: Added regression tests
-
-**CLOSES**
-
-> #123`
+  explanation: WELCOME_MESSAGE,
+  solution: WELCOME_MESSAGE,
+  pr: WELCOME_MESSAGE
 };
+
 
 async function getAIResponse(
   type: 'explanation' | 'solution' | 'pr',
