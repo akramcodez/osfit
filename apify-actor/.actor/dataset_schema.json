@@ -3,49 +3,97 @@
   "fields": {
     "success": {
       "type": "boolean",
-      "description": "Whether the operation was successful",
-      "label": "Success"
+      "description": "Indicates whether the operation completed successfully. False if an error occurred.",
+      "label": "Success Status"
     },
     "mode": {
       "type": "string",
-      "description": "The operation mode (file_explainer or issue_solver)",
+      "description": "The operation mode used: 'file_explainer' (AI file analysis), 'issue_solver' (AI issue solutions), 'file' (raw file data), or 'issue' (raw issue data)",
       "label": "Mode"
     },
     "explanation": {
       "type": "string",
-      "description": "The AI-generated explanation of the file or issue",
+      "description": "AI-generated technical explanation in Markdown format. Includes file purpose, main functions, logic flow analysis, and code structure breakdown. Language matches the 'language' input parameter.",
       "label": "Explanation (Markdown)"
+    },
+    "issueExplanation": {
+      "type": "string",
+      "description": "AI-generated explanation of the GitHub issue's problem statement, context, and background. Only present in issue_solver mode.",
+      "label": "Issue Explanation"
     },
     "flowchart": {
       "type": "string",
-      "description": "Mermaid.js flowchart code",
-      "label": "Flowchart Code"
+      "description": "Mermaid.js flowchart code visualizing code execution flow and logic paths. Only present when includeFlowchart=true in file_explainer mode. Can be rendered using Mermaid.js renderers.",
+      "label": "Flowchart Code (Mermaid.js)"
     },
     "solutionPlan": {
       "type": "string",
-      "description": "The step-by-step solution plan for the issue",
+      "description": "Step-by-step actionable solution plan in Markdown format for fixing the GitHub issue. Includes specific file changes, code examples, and verification steps. Only present when includeSolutionPlan=true in issue_solver mode.",
       "label": "Solution Plan"
     },
     "file": {
       "type": "object",
-      "description": "Details of the analyzed file",
+      "description": "Metadata and content of the analyzed GitHub file. Present in file_explainer and file modes.",
       "label": "File Details",
       "properties": {
-        "path": { "type": "string", "label": "File Path" },
-        "detectedLanguage": { "type": "string", "label": "Language" },
-        "url": { "type": "string", "label": "URL" }
+        "path": { 
+          "type": "string", 
+          "description": "Relative file path within the repository",
+          "label": "File Path" 
+        },
+        "content": {
+          "type": "string",
+          "description": "Raw source code content of the file",
+          "label": "File Content"
+        },
+        "detectedLanguage": { 
+          "type": "string", 
+          "description": "Programming language detected from file extension (e.g., 'javascript', 'python', 'typescript')",
+          "label": "Language" 
+        },
+        "url": { 
+          "type": "string", 
+          "description": "Full GitHub URL to the file",
+          "label": "GitHub URL" 
+        }
       }
     },
     "issue": {
       "type": "object",
-      "description": "Details of the analyzed issue",
+      "description": "Metadata and content of the analyzed GitHub issue. Present in issue_solver and issue modes.",
       "label": "Issue Details",
       "properties": {
-        "number": { "type": "integer", "label": "#" },
-        "title": { "type": "string", "label": "Title" },
-        "state": { "type": "string", "label": "State" },
-        "url": { "type": "string", "label": "URL" }
+        "number": { 
+          "type": "integer", 
+          "description": "GitHub issue number",
+          "label": "Issue #" 
+        },
+        "title": { 
+          "type": "string", 
+          "description": "Title of the GitHub issue",
+          "label": "Title" 
+        },
+        "state": { 
+          "type": "string", 
+          "description": "Current state of the issue: 'open' or 'closed'",
+          "label": "State" 
+        },
+        "body": {
+          "type": "string",
+          "description": "Full issue description/body text in Markdown format",
+          "label": "Description"
+        },
+        "url": { 
+          "type": "string", 
+          "description": "Full GitHub URL to the issue",
+          "label": "GitHub URL" 
+        }
       }
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message describing what went wrong. Only present when success=false.",
+      "label": "Error Message"
     }
   },
   "views": {

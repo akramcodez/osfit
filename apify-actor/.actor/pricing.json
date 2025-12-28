@@ -1,0 +1,33 @@
+{
+  "pricingModel": "PAY_PER_EVENT",
+  "title": "AI Analysis Events",
+  "description": "Pay only for AI-powered analysis. App integration modes (file/issue) are free.",
+  "events": [
+    {
+      "name": "file_analysis",
+      "displayName": "File Analysis",
+      "price": 0.06,
+      "description": "AI-powered code explanation in 20+ languages with logic flow breakdown"
+    },
+    {
+      "name": "flowchart_generation",
+      "displayName": "Flowchart Generation",
+      "price": 0.04,
+      "description": "Mermaid.js flowchart visualizing code execution paths"
+    },
+    {
+      "name": "issue_explanation",
+      "displayName": "Issue Explanation",
+      "price": 0.04,
+      "description": "AI-powered GitHub issue analysis and context explanation"
+    },
+    {
+      "name": "issue_solution",
+      "displayName": "Issue Solution",
+      "price": 0.10,
+      "description": "AI-powered GitHub issue analysis with step-by-step solution plan"
+    }
+  ],
+  "freeEvents": 0
+}
+

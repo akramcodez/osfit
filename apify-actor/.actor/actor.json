@@ -2,8 +2,10 @@
   "actorSpecification": 1,
   "name": "multilingual-github-scraper",
   "title": "Multilingual GitHub Scraper",
-  "description": "Standalone AI-powered GitHub file explainer and issue solver with multilingual support",
+  "description": "AI-powered GitHub file explainer and issue solver with support for 20+ languages. Get code explanations, flowcharts, and solution plans.",
   "version": "1.0",
+  "pricing": "./pricing.json",
+  "categories": ["AI", "DEVELOPER_TOOLS"],
   "meta": {
     "templateId": "ts-crawlee-cheerio"
   },

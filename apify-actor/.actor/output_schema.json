@@ -1,31 +1,31 @@
 {
-    "actorOutputSchemaVersion": 1,
-    "title": "Multilingual GitHub Scraper Output",
-    "description": "Output links for File Explainer and Issue Solver results.",
-    "properties": {
-        "overview": {
-            "type": "string",
-            "title": "Results Overview",
-            "description": "View key results including success status and mode.",
-            "template": "{{links.apiDefaultDatasetUrl}}/items?view=overview"
-        },
-        "fileAnalysis": {
-            "type": "string",
-            "title": "File Analysis",
-            "description": "View file explanations and flowcharts.",
-            "template": "{{links.apiDefaultDatasetUrl}}/items?view=files"
-        },
-        "issueSolutions": {
-            "type": "string",
-            "title": "Issue Solutions",
-            "description": "View issue analysis and solution plans.",
-            "template": "{{links.apiDefaultDatasetUrl}}/items?view=issues"
-        },
-        "allData": {
-            "type": "string",
-            "title": "Full Dataset",
-            "description": "Access all raw data items.",
-            "template": "{{links.apiDefaultDatasetUrl}}/items"
-        }
+  "actorOutputSchemaVersion": 1,
+  "title": "Multilingual GitHub Scraper Output",
+  "description": "AI-powered analysis results for GitHub files and issues. Returns explanations, flowcharts (Mermaid.js), and solution plans in 20+ languages. Supports four modes: file_explainer (AI file analysis), issue_solver (AI issue solutions), file (raw file data), and issue (raw issue data).",
+  "properties": {
+    "overview": {
+      "type": "string",
+      "title": "📊 Results Overview",
+      "description": "View key analysis results including success status, mode, and summaries",
+      "template": "{{links.apiDefaultDatasetUrl}}/items?view=overview"
+    },
+    "fileAnalysis": {
+      "type": "string",
+      "title": "📁 File Analysis",
+      "description": "View file explanations and flowcharts from file_explainer mode",
+      "template": "{{links.apiDefaultDatasetUrl}}/items?view=files"
+    },
+    "issueSolutions": {
+      "type": "string",
+      "title": "🔧 Issue Solutions",
+      "description": "View issue analysis and solution plans from issue_solver mode",
+      "template": "{{links.apiDefaultDatasetUrl}}/items?view=issues"
+    },
+    "fullDataset": {
+      "type": "string",
+      "title": "💾 Complete Dataset",
+      "description": "Access all raw data items (all modes)",
+      "template": "{{links.apiDefaultDatasetUrl}}/items"
     }
+  }
 }

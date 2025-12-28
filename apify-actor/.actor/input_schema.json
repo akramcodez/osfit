@@ -6,38 +6,47 @@
     "mode": {
       "title": "Mode",
       "type": "string",
-      "description": "Operation mode: file_explainer (explain a file), issue_solver (analyze issue + solution), or legacy types (issue, file)",
-      "enum": ["file_explainer", "issue_solver", "issue", "file"],
+      "description": "Operation mode: file_explainer (AI-powered file analysis), issue_solver (AI-powered issue solution), file (raw file data for app integration), issue (raw issue data for app integration)",
+      "enum": ["file_explainer", "issue_solver", "file", "issue"],
       "default": "file_explainer",
       "editor": "select"
     },
     "url": {
       "title": "GitHub URL",
       "type": "string",
-      "description": "GitHub file URL (for file_explainer/file) or issue URL (for issue_solver/issue)",
-      "editor": "textfield"
+      "description": "GitHub file URL (for file_explainer/file modes) or GitHub issue URL (for issue_solver/issue modes)",
+      "editor": "textfield",
+      "example": "https://github.com/user/repo/blob/main/src/index.ts"
     },
     "language": {
-      "title": "Output Language",
+      "title": "Output Language (AI Modes Only)",
       "type": "string",
-      "description": "Language for the explanation and solution.",
+      "description": "Language for AI-powered explanations and solutions. Only applies to file_explainer and issue_solver modes.",
       "default": "en",
       "editor": "select",
       "enum": ["en", "es", "fr", "de", "bn", "hi", "ar", "ja", "ko", "zh", "ru", "pt", "it", "nl", "tr", "vi", "th", "id", "ms"],
-      "enumTitles": ["English", "Spanish", "French", "German", "Bengali", "Hindi", "Arabic", "Japanese", "Korean", "Chinese", "Russian", "Portuguese", "Italian", "Dutch", "Turkish", "Vietnamese", "Thai", "Indonesian", "Malay"]
+      "enumTitles": ["English", "Spanish", "French", "German", "Bengali", "Hindi", "Arabic", "Japanese", "Korean", "Chinese", "Russian", "Portuguese", "Italian", "Dutch", "Turkish", "Vietnamese", "Thai", "Indonesian", "Malay"],
+      "sectionCaption": "AI-Powered Modes Configuration",
+      "sectionDescription": "These options only apply to file_explainer and issue_solver modes"
     },
     "useLingoTranslation": {
-      "title": "Use Lingo Translation",
+      "title": "Use Lingo.dev Translation",
       "type": "boolean",
-      "description": "If true, uses Lingo for high-quality translation. If false (default), AI responds directly in target language.",
+      "description": "Enable Lingo.dev for professional-grade translation. Requires LINGO_API_KEY environment variable.",
       "default": false
     },
     "includeFlowchart": {
-      "title": "Include Flowchart",
+      "title": "Generate Flowchart (File Explainer Only)",
       "type": "boolean",
-      "description": "If true (default), generates a Mermaid.js flowchart explaining the code.",
+      "description": "Generate a Mermaid.js flowchart visualizing code execution flow. Only applies when mode is 'file_explainer'.",
+      "default": true
+    },
+    "includeSolutionPlan": {
+      "title": "Generate Solution Plan (Issue Solver Only)",
+      "type": "boolean",
+      "description": "Generate step-by-step solution plan for the issue. Only applies when mode is 'issue_solver'.",
       "default": true
     }
   },
-  "required": ["url"]
+  "required": ["mode", "url"]
 }

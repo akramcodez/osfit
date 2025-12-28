@@ -103,9 +103,13 @@ These modes are used by the OSFIT App or other external tools. They perform no A
 ### Mode: File (`file`)
 Specifically designed to fetch the raw content of a file from GitHub for app-side processing.
 
-**Input:**
-- `mode`: "file"
-- `url`: GitHub file URL
+**Example Input JSON:**
+```json
+{
+  "mode": "file",
+  "url": "https://github.com/user/project/blob/main/src/utils.ts"
+}
+```
 
 **Output Example (JSON):**
 ```json
@@ -122,9 +126,13 @@ Specifically designed to fetch the raw content of a file from GitHub for app-sid
 ### Mode: Issue (`issue`)
 Scrapes GitHub issue data into a structured format for app-side AI processing.
 
-**Input:**
-- `mode`: "issue"
-- `url`: GitHub issue URL
+**Example Input JSON:**
+```json
+{
+  "mode": "issue",
+  "url": "https://github.com/user/project/issues/456"
+}
+```
 
 **Output Example (JSON):**
 ```json
@@ -150,8 +158,8 @@ Scrapes GitHub issue data into a structured format for app-side AI processing.
 | `mode` | string | Yes | Operation mode: `file_explainer`, `issue_solver`, `file`, or `issue`. |
 | `url` | string | Yes | The GitHub URL. Must match the mode (File URL for file modes, Issue URL for issue modes). |
 | `language` | string | No | Target language code for AI output (e.g., `en`, `fr`, `hi`). Default: `en`. |
-| `includeFlowchart` | boolean | No | (File Explainer only) If true, generates a Mermaid.js flowchart. Default: `true`. |
-| `includeSolutionPlan` | boolean | No | (Issue Solver only) If true, generates a solution plan. Default: `true`. |
+| `includeFlowchart` | boolean | No | (File Explainer only) If true, generates Mermaid.js flowchart (+$0.04). Default: `true`. |
+| `includeSolutionPlan` | boolean | No | (Issue Solver only) If true, generates solution plan ($0.10 total). If false, only explanation ($0.04). Default: `true`. |
 | `useLingoTranslation` | boolean | No | If true, uses Lingo.dev for professional-grade translation. Default: `false`. |
 
 ---
@@ -162,3 +170,29 @@ This Actor requires the following environment variables. In the hosted version, 
 
 - `GROQ_API_KEY`: Required. API key for Groq (used for AI analysis).
 - `LINGO_API_KEY`: Optional. API key for Lingo.dev (used if `useLingoTranslation` is true).
+
+---
+
+## Pricing
+
+This Actor uses a **pay-per-event** model. You only pay for AI-powered analysis:
+
+| Event | Price | When Charged |
+|-------|-------|--------------|
+| **File Analysis** | $0.06 | When `file_explainer` runs **without** flowchart (`includeFlowchart: false`) |
+| **File Analysis + Flowchart** | $0.10 | When `file_explainer` runs **with** flowchart (`includeFlowchart: true`) |
+| **Issue Explanation** | $0.04 | When `issue_solver` runs **without** solution (`includeSolutionPlan: false`) |
+| **Issue Solution** | $0.10 | When `issue_solver` runs **with** solution (`includeSolutionPlan: true`) |
+
+### Free Modes
+- **`file` mode** (raw data) - FREE
+- **`issue` mode** (raw data) - FREE
+
+### Cost Estimation Examples
+- Analyze 10 files **without** flowcharts: 10 × $0.06 = **$0.60**
+- Analyze 10 files **with** flowcharts: 10 × ($0.06 + $0.04) = **$1.00**
+- Get explanations for 10 issues (no solutions): 10 × $0.04 = **$0.40**
+- Solve 10 issues (with solution plans): 10 × $0.10 = **$1.00**
+- Fetch 100 raw files (app mode): **$0.00** (free)
+
+> **Note**: Platform usage costs (compute units, storage) are waived for pay-per-event Actors.

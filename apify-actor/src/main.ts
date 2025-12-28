@@ -13,6 +13,7 @@ interface Input {
   language?: string;
   useLingoTranslation?: boolean;
   includeFlowchart?: boolean;
+  includeSolutionPlan?: boolean;
 }
 
 interface FileData {
@@ -393,6 +394,13 @@ ${file.content.substring(0, 4000)}
     flowchart = await generateFlowchart(file.content, file.detectedLanguage, language);
   }
 
+  // Record billing events
+  await Actor.charge({ eventName: 'file_analysis', count: 1 });
+
+  if (flowchart) {
+    await Actor.charge({ eventName: 'flowchart_generation', count: 1 });
+  }
+
   return {
     success: true,
     mode: 'file_explainer',
@@ -406,7 +414,8 @@ ${file.content.substring(0, 4000)}
 async function handleIssueSolver(
   url: string,
   language: string,
-  useLingoTranslation: boolean
+  useLingoTranslation: boolean,
+  includeSolutionPlan: boolean
 ): Promise<IssueSolverOutput> {
   console.log(`[Issue Solver] Fetching issue: ${url}`);
   const issue = await fetchGitHubIssue(url);
@@ -477,7 +486,19 @@ ${issue.body || 'No description provided'}`;
   const filesMatch = response.match(/## Files to Modify\n([\s\S]*?)$/);
 
   const issueExplanation = explanationMatch?.[1]?.trim() || response;
-  const solutionPlan = (solutionMatch?.[1] || '') + (filesMatch ? '\n\n## Files to Modify\n' + filesMatch[1] : '');
+  let solutionPlan = '';
+
+  // Only include solution plan in output if requested
+  if (includeSolutionPlan) {
+    solutionPlan = (solutionMatch?.[1] || '') + (filesMatch ? '\n\n## Files to Modify\n' + filesMatch[1] : '');
+    solutionPlan = solutionPlan.trim() || response;
+    
+    // Charge for full solution ($0.10)
+    await Actor.charge({ eventName: 'issue_solution', count: 1 });
+  } else {
+    // Charge only for issue explanation ($0.04)
+    await Actor.charge({ eventName: 'issue_explanation', count: 1 });
+  }
 
   return {
     success: true,
@@ -485,7 +506,7 @@ ${issue.body || 'No description provided'}`;
     issue,
     relatedFiles,
     issueExplanation: issueExplanation.trim(),
-    solutionPlan: solutionPlan.trim() || response,
+    solutionPlan,
   };
 }
 
@@ -512,7 +533,8 @@ async function main(): Promise<void> {
     url, 
     language = 'en', 
     useLingoTranslation = false,
-    includeFlowchart = true // Default to true
+    includeFlowchart = true, // Default to true
+    includeSolutionPlan = true // Default to true
   } = input;
   
   // Determine mode (support both new 'mode' and legacy 'type')
@@ -528,7 +550,7 @@ async function main(): Promise<void> {
       break;
 
     case 'issue_solver':
-      result = await handleIssueSolver(url, language, useLingoTranslation);
+      result = await handleIssueSolver(url, language, useLingoTranslation, includeSolutionPlan);
       break;
 
     case 'issue':
