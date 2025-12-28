@@ -31,6 +31,16 @@
       "description": "Step-by-step actionable solution plan in Markdown format for fixing the GitHub issue. Includes specific file changes, code examples, and verification steps. Only present when includeSolutionPlan=true in issue_solver mode.",
       "label": "Solution Plan"
     },
+    "dataType": {
+      "type": "string",
+      "description": "Output type for raw data modes: 'file' or 'issue'. Only present in file and issue modes.",
+      "label": "Data Type"
+    },
+    "relatedFiles": {
+      "type": "array",
+      "description": "Array of related files referenced in the GitHub issue. Only present in issue_solver mode when files are found in the issue body or comments.",
+      "label": "Related Files"
+    },
     "file": {
       "type": "object",
       "description": "Metadata and content of the analyzed GitHub file. Present in file_explainer and file modes.",
@@ -87,6 +97,16 @@
           "type": "string", 
           "description": "Full GitHub URL to the issue",
           "label": "GitHub URL" 
+        },
+        "labels": {
+          "type": "array",
+          "description": "Labels attached to the issue",
+          "label": "Labels"
+        },
+        "comments": {
+          "type": "array",
+          "description": "Comments on the issue with author, body, and timestamp",
+          "label": "Comments"
         }
       }
     },

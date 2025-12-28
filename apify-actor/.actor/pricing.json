@@ -1,33 +1,56 @@
 {
   "pricingModel": "PAY_PER_EVENT",
   "title": "AI Analysis Events",
-  "description": "Pay only for AI-powered analysis. App integration modes (file/issue) are free.",
+  "description": "Pay only for AI-powered analysis. Raw data fetching modes have minimal cost.",
   "events": [
     {
       "name": "file_analysis",
       "displayName": "File Analysis",
       "price": 0.06,
-      "description": "AI-powered code explanation in 20+ languages with logic flow breakdown"
+      "description": "AI-powered code explanation in 20+ languages"
     },
     {
-      "name": "flowchart_generation",
-      "displayName": "Flowchart Generation",
-      "price": 0.04,
-      "description": "Mermaid.js flowchart visualizing code execution paths"
+      "name": "file_analysis_flowchart_generation",
+      "displayName": "File Analysis with Flowchart",
+      "price": 0.10,
+      "description": "AI-powered code explanation with Mermaid.js flowchart"
+    },
+    {
+      "name": "file_analysis_flowchart_generation_lingo",
+      "displayName": "File Analysis with Flowchart + Lingo",
+      "price": 0.50,
+      "description": "AI-powered code explanation with flowchart and professional Lingo.dev translation"
     },
     {
       "name": "issue_explanation",
       "displayName": "Issue Explanation",
       "price": 0.04,
-      "description": "AI-powered GitHub issue analysis and context explanation"
+      "description": "AI-powered GitHub issue analysis in 20+ languages"
     },
     {
-      "name": "issue_solution",
-      "displayName": "Issue Solution",
+      "name": "issue_explanation_solution_plan",
+      "displayName": "Issue Explanation with Solution",
       "price": 0.10,
       "description": "AI-powered GitHub issue analysis with step-by-step solution plan"
+    },
+    {
+      "name": "issue_explanation_solution_plan_lingo",
+      "displayName": "Issue Explanation with Solution + Lingo",
+      "price": 0.50,
+      "description": "AI-powered issue analysis with solution and professional Lingo.dev translation"
+    },
+    {
+      "name": "file_fetcher",
+      "displayName": "File Fetcher",
+      "price": 0.001,
+      "description": "Fetch raw file content from GitHub"
+    },
+    {
+      "name": "issue_fetcher",
+      "displayName": "Issue Fetcher",
+      "price": 0.001,
+      "description": "Fetch raw issue content from GitHub"
     }
   ],
   "freeEvents": 0
 }
-

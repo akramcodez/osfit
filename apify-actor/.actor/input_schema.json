@@ -24,8 +24,8 @@
       "description": "Language for AI-powered explanations and solutions. Only applies to file_explainer and issue_solver modes.",
       "default": "en",
       "editor": "select",
-      "enum": ["en", "es", "fr", "de", "bn", "hi", "ar", "ja", "ko", "zh", "ru", "pt", "it", "nl", "tr", "vi", "th", "id", "ms"],
-      "enumTitles": ["English", "Spanish", "French", "German", "Bengali", "Hindi", "Arabic", "Japanese", "Korean", "Chinese", "Russian", "Portuguese", "Italian", "Dutch", "Turkish", "Vietnamese", "Thai", "Indonesian", "Malay"],
+      "enum": ["en", "es", "fr", "de", "bn", "hi", "ar", "ja", "ko", "zh", "ru", "pt", "it", "nl", "tr", "vi", "th", "id", "ms", "ta", "te"],
+      "enumTitles": ["English", "Spanish", "French", "German", "Bengali", "Hindi", "Arabic", "Japanese", "Korean", "Chinese", "Russian", "Portuguese", "Italian", "Dutch", "Turkish", "Vietnamese", "Thai", "Indonesian", "Malay", "Tamil", "Telugu"],
       "sectionCaption": "AI-Powered Modes Configuration",
       "sectionDescription": "These options only apply to file_explainer and issue_solver modes"
     },

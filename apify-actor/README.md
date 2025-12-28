@@ -26,7 +26,8 @@ Analyzes a single source code file and provides a technical breakdown with a vis
   "mode": "file_explainer",
   "url": "https://github.com/user/project/blob/main/calculate.js",
   "language": "ja",
-  "includeFlowchart": true
+  "includeFlowchart": true,
+  "useLingoTranslation": false
 }
 ```
 
@@ -64,7 +65,8 @@ Analyzes a GitHub issue, identifies mentioned files, and proposes a fix.
   "mode": "issue_solver",
   "url": "https://github.com/user/project/issues/123",
   "language": "hi",
-  "includeSolutionPlan": true
+  "includeSolutionPlan": true,
+  "useLingoTranslation": false
 }
 ```
 
@@ -115,11 +117,10 @@ Specifically designed to fetch the raw content of a file from GitHub for app-sid
 ```json
 {
   "type": "file",
-  "url": "...",
-  "payload": {
-    "content": "raw file content string...",
-    "language": "typescript"
-  }
+  "path": "src/utils.ts",
+  "content": "raw file content string...",
+  "detectedLanguage": "typescript",
+  "url": "https://github.com/user/project/blob/main/src/utils.ts"
 }
 ```
 
@@ -138,14 +139,13 @@ Scrapes GitHub issue data into a structured format for app-side AI processing.
 ```json
 {
   "type": "issue",
-  "url": "...",
-  "payload": {
-    "title": "Issue Title",
-    "number": "123",
-    "state": "open",
-    "body": "Description text...",
-    "comments": ["HTML list of comments..."]
-  }
+  "title": "Issue Title",
+  "number": 456,
+  "state": "open",
+  "body": "Description text...",
+  "url": "https://github.com/user/project/issues/456",
+  "labels": ["bug", "help wanted"],
+  "comments": []
 }
 ```
 
@@ -175,24 +175,33 @@ This Actor requires the following environment variables. In the hosted version, 
 
 ## Pricing
 
-This Actor uses a **pay-per-event** model. You only pay for AI-powered analysis:
+This Actor uses a **pay-per-event** model. You pay for the specific features you use:
 
-| Event | Price | When Charged |
-|-------|-------|--------------|
-| **File Analysis** | $0.06 | When `file_explainer` runs **without** flowchart (`includeFlowchart: false`) |
-| **File Analysis + Flowchart** | $0.10 | When `file_explainer` runs **with** flowchart (`includeFlowchart: true`) |
-| **Issue Explanation** | $0.04 | When `issue_solver` runs **without** solution (`includeSolutionPlan: false`) |
-| **Issue Solution** | $0.10 | When `issue_solver` runs **with** solution (`includeSolutionPlan: true`) |
+### AI-Powered Analysis
 
-### Free Modes
-- **`file` mode** (raw data) - FREE
-- **`issue` mode** (raw data) - FREE
+| Mode | Features | Price |
+|------|----------|-------|
+| **File Analysis** | Code explanation in 20+ languages | $0.06 |
+| **File Analysis + Flowchart** | Explanation + Mermaid.js diagram | $0.10 |
+| **File Analysis + Flowchart + Lingo** | Above + Lingo.dev translation | $0.50 |
+| **Issue Explanation** | Issue analysis in 20+ languages | $0.04 |
+| **Issue Explanation + Solution** | Analysis + step-by-step fix plan | $0.10 |
+| **Issue Explanation + Solution + Lingo** | Above + Lingo.dev translation | $0.50 |
+
+### Raw Data Fetching
+
+| Mode | Description | Price |
+|------|-------------|-------|
+| **File Fetcher** | Fetch raw file content | $0.001 |
+| **Issue Fetcher** | Fetch raw issue data | $0.001 |
 
 ### Cost Estimation Examples
 - Analyze 10 files **without** flowcharts: 10 × $0.06 = **$0.60**
-- Analyze 10 files **with** flowcharts: 10 × ($0.06 + $0.04) = **$1.00**
+- Analyze 10 files **with** flowcharts: 10 × $0.10 = **$1.00**
+- Analyze 10 files **with** flowcharts + Lingo: 10 × $0.50 = **$5.00**
 - Get explanations for 10 issues (no solutions): 10 × $0.04 = **$0.40**
 - Solve 10 issues (with solution plans): 10 × $0.10 = **$1.00**
-- Fetch 100 raw files (app mode): **$0.00** (free)
+- Fetch 100 raw files: 100 × $0.001 = **$0.10**
 
 > **Note**: Platform usage costs (compute units, storage) are waived for pay-per-event Actors.
+

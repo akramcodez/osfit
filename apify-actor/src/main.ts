@@ -377,8 +377,9 @@ ${file.content.substring(0, 4000)}
 
   console.log('[File Explainer] Analyzing with Groq...');
   let explanation: string;
+  const usedLingo = useLingoTranslation && language !== 'en';
 
-  if (useLingoTranslation && language !== 'en') {
+  if (usedLingo) {
     // Get English response, then translate
     explanation = await analyzeWithGroq(systemPrompt, userMessage, 'en');
     console.log('[File Explainer] Translating with Lingo...');
@@ -394,11 +395,13 @@ ${file.content.substring(0, 4000)}
     flowchart = await generateFlowchart(file.content, file.detectedLanguage, language);
   }
 
-  // Record billing events
-  await Actor.charge({ eventName: 'file_analysis', count: 1 });
-
-  if (flowchart) {
-    await Actor.charge({ eventName: 'flowchart_generation', count: 1 });
+  // Record billing event based on combination of features
+  if (flowchart && usedLingo) {
+    await Actor.charge({ eventName: 'file_analysis_flowchart_generation_lingo', count: 1 });
+  } else if (flowchart) {
+    await Actor.charge({ eventName: 'file_analysis_flowchart_generation', count: 1 });
+  } else {
+    await Actor.charge({ eventName: 'file_analysis', count: 1 });
   }
 
   return {
@@ -471,8 +474,9 @@ ${issue.body || 'No description provided'}`;
 
   console.log('[Issue Solver] Analyzing with Groq...');
   let response: string;
+  const usedLingo = useLingoTranslation && language !== 'en';
 
-  if (useLingoTranslation && language !== 'en') {
+  if (usedLingo) {
     response = await analyzeWithGroq(systemPrompt, userMessage, 'en');
     console.log('[Issue Solver] Translating with Lingo...');
     response = await translateWithLingo(response, language);
@@ -492,11 +496,14 @@ ${issue.body || 'No description provided'}`;
   if (includeSolutionPlan) {
     solutionPlan = (solutionMatch?.[1] || '') + (filesMatch ? '\n\n## Files to Modify\n' + filesMatch[1] : '');
     solutionPlan = solutionPlan.trim() || response;
-    
-    // Charge for full solution ($0.10)
-    await Actor.charge({ eventName: 'issue_solution', count: 1 });
+  }
+
+  // Record billing event based on combination of features
+  if (includeSolutionPlan && usedLingo) {
+    await Actor.charge({ eventName: 'issue_explanation_solution_plan_lingo', count: 1 });
+  } else if (includeSolutionPlan) {
+    await Actor.charge({ eventName: 'issue_explanation_solution_plan', count: 1 });
   } else {
-    // Charge only for issue explanation ($0.04)
     await Actor.charge({ eventName: 'issue_explanation', count: 1 });
   }
 
@@ -554,14 +561,16 @@ async function main(): Promise<void> {
       break;
 
     case 'issue':
-      // Legacy mode - just fetch issue data
+      // Raw data mode - just fetch issue data
       result = { type: 'issue', ...(await handleLegacyIssue(url)) };
+      await Actor.charge({ eventName: 'issue_fetcher', count: 1 });
       break;
 
     case 'file':
-      // Legacy mode - just fetch file data
+      // Raw data mode - just fetch file data
       const fileData = await handleLegacyFile(url);
       result = { type: 'file', ...fileData, language: fileData.detectedLanguage };
+      await Actor.charge({ eventName: 'file_fetcher', count: 1 });
       break;
 
     default:
@@ -575,7 +584,19 @@ async function main(): Promise<void> {
 }
 
 // Run
-main().catch((err: unknown) => {
-  console.error('Actor failed:', err);
-  process.exit(1);
+main().catch(async (err: unknown) => {
+  const errorMessage = err instanceof Error ? err.message : String(err);
+  console.error('Actor failed:', errorMessage);
+  
+  try {
+    // Push structured error to dataset
+    await Actor.pushData({
+      success: false,
+      error: errorMessage,
+    });
+  } catch {
+    // Ignore if pushData fails
+  }
+  
+  await Actor.fail(errorMessage);
 });
