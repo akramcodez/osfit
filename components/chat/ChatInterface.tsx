@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Message, AssistantMode, FileExplanation } from '@/types';
-import { LanguageCode } from '@/lib/translations';
+import { LanguageCode, t } from '@/lib/translations';
 import MessageList from './MessageList';
 import FileExplainerList from './FileExplainerList';
 import IssueSolverBanner from './IssueSolverBanner';
@@ -431,7 +431,7 @@ export default function ChatInterface() {
 
       // Show apify warning if present
       if (responseData.apifyWarning?.show) {
-        setApifyWarning(responseData.apifyWarning.message);
+        setApifyWarning(t('apifyWarning', currentLanguage as LanguageCode));
       }
 
       const aiResponse = responseData.response;
@@ -534,7 +534,7 @@ export default function ChatInterface() {
 
       // Show apify warning if present
       if (responseData.apifyWarning?.show) {
-        setApifyWarning(responseData.apifyWarning.message);
+        setApifyWarning(t('apifyWarning', currentLanguage as LanguageCode));
       }
 
       const aiResponse = responseData.response;
@@ -647,7 +647,7 @@ export default function ChatInterface() {
 
       // Show apify warning if present
       if (data.apifyWarning?.show) {
-        setApifyWarning(data.apifyWarning.message);
+        setApifyWarning(t('apifyWarning', currentLanguage as LanguageCode));
       }
 
       const issue = data.issue;
@@ -710,7 +710,7 @@ export default function ChatInterface() {
 
       // Show apify warning if present
       if (data.apifyWarning?.show) {
-        setApifyWarning(data.apifyWarning.message);
+        setApifyWarning(t('apifyWarning', currentLanguage as LanguageCode));
       }
 
       const issue = data.issue;
@@ -797,7 +797,7 @@ export default function ChatInterface() {
 
       // Show apify warning if present
       if (data.apifyWarning?.show) {
-        setApifyWarning(data.apifyWarning.message);
+        setApifyWarning(t('apifyWarning', currentLanguage as LanguageCode));
       }
 
       const issue = data.issue;

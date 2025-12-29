@@ -19,10 +19,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ 
         data: issue, 
         type: 'issue',
-        apifyWarning: !userApifyKey ? {
-          show: true,
-          message: "You haven't added your own Apify API key. Using basic scraping mode. Add your Apify key in Settings for better reliability."
-        } : undefined
+        apifyWarning: !userApifyKey ? { show: true } : undefined
       });
     } else if (type === 'file') {
       const file = await fetchGitHubFile(url);

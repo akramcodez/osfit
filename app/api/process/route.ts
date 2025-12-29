@@ -242,10 +242,7 @@ To get started, please add your API keys in **Settings**.
     return NextResponse.json({ 
       response, 
       fileInfo,
-      apifyWarning: (mode === 'issue_solver' || mode === 'file_explainer') && !userKeys.apify_key ? {
-        show: true,
-        message: "For better reliability and to avoid rate limits, add your own Apify API key in Settings. Get a free key at apify.com"
-      } : undefined
+      apifyWarning: (mode === 'issue_solver' || mode === 'file_explainer') && !userKeys.apify_key ? { show: true } : undefined
     });
   } catch (error: unknown) {
     console.error('Process error:', error);

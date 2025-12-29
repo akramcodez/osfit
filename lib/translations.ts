@@ -79,6 +79,7 @@ export interface TranslationStrings {
   
   
   error?: string;
+  apifyWarning?: string;
 }
 
 export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
@@ -142,6 +143,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     signInToSave: 'Sign in to save your chats',
     
     error: 'Error',
+    apifyWarning: "You haven't added your own Apify API key. Using basic scraping mode. Add your Apify key in Settings for better reliability.",
   },
   es: {
     newChat: 'Nuevo chat',
@@ -200,6 +202,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     welcomeToOsfit: 'Bienvenido a OSFIT',
     signInToSave: 'Inicia sesión para guardar tus chats',
     error: 'Error',
+    apifyWarning: 'No has añadido tu clave API de Apify. Usando modo de scraping básico. Añade tu clave Apify en Configuración para mayor fiabilidad.',
   },
   fr: {
     newChat: 'Nouveau chat',
@@ -258,6 +261,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     welcomeToOsfit: 'Bienvenue sur OSFIT',
     signInToSave: 'Connectez-vous pour sauvegarder vos chats',
     error: 'Erreur',
+    apifyWarning: "Vous n'avez pas ajouté votre clé API Apify. Utilisation du mode scraping basique. Ajoutez votre clé Apify dans Paramètres pour plus de fiabilité.",
   },
   de: {
     newChat: 'Neuer Chat',
@@ -316,6 +320,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     welcomeToOsfit: 'Willkommen bei OSFIT',
     signInToSave: 'Anmelden um Chats zu speichern',
     error: 'Fehler',
+    apifyWarning: 'Du hast keinen eigenen Apify API-Schlüssel hinzugefügt. Einfacher Scraping-Modus wird verwendet. Füge deinen Apify-Schlüssel in den Einstellungen hinzu für bessere Zuverlässigkeit.',
   },
   hi: {
     newChat: 'नई चैट',
@@ -374,6 +379,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     welcomeToOsfit: 'OSFIT में आपका स्वागत है',
     signInToSave: 'चैट सहेजने के लिए साइन इन करें',
     error: 'त्रुटि',
+    apifyWarning: 'आपने अपनी Apify API कुंजी नहीं जोड़ी है। बेसिक स्क्रैपिंग मोड का उपयोग किया जा रहा है। बेहतर विश्वसनीयता के लिए सेटिंग्स में अपनी Apify कुंजी जोड़ें।',
   },
   zh: {
     newChat: '新对话',
@@ -432,6 +438,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     welcomeToOsfit: '欢迎使用OSFIT',
     signInToSave: '登录以保存聊天记录',
     error: '错误',
+    apifyWarning: '您尚未添加自己的Apify API密钥。正在使用基本抓取模式。请在设置中添加您的Apify密钥以获得更好的可靠性。',
   },
   ja: {
     newChat: '新しいチャット',
@@ -490,6 +497,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     welcomeToOsfit: 'OSFITへようこそ',
     signInToSave: 'チャットを保存するにはログインしてください',
     error: 'エラー',
+    apifyWarning: 'Apify APIキーが追加されていません。基本スクレイピングモードを使用しています。信頼性向上のため設定でApifyキーを追加してください。',
   },
   ko: {
     newChat: '새 대화',
@@ -548,6 +556,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     welcomeToOsfit: 'OSFIT에 오신 것을 환영합니다',
     signInToSave: '채팅을 저장하려면 로그인하세요',
     error: '오류',
+    apifyWarning: 'Apify API 키를 추가하지 않았습니다. 기본 스크래핑 모드를 사용 중입니다. 더 나은 안정성을 위해 설정에서 Apify 키를 추가하세요.',
   },
   pt: {
     newChat: 'Novo chat',
@@ -606,6 +615,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     welcomeToOsfit: 'Bem-vindo ao OSFIT',
     signInToSave: 'Entre para salvar seus chats',
     error: 'Erro',
+    apifyWarning: 'Você não adicionou sua chave API Apify. Usando modo de scraping básico. Adicione sua chave Apify nas Configurações para maior confiabilidade.',
   },
   ru: {
     newChat: 'Новый чат',
@@ -664,6 +674,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     welcomeToOsfit: 'Добро пожаловать в OSFIT',
     signInToSave: 'Войдите, чтобы сохранить чаты',
     error: 'Ошибка',
+    apifyWarning: 'Вы не добавили свой API-ключ Apify. Используется базовый режим парсинга. Добавьте ключ Apify в Настройках для лучшей надежности.',
   },
   ar: {
     newChat: 'محادثة جديدة',
@@ -722,6 +733,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     welcomeToOsfit: 'مرحباً بك في OSFIT',
     signInToSave: 'سجل الدخول لحفظ محادثاتك',
     error: 'خطأ',
+    apifyWarning: 'لم تقم بإضافة مفتاح API الخاص بك لـ Apify. يتم استخدام وضع الاستخراج الأساسي. أضف مفتاح Apify في الإعدادات لمزيد من الموثوقية.',
   },
   bn: {
     newChat: 'নতুন চ্যাট',
@@ -780,6 +792,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     welcomeToOsfit: 'OSFIT-এ স্বাগতম',
     signInToSave: 'চ্যাট সংরক্ষণ করতে সাইন ইন করুন',
     error: 'ত্রুটি',
+    apifyWarning: 'আপনি আপনার নিজস্ব Apify API কী যোগ করেননি। বেসিক স্ক্র্যাপিং মোড ব্যবহার করা হচ্ছে। ভালো নির্ভরযোগ্যতার জন্য সেটিংসে আপনার Apify কী যোগ করুন।',
   },
 };
 
