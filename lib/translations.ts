@@ -1,32 +1,32 @@
-// Full UI Translations for OSFIT
-// Supports all 12 languages from the language selector
+
+
 
 export type LanguageCode = 'en' | 'es' | 'fr' | 'de' | 'hi' | 'zh' | 'ja' | 'ko' | 'pt' | 'ru' | 'ar' | 'bn';
 
 export interface TranslationStrings {
-  // Sidebar
+  
   newChat: string;
   recent: string;
   upgradePlan: string;
   logOut: string;
   newChatLoading: string;
   
-  // Message Input
+  
   messagePlaceholder: string;
   
-  // Mode Selector
+  
   issueSolver: string;
   fileExplainer: string;
   openSourceMentor: string;
   
-  // Language Selector
+  
   language: string;
   
-  // General
+  
   osfit: string;
   disclaimer: string;
   
-  // Welcome Screen
+  
   howCanIHelp: string;
   solveGitHubIssue: string;
   solveGitHubIssueDesc: string;
@@ -34,7 +34,7 @@ export interface TranslationStrings {
   explainCodeFileDesc: string;
   getGuidance: string;
   
-  // Settings Page (optional for backward compatibility)
+  
   backToChat?: string;
   apiKeys?: string;
   apiKeysDescription?: string;
@@ -51,7 +51,7 @@ export interface TranslationStrings {
   groqApiKey?: string;
   groqApiKeyDesc?: string;
   
-  // Auth Dialog
+  
   welcomeBack?: string;
   createAccount?: string;
   enterCredentials?: string;
@@ -64,7 +64,7 @@ export interface TranslationStrings {
   dontHaveAccount?: string;
   alreadyHaveAccount?: string;
   
-  // Auth Errors
+  
   fillAllFields?: string;
   usernameMinLength?: string;
   usernameMaxLength?: string;
@@ -73,11 +73,11 @@ export interface TranslationStrings {
   passwordsDontMatch?: string;
   authFailed?: string;
   
-  // Sidebar Auth
+  
   welcomeToOsfit?: string;
   signInToSave?: string;
   
-  // Error Toast
+  
   error?: string;
 }
 
@@ -101,7 +101,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: 'Explain Code File',
     explainCodeFileDesc: 'Understand complex logic',
     getGuidance: 'Get guidance on contributing',
-    // Settings
+    
     backToChat: 'Back to Chat',
     apiKeys: 'API Keys',
     apiKeysDescription: 'Configure your own API keys to use the app with your personal accounts. Keys are encrypted and stored securely.',
@@ -117,7 +117,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: 'Enables translation features',
     groqApiKey: 'Groq API Key',
     groqApiKeyDesc: 'Powers OSS AI model (GPT-OSS-120B)',
-    // Auth Dialog
+    
     welcomeBack: 'Welcome back',
     createAccount: 'Create account',
     enterCredentials: 'Enter your credentials',
@@ -129,7 +129,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     signUp: 'Sign Up',
     dontHaveAccount: "Don't have an account?",
     alreadyHaveAccount: 'Already have an account?',
-    // Auth Errors
+    
     fillAllFields: 'Please fill in all fields',
     usernameMinLength: 'Username must be at least 3 characters',
     usernameMaxLength: 'Username must be 20 characters or less',
@@ -137,10 +137,10 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     passwordMinLength: 'Password must be at least 6 characters',
     passwordsDontMatch: 'Passwords do not match',
     authFailed: 'Authentication failed',
-    // Sidebar Auth
+    
     welcomeToOsfit: 'Welcome to OSFIT',
     signInToSave: 'Sign in to save your chats',
-    // Error Toast
+    
     error: 'Error',
   },
   es: {
@@ -162,7 +162,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: 'Explicar archivo de código',
     explainCodeFileDesc: 'Entender lógica compleja',
     getGuidance: 'Obtener orientación para contribuir',
-    // Settings
+    
     backToChat: 'Volver al Chat',
     apiKeys: 'Claves API',
     apiKeysDescription: 'Configure sus propias claves API. Las claves están encriptadas.',
@@ -178,7 +178,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: 'Habilita funciones de traducción',
     groqApiKey: 'Clave API de Groq',
     groqApiKeyDesc: 'Potencia el modelo AI OSS (GPT-OSS-120B)',
-    // Auth Dialog
+    
     welcomeBack: 'Bienvenido de nuevo',
     createAccount: 'Crear cuenta',
     enterCredentials: 'Ingresa tus credenciales',
@@ -220,7 +220,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: 'Expliquer un fichier de code',
     explainCodeFileDesc: 'Comprendre la logique complexe',
     getGuidance: 'Obtenir des conseils pour contribuer',
-    // Settings
+    
     backToChat: 'Retour au Chat',
     apiKeys: 'Clés API',
     apiKeysDescription: 'Configurez vos propres clés API. Les clés sont cryptées et stockées en toute sécurité.',
@@ -236,7 +236,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: 'Active les fonctions de traduction',
     groqApiKey: 'Clé API Groq',
     groqApiKeyDesc: 'Alimente le modèle AI OSS (GPT-OSS-120B)',
-    // Auth Dialog
+    
     welcomeBack: 'Bon retour',
     createAccount: 'Créer un compte',
     enterCredentials: 'Entrez vos identifiants',
@@ -278,7 +278,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: 'Code-Datei erklären',
     explainCodeFileDesc: 'Komplexe Logik verstehen',
     getGuidance: 'Orientierung zum Beitragen erhalten',
-    // Settings
+    
     backToChat: 'Zurück zum Chat',
     apiKeys: 'API-Schlüssel',
     apiKeysDescription: 'Konfigurieren Sie Ihre eigenen API-Schlüssel. Die Schlüssel werden verschlüsselt und sicher gespeichert.',
@@ -294,7 +294,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: 'Aktiviert Übersetzungsfunktionen',
     groqApiKey: 'Groq API-Schlüssel',
     groqApiKeyDesc: 'Betreibt das OSS-AI-Modell (GPT-OSS-120B)',
-    // Auth Dialog
+    
     welcomeBack: 'Willkommen zurück',
     createAccount: 'Konto erstellen',
     enterCredentials: 'Anmeldedaten eingeben',
@@ -336,7 +336,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: 'कोड फ़ाइल समझाएं',
     explainCodeFileDesc: 'जटिल तर्क समझें',
     getGuidance: 'योगदान के लिए मार्गदर्शन प्राप्त करें',
-    // Settings
+    
     backToChat: 'चैट पर वापस जाएं',
     apiKeys: 'API कुंजी',
     apiKeysDescription: 'ऐप को अपने व्यक्तिगत खातों के साथ उपयोग करने के लिए अपनी API कुंजी कॉन्फ़िगर करें।',
@@ -352,7 +352,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: 'अनुवाद सुविधाएं सक्षम करता है',
     groqApiKey: 'Groq API कुंजी',
     groqApiKeyDesc: 'OSS AI मॉडल (GPT-OSS-120B) को सक्षम करता है',
-    // Auth Dialog
+    
     welcomeBack: 'वापस स्वागत है',
     createAccount: 'खाता बनाएं',
     enterCredentials: 'अपने क्रेडेंशियल दर्ज करें',
@@ -394,7 +394,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: '解释代码文件',
     explainCodeFileDesc: '理解复杂逻辑',
     getGuidance: '获取贡献指导',
-    // Settings
+    
     backToChat: '返回聊天',
     apiKeys: 'API 密钥',
     apiKeysDescription: '配置您自己的 API 密钥。密钥已加密并安全存储。',
@@ -410,7 +410,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: '启用翻译功能',
     groqApiKey: 'Groq API 密钥',
     groqApiKeyDesc: '驱动 OSS AI 模型 (GPT-OSS-120B)',
-    // Auth Dialog
+    
     welcomeBack: '欢迎回来',
     createAccount: '创建账户',
     enterCredentials: '输入您的凭据',
@@ -452,7 +452,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: 'コードファイルを説明',
     explainCodeFileDesc: '複雑なロジックを理解',
     getGuidance: '貢献のガイダンスを取得',
-    // Settings
+    
     backToChat: 'チャットに戻る',
     apiKeys: 'APIキー',
     apiKeysDescription: '独自のAPIキーを設定してください。キーは暗号化され安全に保存されます。',
@@ -468,7 +468,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: '翻訳機能を有効化',
     groqApiKey: 'Groq APIキー',
     groqApiKeyDesc: 'OSS AIモデル (GPT-OSS-120B) を実行',
-    // Auth Dialog
+    
     welcomeBack: 'おかえりなさい',
     createAccount: 'アカウント作成',
     enterCredentials: '認証情報を入力',
@@ -510,7 +510,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: '코드 파일 설명',
     explainCodeFileDesc: '복잡한 로직 이해',
     getGuidance: '기여 가이드 받기',
-    // Settings
+    
     backToChat: '채팅으로 돌아가기',
     apiKeys: 'API 키',
     apiKeysDescription: 'API 키를 구성하세요. 키는 암호화되어 안전하게 저장됩니다.',
@@ -526,7 +526,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: '번역 기능 활성화',
     groqApiKey: 'Groq API 키',
     groqApiKeyDesc: 'OSS AI 모델 (GPT-OSS-120B) 지원',
-    // Auth Dialog
+    
     welcomeBack: '다시 오신 것을 환영합니다',
     createAccount: '계정 만들기',
     enterCredentials: '자격 증명을 입력하세요',
@@ -568,7 +568,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: 'Explicar arquivo de código',
     explainCodeFileDesc: 'Entender lógica complexa',
     getGuidance: 'Obter orientação para contribuir',
-    // Settings
+    
     backToChat: 'Voltar ao Chat',
     apiKeys: 'Chaves API',
     apiKeysDescription: 'Configure suas próprias chaves API. As chaves são criptografadas e armazenadas com segurança.',
@@ -584,7 +584,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: 'Habilita recursos de tradução',
     groqApiKey: 'Chave API Groq',
     groqApiKeyDesc: 'Alimenta o modelo AI OSS (GPT-OSS-120B)',
-    // Auth Dialog
+    
     welcomeBack: 'Bem-vindo de volta',
     createAccount: 'Criar conta',
     enterCredentials: 'Digite suas credenciais',
@@ -626,7 +626,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: 'Объяснить файл кода',
     explainCodeFileDesc: 'Понять сложную логику',
     getGuidance: 'Получить руководство по вкладу',
-    // Settings
+    
     backToChat: 'Вернуться в чат',
     apiKeys: 'API ключи',
     apiKeysDescription: 'Настройте свои API-ключи. Ключи зашифрованы и хранятся безопасно.',
@@ -642,7 +642,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: 'Включает функции перевода',
     groqApiKey: 'API-ключ Groq',
     groqApiKeyDesc: 'Обеспечивает модель OSS AI (GPT-OSS-120B)',
-    // Auth Dialog
+    
     welcomeBack: 'С возвращением',
     createAccount: 'Создать аккаунт',
     enterCredentials: 'Введите учетные данные',
@@ -684,7 +684,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: 'شرح ملف الكود',
     explainCodeFileDesc: 'فهم المنطق المعقد',
     getGuidance: 'الحصول على إرشاداт للمساهمة',
-    // Settings
+    
     backToChat: 'العودة إلى الدردشة',
     apiKeys: 'مفاتيح API',
     apiKeysDescription: 'قم بتكوين مفاتيح API الخاصة بك. يتم تشفير المفاتيح وتخزينها بشكل آمن.',
@@ -700,7 +700,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: 'يفعل ميزات الترجمة',
     groqApiKey: 'مفتاح API لـ Groq',
     groqApiKeyDesc: 'يشغل نموذج AI OSS (GPT-OSS-120B)',
-    // Auth Dialog
+    
     welcomeBack: 'مرحباً بعودتك',
     createAccount: 'إنشاء حساب',
     enterCredentials: 'أدخل بيانات الاعتماد',
@@ -742,7 +742,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     explainCodeFile: 'কোড ফাইল ব্যাখ্যা করুন',
     explainCodeFileDesc: 'জটিল যুক্তি বুঝুন',
     getGuidance: 'অবদানের জন্য নির্দেশনা নিন',
-    // Settings
+    
     backToChat: 'চ্যাটে ফিরে যান',
     apiKeys: 'API কী',
     apiKeysDescription: 'আপনার নিজের API কী কনফিগার করুন। কীগুলি এনক্রিপ্ট করা আছে।',
@@ -758,7 +758,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: 'অনুবাদ বৈশিষ্ট্য সক্ষম করে',
     groqApiKey: 'Groq API কী',
     groqApiKeyDesc: 'OSS AI মডেল (GPT-OSS-120B) চালায়',
-    // Auth Dialog
+    
     welcomeBack: 'স্বাগতম',
     createAccount: 'অ্যাকাউন্ট তৈরি করুন',
     enterCredentials: 'আপনার শংসাপত্র লিখুন',
@@ -783,12 +783,12 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
   },
 };
 
-// Helper function to get a translation
+
 export function t(key: keyof TranslationStrings, lang: LanguageCode = 'en'): string {
   return TRANSLATIONS[lang]?.[key] || TRANSLATIONS.en[key] || key;
 }
 
-// Speech Recognition Language Codes
+
 export const SPEECH_LANG_CODES: Record<LanguageCode, string> = {
   en: 'en-US',
   es: 'es-ES',

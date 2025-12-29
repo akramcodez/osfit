@@ -1,20 +1,14 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Default client using system API key
+
 export const geminiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-/**
- * Create a Gemini client with a specific API key
- * Used when user has their own key configured
- */
+
 export function createGeminiClient(apiKey: string): GoogleGenerativeAI {
   return new GoogleGenerativeAI(apiKey);
 }
 
-/**
- * Get the appropriate Gemini client
- * Uses user key if provided, falls back to system key
- */
+
 export function getGeminiClient(userApiKey?: string | null): GoogleGenerativeAI {
   if (userApiKey) {
     return createGeminiClient(userApiKey);

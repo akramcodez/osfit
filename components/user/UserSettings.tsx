@@ -39,20 +39,16 @@ export default function UserSettings({ user, username, onBack, language, onLangu
   const [savingKey, setSavingKey] = useState<KeyType | null>(null);
   const [deletingKey, setDeletingKey] = useState<KeyType | null>(null);
   
-  // Input values
   const [geminiKey, setGeminiKey] = useState('');
   const [apifyKey, setApifyKey] = useState('');
   const [groqKey, setGroqKey] = useState('');
   
-  // Visibility toggles
   const [showGemini, setShowGemini] = useState(false);
   const [showApify, setShowApify] = useState(false);
   const [showGroq, setShowGroq] = useState(false);
   
-  // AI Provider selection
   const [selectedProvider, setSelectedProvider] = useState<'gemini' | 'groq'>('gemini');
   
-  // Success/error messages
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
@@ -99,7 +95,6 @@ export default function UserSettings({ user, username, onBack, language, onLangu
       
       setMessage({ type: 'success', text: 'API key saved successfully' });
       
-      // Clear input and refresh status
       if (keyType === 'gemini') setGeminiKey('');
       if (keyType === 'apify') setApifyKey('');
       if (keyType === 'groq') setGroqKey('');
@@ -172,22 +167,18 @@ export default function UserSettings({ user, username, onBack, language, onLangu
     },
   ];
 
-  // Filter to show only the selected AI provider's key (Gemini OR Groq), plus Apify
-  // Order: AI Key first, then Apify
   const filteredKeyConfigs = [
-    // First: the selected AI provider's key
     ...keyConfigs.filter(config => 
       (config.type === 'gemini' && selectedProvider === 'gemini') ||
       (config.type === 'groq' && selectedProvider === 'groq')
     ),
-    // Then: Apify
     ...keyConfigs.filter(config => config.type === 'apify'),
   ];
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="h-8 w-8 border-2 border-white/20 border-t-[#3ECF8E] rounded-full animate-spin" />
+        <div className="h-8 w-8 border-2 border-white/20 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
@@ -198,10 +189,9 @@ export default function UserSettings({ user, username, onBack, language, onLangu
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
-      className="flex flex-col h-full bg-[#1C1C1C]"
+      className="flex flex-col h-full bg-background"
     >
-      {/* Header */}
-      <div className="h-14 flex items-center justify-between px-4 border-b border-[#2A2A2A]">
+      <div className="h-14 flex items-center justify-between px-4 border-b border-border-subtle">
         <Button
           variant="ghost"
           size="sm"
@@ -218,10 +208,8 @@ export default function UserSettings({ user, username, onBack, language, onLangu
         />
       </div>
 
-      {/* Content */}
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-2xl mx-auto">
-          {/* Profile Section */}
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -229,7 +217,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
             className="mb-8"
           >
             <div className="flex items-center gap-4 mb-4">
-              <div className="h-16 w-16 rounded-full bg-[#3ECF8E] flex items-center justify-center text-2xl font-bold text-black">
+              <div className="h-16 w-16 rounded-full bg-primary flex items-center justify-center text-2xl font-bold text-black">
                 {username.charAt(0).toUpperCase()}
               </div>
               <div>
@@ -239,7 +227,6 @@ export default function UserSettings({ user, username, onBack, language, onLangu
             </div>
           </motion.div>
 
-          {/* Message */}
           {message && (
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
@@ -255,7 +242,6 @@ export default function UserSettings({ user, username, onBack, language, onLangu
             </motion.div>
           )}
 
-          {/* API Keys Section */}
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -263,7 +249,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
             className="space-y-6"
           >
             <div className="flex items-center gap-2 mb-4">
-              <Key className="h-5 w-5 text-[#3ECF8E]" />
+              <Key className="h-5 w-5 text-primary" />
               <h2 className="text-lg font-medium text-white">{t('apiKeys', language)}</h2>
             </div>
             
@@ -271,8 +257,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
               {t('apiKeysDescription', language)}
             </p>
 
-            {/* AI Provider Selector */}
-            <div className="p-4 bg-[#161616] rounded-lg border border-[#2A2A2A] mb-6">
+            <div className="p-4 bg-surface-2 rounded-lg border border-border-subtle mb-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-medium text-white">AI Provider</h3>
@@ -316,7 +301,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 + index * 0.1 }}
-                className="p-4 bg-[#161616] rounded-lg border border-[#2A2A2A]"
+                className="p-4 bg-surface-2 rounded-lg border border-border-subtle"
               >
                 <div className="flex items-center justify-between mb-2">
                   <div>
@@ -338,7 +323,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
                       href={config.docsUrl} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-gray-500 hover:text-[#3ECF8E] transition-colors"
+                      className="text-gray-500 hover:text-primary transition-colors"
                     >
                       <ExternalLink className="h-4 w-4" />
                     </a>
@@ -352,7 +337,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
                       placeholder={t('enterApiKey', language)}
                       value={config.value}
                       onChange={(e) => config.setValue(e.target.value)}
-                      className="pr-10 bg-[#1C1C1C] border-[#2A2A2A] text-white placeholder:text-gray-600"
+                      className="pr-10 bg-background border-border-subtle text-white placeholder:text-gray-600"
                     />
                     <button
                       onClick={() => config.setShow(!config.show)}
@@ -364,7 +349,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
                   <Button
                     onClick={() => saveKey(config.type, config.value)}
                     disabled={savingKey === config.type || !config.value.trim()}
-                    className="bg-[#3ECF8E] hover:bg-[#35b87d] text-black"
+                    className="bg-primary hover:bg-primary/90 text-black"
                   >
                     {savingKey === config.type ? (
                       <div className="h-4 w-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />

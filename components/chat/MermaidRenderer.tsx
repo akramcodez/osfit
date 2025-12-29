@@ -8,7 +8,6 @@ interface MermaidRendererProps {
   className?: string;
 }
 
-// Initialize mermaid only once
 let mermaidInitialized = false;
 
 export default function MermaidRenderer({ chart, className = '' }: MermaidRendererProps) {
@@ -26,36 +25,33 @@ export default function MermaidRenderer({ chart, className = '' }: MermaidRender
       }
 
       try {
-        // Initialize mermaid only once
-        if (!mermaidInitialized) {
-          mermaid.initialize({
-            startOnLoad: false,
-            theme: 'dark',
-            themeVariables: {
-              primaryColor: '#3ECF8E',
-              primaryTextColor: '#fff',
-              primaryBorderColor: '#3ECF8E',
-              lineColor: '#666',
-              secondaryColor: '#2a2a2a',
-              tertiaryColor: '#1a1a1a',
-              background: '#0d0d0d',
-              mainBkg: '#1a1a1a',
-              nodeBorder: '#3ECF8E',
-            },
-            flowchart: {
-              htmlLabels: true,
-              curve: 'linear',
-            },
-          });
-          mermaidInitialized = true;
-        }
+        const style = getComputedStyle(document.documentElement);
+        const getVar = (name: string, fallback: string) => style.getPropertyValue(name).trim() || fallback;
 
-        // Clean up the chart code
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: 'dark',
+          themeVariables: {
+            primaryColor: getVar('--color-brand', '#3ECF8E'),
+            primaryTextColor: '#fff',
+            primaryBorderColor: getVar('--color-brand', '#3ECF8E'),
+            lineColor: '#666',
+            secondaryColor: getVar('--color-secondary', '#2A2A2A'),
+            tertiaryColor: getVar('--color-surface-1', '#1A1A1A'),
+            background: getVar('--color-surface-3', '#0A0A0A'),
+            mainBkg: getVar('--color-surface-1', '#1A1A1A'),
+            nodeBorder: getVar('--color-brand', '#3ECF8E'),
+          },
+          flowchart: {
+            htmlLabels: true,
+            curve: 'linear',
+          },
+        });
+
         const cleanChart = chart
           .replace(/```mermaid\n?/g, '')
           .replace(/```\n?/g, '')
           .trim();
-
 
         if (!cleanChart) {
           setError('Empty chart content');
@@ -63,10 +59,8 @@ export default function MermaidRenderer({ chart, className = '' }: MermaidRender
           return;
         }
 
-        // Generate unique ID
         const id = `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         
-        // Render the chart
         const { svg: renderedSvg } = await mermaid.render(id, cleanChart);
         
         setSvg(renderedSvg);
@@ -92,7 +86,7 @@ export default function MermaidRenderer({ chart, className = '' }: MermaidRender
         <p className="text-red-400 mb-4">⚠️ {error}</p>
         <details className="text-left">
           <summary className="text-gray-500 text-xs cursor-pointer">Show raw chart</summary>
-          <pre className="mt-2 text-xs bg-[#0d0d0d] p-4 rounded-lg overflow-auto max-h-40 text-gray-400">
+          <pre className="mt-2 text-xs bg-surface-3 p-4 rounded-lg overflow-auto max-h-40 text-gray-400">
             {chart}
           </pre>
         </details>
@@ -103,7 +97,7 @@ export default function MermaidRenderer({ chart, className = '' }: MermaidRender
   if (isLoading || !svg) {
     return (
       <div className={`flex items-center justify-center py-8 ${className}`}>
-        <div className="h-6 w-6 border-2 border-white/20 border-t-[#3ECF8E] rounded-full animate-spin" />
+        <div className="h-6 w-6 border-2 border-white/20 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }

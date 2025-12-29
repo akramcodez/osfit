@@ -1,11 +1,6 @@
 #!/usr/bin/env ts-node
-/**
- * Test script for REAL Gemini API responses (not mock)
- * Run with: npx ts-node scripts/test-gemini-real.ts
- * 
- * ⚠️ This will make real API calls to Gemini and consume API quota!
- */
-// Make this file a module
+
+
 export {};
 
 const BASE_URL = 'http://localhost:3000';
@@ -20,7 +15,7 @@ interface TestResult {
 
 const results: TestResult[] = [];
 
-// Sample TypeScript code for testing
+
 const SAMPLE_CODE = `import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -62,7 +57,7 @@ async function testRealLineExplanation(lineNumber: number): Promise<TestResult> 
         fullFileContent: SAMPLE_CODE,
         language: 'typescript',
         filePath: 'app/api/users/route.ts',
-        useMockData: false // Use REAL Gemini API
+        useMockData: false 
       })
     });
 
@@ -84,7 +79,7 @@ async function testRealLineExplanation(lineNumber: number): Promise<TestResult> 
       };
     }
 
-    // Validate the explanation is meaningful
+    
     const explanation = data.explanation;
     const hasContent = explanation.length > 50;
     const isMock = data.mock === true;
@@ -128,7 +123,7 @@ async function testRealFlowchart(): Promise<TestResult> {
         fileContent: SAMPLE_CODE,
         language: 'typescript',
         filePath: 'app/api/users/route.ts',
-        useMockData: false // Use REAL Gemini API
+        useMockData: false 
       })
     });
 
@@ -162,7 +157,7 @@ async function testRealFlowchart(): Promise<TestResult> {
       };
     }
 
-    // Validate Mermaid syntax
+    
     const hasFlowchartDecl = flowchart.includes('flowchart') || flowchart.includes('graph');
     const hasNodes = flowchart.includes('[') && flowchart.includes(']');
     const hasConnections = flowchart.includes('-->');
@@ -190,17 +185,17 @@ async function runTests() {
   console.log('⚠️  This will consume API quota!\n');
   console.log('=' .repeat(60));
 
-  // Test line explanations for key lines
-  results.push(await testRealLineExplanation(1));   // import statement
-  results.push(await testRealLineExplanation(4));   // async function
-  results.push(await testRealLineExplanation(10));  // supabase query
-  results.push(await testRealLineExplanation(15));  // error handling
-  results.push(await testRealLineExplanation(19));  // return statement
+  
+  results.push(await testRealLineExplanation(1));   
+  results.push(await testRealLineExplanation(4));   
+  results.push(await testRealLineExplanation(10));  
+  results.push(await testRealLineExplanation(15));  
+  results.push(await testRealLineExplanation(19));  
 
-  // Test flowchart generation
+  
   results.push(await testRealFlowchart());
 
-  // Print summary
+  
   console.log('\n' + '=' .repeat(60));
   console.log('\n📊 REAL API Test Results:\n');
   

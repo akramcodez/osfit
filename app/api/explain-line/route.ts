@@ -9,7 +9,7 @@ interface EffectiveKeys {
   lingo: { key: string | null; source: 'user' | 'system' | 'none' };
 }
 
-// Lingo is provided by the app
+
 const SYSTEM_LINGO_KEY = process.env.LINGO_API_KEY || null;
 
 function getEffectiveKeys(userKeys: { gemini_key: string | null; groq_key: string | null; lingo_key: string | null; ai_provider: string }): EffectiveKeys {
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
     const useMock = useMockData === true || !hasAIKey;
     
     if (useMock) {
-      // Return mock explanation in English (no translation for mocks)
+      
       const explanation = `**Line ${lineNumber}: \`${(lineContent || '').trim()}\`**
 
 This line ${getLineExplanation(lineContent || '', lineNumber)}.
@@ -114,7 +114,7 @@ LANGUAGE: ${codeLang || 'unknown'}`;
 
     const userMessage = `Explain line ${lineNumber}:\n\n\`\`\`${codeLang || 'code'}\n${contextWithLineNumbers}\n\`\`\``;
 
-    // AI generates directly in target language via targetLanguage parameter
+    
     const explanation = await analyzeWithAI(systemPrompt, userMessage, undefined, {
       provider,
       geminiKey: effectiveKeys.gemini.key,

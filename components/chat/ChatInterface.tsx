@@ -17,7 +17,6 @@ import UserSettings from '@/components/user/UserSettings';
 import { supabase, onAuthStateChange, getUsername, getSession } from '@/lib/supabase-auth';
 import { User } from '@supabase/supabase-js';
 
-// Service names for error messages
 const SERVICE_NAMES: Record<string, Record<string, string>> = {
   gemini: {
     en: 'Gemini AI', es: 'Gemini AI', fr: 'Gemini AI', de: 'Gemini AI',
@@ -41,7 +40,6 @@ const SERVICE_NAMES: Record<string, Record<string, string>> = {
   }
 };
 
-// Parse API error response - handles both structured and unstructured errors
 interface ApiErrorResponse {
   error: string;
   errorType?: 'api_key_error';
@@ -50,12 +48,10 @@ interface ApiErrorResponse {
 }
 
 function parseApiErrorResponse(response: ApiErrorResponse, language: string = 'en'): string {
-  // If it's a structured API key error
   if (response.errorType === 'api_key_error' && response.service && response.source) {
     const serviceName = SERVICE_NAMES[response.service]?.[language] || response.service;
     
     if (response.source === 'system') {
-      // System key exhausted - user needs to add their own key
       const messages: Record<string, string> = {
         en: `App free credits for ${serviceName} are exhausted. Please add your own API key in Settings.`,
         es: `Los créditos gratuitos de ${serviceName} se agotaron. Por favor agregue su propia clave API en Configuración.`,
@@ -72,7 +68,6 @@ function parseApiErrorResponse(response: ApiErrorResponse, language: string = 'e
       };
       return messages[language] || messages.en;
     } else {
-      // User's own key exhausted
       const messages: Record<string, string> = {
         en: `Your ${serviceName} API key credits are exhausted. Please check your key or billing.`,
         es: `Los créditos de su clave API de ${serviceName} se agotaron. Revise su clave o facturación.`,
@@ -91,15 +86,12 @@ function parseApiErrorResponse(response: ApiErrorResponse, language: string = 'e
     }
   }
   
-  // Fallback to simple error parsing for non-structured errors
   return parseSimpleError(response.error, language);
 }
 
-// Parse simple string errors (fallback)
 function parseSimpleError(error: string, language: string = 'en'): string {
   const errorLower = error.toLowerCase();
   
-  // Quota/Rate limit errors
   if (errorLower.includes('quota') || errorLower.includes('rate limit') || errorLower.includes('429') || errorLower.includes('too many requests')) {
     const messages: Record<string, string> = {
       en: 'API quota exceeded. Please check your API key billing or try again later.',
@@ -118,7 +110,6 @@ function parseSimpleError(error: string, language: string = 'en'): string {
     return messages[language] || messages.en;
   }
   
-  // Invalid API key
   if (errorLower.includes('invalid') && errorLower.includes('key') || errorLower.includes('401') || errorLower.includes('unauthorized')) {
     const messages: Record<string, string> = {
       en: 'Invalid API key. Please check your API key in Settings.',
@@ -137,7 +128,6 @@ function parseSimpleError(error: string, language: string = 'en'): string {
     return messages[language] || messages.en;
   }
   
-  // Network errors
   if (errorLower.includes('network') || errorLower.includes('fetch') || errorLower.includes('connection')) {
     const messages: Record<string, string> = {
       en: 'Network error. Please check your connection and try again.',
@@ -156,7 +146,6 @@ function parseSimpleError(error: string, language: string = 'en'): string {
     return messages[language] || messages.en;
   }
   
-  // Default - truncate long error messages
   if (error.length > 100) {
     return error.substring(0, 100) + '...';
   }
@@ -188,7 +177,6 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [fileExplanations, setFileExplanations] = useState<FileExplanation[]>([]);
   const [currentMode, setCurrentMode] = useState<AssistantMode>('mentor');
-  // Load language from localStorage on init, default to 'en'
   const [currentLanguage, setCurrentLanguage] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('osfit-language') || 'en';
@@ -197,23 +185,20 @@ export default function ChatInterface() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isSessionLoading, setIsSessionLoading] = useState(false);
-  const [apiError, setApiError] = useState<string>(''); // API errors - shown inline above input
-  const [sessionError, setSessionError] = useState<string>(''); // Session errors - shown as toast
+  const [apiError, setApiError] = useState<string>('');
+  const [sessionError, setSessionError] = useState<string>('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [refreshSidebarTrigger, setRefreshSidebarTrigger] = useState(0);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   
-  // Issue Solver step tracking
   const [issueSolverStep, setIssueSolverStep] = useState<string>('issue_input');
   const [issueSolverData, setIssueSolverData] = useState<Record<string, unknown>>({});
   const [currentIssueId, setCurrentIssueId] = useState<string | null>(null);
 
-  // Persist language to localStorage and database when it changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('osfit-language', currentLanguage);
       
-      // Also save to database for cross-device sync (if user is logged in)
       if (user) {
         supabase.auth.getSession().then(({ data: { session } }) => {
           if (session?.access_token) {
@@ -231,14 +216,12 @@ export default function ChatInterface() {
     }
   }, [currentLanguage, user]);
 
-  // Check auth state on mount
   useEffect(() => {
     const checkAuth = async () => {
       const { session } = await getSession();
       setUser(session?.user || null);
       setIsAuthLoading(false);
       
-      // Load language from database if user is logged in
       if (session?.user && session?.access_token) {
         try {
           const res = await fetch('/api/user/keys', {
@@ -256,14 +239,11 @@ export default function ChatInterface() {
     };
     checkAuth();
 
-    // Listen for auth changes
     const { data: { subscription } } = onAuthStateChange(async (authUser) => {
       setUser(authUser);
       if (authUser) {
-        // User just logged in, refresh sessions and load language
         setRefreshSidebarTrigger(prev => prev + 1);
         
-        // Load language from database on login
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.access_token) {
@@ -285,13 +265,9 @@ export default function ChatInterface() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // No longer auto-create session on login - wait until first message
-  // This prevents creating empty sessions
-
   const initSession = async (firstMessage: string, mode: AssistantMode): Promise<string | null> => {
     if (!user) return null;
     
-    // Generate title from first message
     let title = '';
     if (mode === 'file_explainer') {
       const fileMatch = firstMessage.match(/github\.com\/[^\/]+\/[^\/]+\/blob\/[^\/]+\/(.+)/);
@@ -342,7 +318,7 @@ export default function ChatInterface() {
     setSessionId(existingSessionId);
     setMessages([]);
     setFileExplanations([]);
-    setShowUserSettings(false); // Close settings when loading a chat
+    setShowUserSettings(false);
     await loadMessages(existingSessionId, currentMode);
   };
 
@@ -371,7 +347,6 @@ export default function ChatInterface() {
   };
 
   const handleSendMessage = async (content: string) => {
-    // If not authenticated, show auth dialog and save pending message
     if (!user) {
       setPendingMessage(content);
       setShowAuthDialog(true);
@@ -381,7 +356,6 @@ export default function ChatInterface() {
     let activeSessionId: string | null = sessionId;
     
     if (!activeSessionId) {
-      // Create session with title from first message
       activeSessionId = await initSession(content, currentMode);
       if (!activeSessionId) {
         setApiError('Failed to create session. Please try again.');
@@ -389,7 +363,6 @@ export default function ChatInterface() {
       }
     }
     
-    // Handle based on current mode
     if (currentMode === 'mentor') {
       await handleMentorMessage(content, activeSessionId);
     } else if (currentMode === 'file_explainer') {
@@ -399,7 +372,6 @@ export default function ChatInterface() {
     }
   };
 
-  // Handle Mentor mode messages
   const handleMentorMessage = async (content: string, activeSessionId: string) => {
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -418,7 +390,6 @@ export default function ChatInterface() {
       const { data: { session } } = await supabase.auth.getSession();
       const authHeader = { 'Authorization': `Bearer ${session?.access_token}` };
       
-      // Save user message to messages table
       const chatRes = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeader },
@@ -469,7 +440,6 @@ export default function ChatInterface() {
       setStreamingMessageId(assistantMessage.id);
       setMessages(prev => [...prev, assistantMessage]);
       
-      // Save assistant message to messages table
       await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeader },
@@ -492,15 +462,12 @@ export default function ChatInterface() {
     }
   };
 
-  // Handle File Explainer mode messages
   const handleFileExplainerMessage = async (content: string, activeSessionId: string) => {
-    // Validate input - must be a GitHub file URL (contains /blob/)
     const trimmedContent = content.trim();
     const isGitHubUrl = trimmedContent.includes('github.com');
     const isFileUrl = trimmedContent.includes('/blob/');
     const isFolderUrl = trimmedContent.includes('/tree/');
     
-    // Validation checks
     if (!isGitHubUrl) {
       setApiError('Please enter a valid GitHub file URL (e.g., github.com/owner/repo/blob/main/file.js)');
       return;
@@ -516,7 +483,6 @@ export default function ChatInterface() {
       return;
     }
 
-    // Show temporary loading state in UI (not saved to DB)
     const tempUserEntry: FileExplanation = {
       id: 'temp-' + Date.now().toString(),
       session_id: activeSessionId,
@@ -554,7 +520,6 @@ export default function ChatInterface() {
       
       if (responseData.error) {
         setApiError(parseApiErrorResponse(responseData, currentLanguage));
-        // Remove temp user entry on error
         setFileExplanations(prev => prev.filter(fe => fe.id !== tempUserEntry.id));
         return;
       }
@@ -562,7 +527,6 @@ export default function ChatInterface() {
       const aiResponse = responseData.response;
       const fileInfo = responseData.fileInfo || {};
 
-      // Remove temp user entry and add the complete assistant entry
       const assistantEntry: FileExplanation = {
         id: Date.now().toString(),
         session_id: activeSessionId,
@@ -577,10 +541,8 @@ export default function ChatInterface() {
       };
 
       setStreamingMessageId(assistantEntry.id);
-      // Replace temp entry with real assistant entry
       setFileExplanations(prev => prev.filter(fe => fe.id !== tempUserEntry.id).concat(assistantEntry));
       
-      // Save only the assistant entry to file_explanations table and get the database ID
       const saveResponse = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeader },
@@ -599,7 +561,6 @@ export default function ChatInterface() {
       
       const { message: savedEntry } = await saveResponse.json();
       
-      // Update with the database ID
       if (savedEntry?.id) {
         setFileExplanations(prev => 
           prev.map(fe => fe.id === assistantEntry.id ? { ...fe, id: savedEntry.id } : fe)
@@ -611,20 +572,16 @@ export default function ChatInterface() {
       console.error('Error processing:', err);
       const errorMessage = err instanceof Error ? err.message : 'Error processing request';
       setApiError(parseSimpleError(errorMessage, currentLanguage));
-      // Remove temp user entry on error
       setFileExplanations(prev => prev.filter(fe => !fe.id.startsWith('temp-')));
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle Issue Solver mode - initial issue URL submission
   const handleIssueSolverMessage = async (content: string, activeSessionId: string) => {
-    // Check if content is a GitHub issue URL
     const issueUrlMatch = content.match(/github\.com\/[^\/]+\/[^\/]+\/issues\/\d+/);
     
     if (!issueUrlMatch) {
-      // Not a valid issue URL, show guide message as local message
       const guideMessage: Message = {
         id: Date.now().toString(),
         session_id: activeSessionId,
@@ -645,7 +602,6 @@ export default function ChatInterface() {
     setIsLoading(true);
     setApiError('');
 
-    // Optimistically add user message to chat for instant feedback
     const userMessage: Message = {
       id: Date.now().toString(),
       session_id: activeSessionId,
@@ -659,7 +615,6 @@ export default function ChatInterface() {
       const { data: { session } } = await supabase.auth.getSession();
       const authHeader = { 'Authorization': `Bearer ${session?.access_token}` };
 
-      // Call new issue-solver API to create row and analyze
       const response = await fetch('/api/issue-solver', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeader },
@@ -677,7 +632,6 @@ export default function ChatInterface() {
         return;
       }
 
-      // Update state with issue data
       const issue = data.issue;
       setCurrentIssueId(issue.id);
       setIssueSolverStep(issue.current_step);
@@ -688,7 +642,6 @@ export default function ChatInterface() {
         explanation: issue.explanation
       });
 
-      // Show explanation as assistant message
       const assistantMessage: Message = {
         id: issue.id,
         session_id: activeSessionId,
@@ -710,7 +663,6 @@ export default function ChatInterface() {
     }
   };
 
-  // Handler for "Yes" button - generate solution plan
   const handleIssueSolverYes = async () => {
     if (!currentIssueId) return;
     
@@ -742,7 +694,6 @@ export default function ChatInterface() {
       setIssueSolverStep(issue.current_step);
       setIssueSolverData(prev => ({ ...prev, solutionPlan: issue.solution_plan }));
 
-      // Show solution plan as new message
       const solutionMessage: Message = {
         id: Date.now().toString(),
         session_id: sessionId,
@@ -763,14 +714,12 @@ export default function ChatInterface() {
     }
   };
 
-  // Handler for "No" or "Discard" - complete without continuing
   const handleIssueSolverNo = async () => {
     await handleIssueSolverDiscard();
   };
 
   const handleIssueSolverDiscard = async () => {
     if (!currentIssueId) {
-      // Just reset if no issue
       resetIssueSolver();
       return;
     }
@@ -795,7 +744,6 @@ export default function ChatInterface() {
     resetIssueSolver();
   };
 
-  // Handler for git diff submission - generate PR
   const handleIssueSolverSubmitDiff = async (gitDiff: string) => {
     if (!currentIssueId) return;
 
@@ -826,12 +774,11 @@ export default function ChatInterface() {
 
       const issue = data.issue;
 
-      // Show PR content as final message
       const prMessage: Message = {
         id: Date.now().toString(),
         session_id: sessionId,
         role: 'assistant',
-        content: `## 🎉 PR Ready!\n\n${issue.pr_solution}`,
+        content: `## PR Ready!\n\n${issue.pr_solution}`,
         metadata: { step: 'completed' },
         created_at: new Date().toISOString()
       };
@@ -839,7 +786,6 @@ export default function ChatInterface() {
       setStreamingMessageId(prMessage.id);
       setMessages(prev => [...prev, prMessage]);
       
-      // Reset for next issue
       resetIssueSolver();
 
     } catch (err: unknown) {
@@ -850,7 +796,6 @@ export default function ChatInterface() {
     }
   };
 
-  // Reset issue solver state
   const resetIssueSolver = () => {
     setCurrentIssueId(null);
     setIssueSolverStep('issue_input');
@@ -858,7 +803,6 @@ export default function ChatInterface() {
   };
 
   const handleAuthSuccess = () => {
-    // If there was a pending message, send it after auth
     if (pendingMessage) {
       setTimeout(() => {
         handleSendMessage(pendingMessage);
@@ -867,12 +811,10 @@ export default function ChatInterface() {
     }
   };
 
-  // Handle mode change - reload data from correct table
   const handleModeChange = async (mode: AssistantMode) => {
     setCurrentMode(mode);
     setApiError('');
     
-    // If we have a session, load data for the new mode
     if (sessionId) {
       await loadMessages(sessionId, mode);
     }
@@ -898,7 +840,6 @@ export default function ChatInterface() {
       const result = await response.json();
 
       if (response.ok) {
-        // Remove from local state
         setFileExplanations(prev => prev.filter(fe => fe.id !== id));
       } else {
         console.error('Failed to delete explanation:', result);
@@ -914,7 +855,6 @@ export default function ChatInterface() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
-      // Delete session from database
       const response = await fetch('/api/session', {
         method: 'DELETE',
         headers: {
@@ -925,13 +865,11 @@ export default function ChatInterface() {
       });
 
       if (response.ok) {
-        // If we deleted the current session, reset to new chat state
         if (id === sessionId) {
           setSessionId('');
           setMessages([]);
           setFileExplanations([]);
         }
-        // Refresh sidebar
         setRefreshSidebarTrigger(prev => prev + 1);
       } else {
         const result = await response.json();
@@ -952,17 +890,16 @@ export default function ChatInterface() {
     setFileExplanations([]);
   };
 
-  // Show loading while checking auth
   if (isAuthLoading) {
     return (
-      <div className="flex w-full h-screen bg-[#1C1C1C] items-center justify-center">
-        <div className="h-8 w-8 border-2 border-white/20 border-t-[#3ECF8E] rounded-full animate-spin" />
+      <div className="flex w-full h-screen bg-background items-center justify-center">
+        <div className="h-8 w-8 border-2 border-white/20 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="flex w-full h-screen bg-[#1C1C1C] text-white overflow-hidden font-sans">
+    <div className="flex w-full h-screen bg-background text-white overflow-hidden font-sans">
       {sessionError && <ErrorToast message={sessionError} onClose={() => setSessionError('')} />}
       
       <AuthDialog 
@@ -975,7 +912,6 @@ export default function ChatInterface() {
       
       <Sidebar 
         onNewChat={() => {
-          // Just reset UI state - don't create session until first message
           setSessionId('');
           setMessages([]);
           setFileExplanations([]);
@@ -1019,8 +955,7 @@ export default function ChatInterface() {
               transition={{ duration: 0.2, ease: 'easeOut' }}
               className="flex flex-col h-full"
             >
-              {/* Top Header */}
-              <div className="h-14 flex items-center justify-between px-4 fixed top-0 left-0 right-0 md:static z-20 bg-[#1C1C1C] md:bg-transparent">
+              <div className="h-14 flex items-center justify-between px-4 fixed top-0 left-0 right-0 md:static z-20 bg-background md:bg-transparent">
                    {!isSidebarOpen && <div className="w-8"></div>} 
                    
                    <div className="flex-1 flex justify-start pl-4 md:pl-0">
@@ -1043,7 +978,6 @@ export default function ChatInterface() {
                    </div> 
               </div>
 
-              {/* Main Content Area */}
               <div className="flex-1 relative w-full h-full flex flex-col">
                   
                   <div className="absolute inset-0 pb-32">
@@ -1073,9 +1007,8 @@ export default function ChatInterface() {
                       )}
                   </div>
 
-                  {/* Issue Solver Banner - shows step prompts, replaces input when visible */}
                   {currentMode === 'issue_solver' && (issueSolverStep === 'solution_step' || issueSolverStep === 'pr_context') ? (
-                    <div className="absolute bottom-0 left-0 right-0 w-full flex justify-center p-4 bg-gradient-to-t from-[#1C1C1C] from-50% via-[#1C1C1C]/80 to-transparent pt-20 pb-6 z-10">
+                    <div className="absolute bottom-0 left-0 right-0 w-full flex justify-center p-4 bg-gradient-to-t from-background from-50% via-background/80 to-transparent pt-20 pb-6 z-10">
                       <div className="w-full max-w-3xl">
                         <IssueSolverBanner
                           currentStep={issueSolverStep}
@@ -1091,7 +1024,7 @@ export default function ChatInterface() {
                       </div>
                     </div>
                   ) : (
-                    <div className="absolute bottom-0 left-0 right-0 w-full flex justify-center p-4 bg-gradient-to-t from-[#1C1C1C] from-50% via-[#1C1C1C]/80 to-transparent pt-20 pb-6 z-10">
+                    <div className="absolute bottom-0 left-0 right-0 w-full flex justify-center p-4 bg-gradient-to-t from-background from-50% via-background/80 to-transparent pt-20 pb-6 z-10">
                       <MessageInput 
                         onSend={handleSendMessage} 
                         disabled={isLoading} 

@@ -21,21 +21,17 @@ export default function InteractiveCodeViewer({
 }: InteractiveCodeViewerProps) {
   const [hoveredLine, setHoveredLine] = useState<number | null>(null);
 
-  // Split code into lines and highlight
   const highlightedLines = useMemo(() => {
     const lines = code.split('\n');
     
-    // Try to highlight the full code first for better context
     let highlighted: string;
     try {
-      // Check if language is registered, fallback to plaintext if not
       const langToUse = language && hljs.getLanguage(language) ? language : 'plaintext';
       highlighted = hljs.highlight(code, { language: langToUse }).value;
     } catch {
       highlighted = hljs.highlightAuto(code).value;
     }
     
-    // Split highlighted code by newlines while preserving HTML
     const highlightedLines = highlighted.split('\n');
     
     return lines.map((rawLine, index) => ({
@@ -65,7 +61,7 @@ export default function InteractiveCodeViewer({
                 className={`
                   group cursor-pointer transition-colors duration-150
                   ${isSelected 
-                    ? 'bg-[#3ECF8E]/20 border-l-2 border-[#3ECF8E]' 
+                    ? 'bg-primary/20 border-l-2 border-primary' 
                     : isHovered 
                       ? 'bg-white/5' 
                       : 'hover:bg-white/5'
@@ -76,12 +72,11 @@ export default function InteractiveCodeViewer({
                 onMouseEnter={() => setHoveredLine(line.number)}
                 onMouseLeave={() => setHoveredLine(null)}
               >
-                {/* Line number */}
                 <td 
                   className={`
                     w-12 px-3 py-0.5 text-right select-none
                     ${isSelected 
-                      ? 'text-[#3ECF8E] font-semibold' 
+                      ? 'text-primary font-semibold' 
                       : 'text-gray-500 group-hover:text-gray-400'
                     }
                   `}
@@ -89,7 +84,6 @@ export default function InteractiveCodeViewer({
                   {line.number}
                 </td>
                 
-                {/* Code content */}
                 <td className="px-4 py-0.5 whitespace-pre">
                   <code 
                     className="hljs"
@@ -97,7 +91,6 @@ export default function InteractiveCodeViewer({
                   />
                 </td>
                 
-                {/* Click indicator on hover */}
                 <td className="w-8 px-2">
                   {(isHovered && !isSelected && !isLoading) && (
                     <span className="text-[10px] text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -105,7 +98,7 @@ export default function InteractiveCodeViewer({
                     </span>
                   )}
                   {isSelected && (
-                    <span className="text-[#3ECF8E] text-xs">◀</span>
+                    <span className="text-primary text-xs">◀</span>
                   )}
                 </td>
               </tr>
@@ -114,7 +107,6 @@ export default function InteractiveCodeViewer({
         </tbody>
       </table>
       
-      {/* Empty state for very short files */}
       {highlightedLines.length === 0 && (
         <div className="text-gray-500 text-center py-8">
           No code to display

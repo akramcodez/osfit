@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 
-// Helper to get user from auth header
+
 async function getUserFromRequest(request: Request) {
   const authHeader = request.headers.get('Authorization');
   if (!authHeader?.startsWith('Bearer ')) {
@@ -21,7 +21,7 @@ async function getUserFromRequest(request: Request) {
   return user;
 }
 
-// Get Supabase client with service role for DB operations
+
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   const supabase = getSupabase();
   const sessionToken = uuidv4();
   
-  // Get mode and title from request body
+  
   let mode = 'mentor';
   let title = null;
   try {
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     mode = body.mode || 'mentor';
     title = body.title || null;
   } catch {
-    // No body provided, use defaults
+    
   }
   
   const { data, error } = await supabase
@@ -78,7 +78,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const sessionToken = searchParams.get('token');
 
-  // If token is provided, return specific session (must belong to user)
+  
   if (sessionToken) {
     const { data, error } = await supabase
       .from('chat_sessions')
@@ -94,7 +94,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ session: data });
   }
 
-  // Otherwise list user's recent sessions
+  
   const { data: sessions, error } = await supabase
     .from('chat_sessions')
     .select('id, title, mode, created_at')
@@ -123,7 +123,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: 'No session ID provided' }, { status: 400 });
   }
 
-  // Verify user owns this session
+  
   const { data: session, error: fetchError } = await supabase
     .from('chat_sessions')
     .select('id')
@@ -135,12 +135,12 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: 'Session not found' }, { status: 404 });
   }
 
-  // Delete associated messages first (foreign key constraint)
+  
   await supabase.from('messages').delete().eq('session_id', id);
   await supabase.from('file_explanations').delete().eq('session_id', id);
-  // await supabase.from('issue_solutions').delete().eq('session_id', id);
+  
 
-  // Delete the session
+  
   const { error: deleteError } = await supabase
     .from('chat_sessions')
     .delete()

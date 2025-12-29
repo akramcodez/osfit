@@ -1,9 +1,4 @@
-/**
- * Production Flow Test Script
- * Tests both Mentor (messages) and File Explainer modes
- * 
- * Run: npx ts-node --skip-project scripts/test-prod-flow.ts
- */
+
 
 import * as dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
@@ -12,14 +7,14 @@ import { dirname, resolve } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load .env.local from project root
+
 dotenv.config({ path: resolve(__dirname, '..', '.env.local') });
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const GEMINI_KEY = process.env.GEMINI_API_KEY!;
 
-// Colors for console output
+
 const colors = {
   reset: '\x1b[0m',
   green: '\x1b[32m',
@@ -39,9 +34,9 @@ function log(type: 'pass' | 'fail' | 'info' | 'section', message: string) {
   console.log(`${prefix[type]} ${message}`);
 }
 
-// ============================================
-// SUPABASE HELPERS
-// ============================================
+
+
+
 
 function generateUUID(): string {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
@@ -71,9 +66,9 @@ async function supabaseQuery<T = any>(endpoint: string, options: RequestInit = {
   return response.json() as Promise<T>;
 }
 
-// ============================================
-// TEST 1: MENTOR MODE (messages table)
-// ============================================
+
+
+
 
 async function testMentorMode() {
   log('section', 'Testing MENTOR MODE (messages table)');
@@ -81,7 +76,7 @@ async function testMentorMode() {
   const testSessionId = generateUUID();
   
   try {
-    // 0. Get an existing user from the database
+    
     log('info', 'Fetching existing user for test...');
     const profiles = await supabaseQuery<any[]>('profiles?limit=1');
     
@@ -93,7 +88,7 @@ async function testMentorMode() {
     const testUserId = profiles[0].id;
     log('pass', `Using existing user: ${testUserId.substring(0, 8)}...`);
     
-    // 1. Create a test session
+    
     log('info', 'Creating test session...');
     const [session] = await supabaseQuery('chat_sessions', {
       method: 'POST',
@@ -107,7 +102,7 @@ async function testMentorMode() {
     });
     log('pass', `Session created: ${session.id}`);
     
-    // 2. Simulate user message
+    
     log('info', 'Saving user message...');
     const userContent = 'How do I contribute to open source?';
     const [userMsg] = await supabaseQuery('messages', {
@@ -120,14 +115,14 @@ async function testMentorMode() {
       }),
     });
     
-    // Verify user message
+    
     if (userMsg.role === 'user' && userMsg.content === userContent) {
       log('pass', 'User message saved correctly');
     } else {
       log('fail', 'User message mismatch');
     }
     
-    // 3. Generate AI response using Gemini
+    
     log('info', 'Generating AI response via Gemini...');
     const aiResponse = await generateGeminiResponse(
       'You are an open source mentor. Be concise.',
@@ -140,7 +135,7 @@ async function testMentorMode() {
       log('fail', 'AI response too short or empty');
     }
     
-    // 4. Check markdown format in AI response
+    
     log('info', 'Checking markdown format...');
     const hasMarkdown = checkMarkdownFormat(aiResponse);
     if (hasMarkdown) {
@@ -149,7 +144,7 @@ async function testMentorMode() {
       log('info', 'Response may lack markdown (depends on AI)');
     }
     
-    // 5. Save AI response
+    
     log('info', 'Saving assistant message...');
     const [assistantMsg] = await supabaseQuery('messages', {
       method: 'POST',
@@ -161,14 +156,14 @@ async function testMentorMode() {
       }),
     });
     
-    // Verify assistant message
+    
     if (assistantMsg.role === 'assistant' && assistantMsg.metadata?.language === 'en') {
       log('pass', 'Assistant message saved with metadata');
     } else {
       log('fail', 'Assistant message metadata mismatch');
     }
     
-    // 6. Verify both messages in DB
+    
     log('info', 'Verifying messages in database...');
     const messages = await supabaseQuery(
       `messages?session_id=eq.${testSessionId}&order=created_at.asc`
@@ -182,7 +177,7 @@ async function testMentorMode() {
       log('fail', `Expected 2 messages, found ${messages.length}`);
     }
     
-    // Cleanup
+    
     await cleanupTestData(testSessionId);
     log('pass', 'Test data cleaned up');
     
@@ -194,9 +189,9 @@ async function testMentorMode() {
   }
 }
 
-// ============================================
-// TEST 2: FILE EXPLAINER MODE
-// ============================================
+
+
+
 
 async function testFileExplainerMode() {
   log('section', 'Testing FILE EXPLAINER MODE (file_explanations table)');
@@ -205,7 +200,7 @@ async function testFileExplainerMode() {
   const testFileUrl = 'https://github.com/vercel/next.js/blob/canary/packages/next/src/shared/lib/constants.ts';
   
   try {
-    // 0. Get an existing user from the database
+    
     log('info', 'Fetching existing user for test...');
     const profiles = await supabaseQuery<any[]>('profiles?limit=1');
     
@@ -217,7 +212,7 @@ async function testFileExplainerMode() {
     const testUserId = profiles[0].id;
     log('pass', `Using existing user: ${testUserId.substring(0, 8)}...`);
     
-    // 1. Create a test session
+    
     log('info', 'Creating test session...');
     const [session] = await supabaseQuery('chat_sessions', {
       method: 'POST',
@@ -231,7 +226,7 @@ async function testFileExplainerMode() {
     });
     log('pass', `Session created: ${session.id}`);
     
-    // 2. Test URL validation
+    
     log('info', 'Testing URL validation...');
     const validationTests = [
       { url: 'hello world', valid: false, reason: 'not github url' },
@@ -249,7 +244,7 @@ async function testFileExplainerMode() {
       }
     }
     
-    // 3. Fetch file content (testing Apify/direct fetch)
+    
     log('info', `Fetching file content from GitHub...`);
     const fileData = await fetchGitHubFile(testFileUrl);
     
@@ -271,7 +266,7 @@ async function testFileExplainerMode() {
       log('fail', 'Language not detected');
     }
     
-    // 4. Generate explanation via Gemini
+    
     log('info', 'Generating file explanation via Gemini...');
     const explanation = await generateFileExplanation(fileData);
     
@@ -281,7 +276,7 @@ async function testFileExplainerMode() {
       log('fail', 'Explanation too short or empty');
     }
     
-    // 5. Check explanation markdown format
+    
     log('info', 'Checking explanation format...');
     const hasProperFormat = checkFileExplanationFormat(explanation);
     if (hasProperFormat) {
@@ -290,7 +285,7 @@ async function testFileExplainerMode() {
       log('info', 'Explanation format may vary');
     }
     
-    // 6. Save to file_explanations table
+    
     log('info', 'Saving to file_explanations table...');
     const [fileExplanation] = await supabaseQuery('file_explanations', {
       method: 'POST',
@@ -299,14 +294,14 @@ async function testFileExplainerMode() {
         role: 'assistant',
         file_url: testFileUrl,
         file_path: fileData.path,
-        file_content: fileData.content.substring(0, 5000), // Limit for test
+        file_content: fileData.content.substring(0, 5000), 
         language: fileData.language,
         explanation: explanation,
         metadata: { language: 'en' },
       }),
     });
     
-    // 7. Verify all fields saved correctly
+    
     log('info', 'Verifying saved data...');
     const [savedRecord] = await supabaseQuery(
       `file_explanations?id=eq.${fileExplanation.id}`
@@ -345,7 +340,7 @@ async function testFileExplainerMode() {
       log('fail', `  metadata: ${JSON.stringify(savedRecord.metadata)}`);
     }
     
-    // 8. Test Lingo translation (Spanish)
+    
     log('info', 'Testing Lingo translation (to Spanish)...');
     const translatedExplanation = await translateText(explanation.substring(0, 500), 'es');
     
@@ -356,7 +351,7 @@ async function testFileExplainerMode() {
       log('fail', 'Translation failed or unchanged');
     }
     
-    // Cleanup
+    
     await cleanupTestData(testSessionId);
     log('pass', 'Test data cleaned up');
     
@@ -368,9 +363,9 @@ async function testFileExplainerMode() {
   }
 }
 
-// ============================================
-// HELPER FUNCTIONS
-// ============================================
+
+
+
 
 function validateFileUrl(url: string): boolean {
   const trimmed = url.trim();
@@ -393,7 +388,7 @@ async function fetchGitHubFile(fileUrl: string) {
   
   const content = await response.text();
   
-  // Extract path
+  
   const urlParts = fileUrl.split('/blob/');
   let path = '';
   if (urlParts.length > 1) {
@@ -421,7 +416,7 @@ async function fetchGitHubFile(fileUrl: string) {
 }
 
 async function generateGeminiResponse(systemPrompt: string, userMessage: string): Promise<string> {
-  // Try gemini-1.5-flash first (usually has more quota)
+  
   const models = ['gemini-1.5-flash', 'gemini-2.0-flash-lite', 'gemini-2.0-flash'];
   
   for (const model of models) {
@@ -457,10 +452,10 @@ async function generateGeminiResponse(systemPrompt: string, userMessage: string)
       }
     }
     
-    // If this model failed, try the next one
+    
     const errorData = await response.json().catch(() => ({})) as any;
     if (errorData.error?.code !== 429) {
-      // Not a quota error, so return empty
+      
       console.error(`Gemini API error (${model}):`, errorData.error?.message || 'Unknown error');
       break;
     }
@@ -496,7 +491,7 @@ async function translateText(text: string, targetLang: string): Promise<string> 
   }
   
   try {
-    // Using Lingo.dev SDK
+    
     const { LingoDotDevEngine } = await import('lingo.dev/sdk');
     const lingoDotDev = new LingoDotDevEngine({
       apiKey: LINGO_KEY,
@@ -510,7 +505,7 @@ async function translateText(text: string, targetLang: string): Promise<string> 
     return result || text;
   } catch (error) {
     console.error('Translation error:', error);
-    // Fallback: use Gemini for translation
+    
     log('info', '  Falling back to Gemini for translation...');
     const translated = await generateGeminiResponse(
       `You are a translator. Translate the following text to ${targetLang}. Only output the translation, nothing else.`,
@@ -521,7 +516,7 @@ async function translateText(text: string, targetLang: string): Promise<string> 
 }
 
 function checkMarkdownFormat(text: string): boolean {
-  // Check for common markdown elements
+  
   const hasHeading = /^#{1,3}\s/m.test(text);
   const hasBold = /\*\*[^*]+\*\*/.test(text);
   const hasList = /^[-*]\s/m.test(text) || /^\d+\.\s/m.test(text);
@@ -532,7 +527,7 @@ function checkMarkdownFormat(text: string): boolean {
 }
 
 function checkFileExplanationFormat(text: string): boolean {
-  // Check for expected sections in file explanation
+  
   const hasPurpose = /purpose|overview|about/i.test(text);
   const hasFunctions = /function|component|method|class/i.test(text);
   const hasFlow = /flow|logic|process|how/i.test(text);
@@ -543,7 +538,7 @@ function checkFileExplanationFormat(text: string): boolean {
 
 async function cleanupTestData(sessionId: string) {
   try {
-    // Delete file_explanations
+    
     await fetch(`${SUPABASE_URL}/rest/v1/file_explanations?session_id=eq.${sessionId}`, {
       method: 'DELETE',
       headers: {
@@ -552,7 +547,7 @@ async function cleanupTestData(sessionId: string) {
       },
     });
     
-    // Delete messages
+    
     await fetch(`${SUPABASE_URL}/rest/v1/messages?session_id=eq.${sessionId}`, {
       method: 'DELETE',
       headers: {
@@ -561,7 +556,7 @@ async function cleanupTestData(sessionId: string) {
       },
     });
     
-    // Delete session
+    
     await fetch(`${SUPABASE_URL}/rest/v1/chat_sessions?id=eq.${sessionId}`, {
       method: 'DELETE',
       headers: {
@@ -574,16 +569,16 @@ async function cleanupTestData(sessionId: string) {
   }
 }
 
-// ============================================
-// MAIN
-// ============================================
+
+
+
 
 async function main() {
   console.log('\n' + '='.repeat(60));
   console.log('  OSFIT PRODUCTION FLOW TEST');
   console.log('='.repeat(60));
   
-  // Check required env vars
+  
   if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !GEMINI_KEY) {
     log('fail', 'Missing required environment variables');
     process.exit(1);
@@ -595,11 +590,11 @@ async function main() {
     fileExplainer: false,
   };
   
-  // Run tests
+  
   results.mentor = await testMentorMode();
   results.fileExplainer = await testFileExplainerMode();
   
-  // Summary
+  
   console.log('\n' + '='.repeat(60));
   console.log('  TEST SUMMARY');
   console.log('='.repeat(60));

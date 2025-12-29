@@ -42,7 +42,7 @@ interface EffectiveKeys {
   provider: AIProvider;
 }
 
-// Lingo is provided by the app
+
 const SYSTEM_LINGO_KEY = process.env.LINGO_API_KEY || null;
 
 function getEffectiveKeys(userKeys: { 
@@ -159,12 +159,12 @@ async function getAIResponse(
   const hasAIKey = keys.gemini || keys.groq;
   
   if (!hasAIKey) {
-    // Return mock response in English when no AI key available
+    
     return MOCK_RESPONSES[type];
   }
   
   try {
-    // AI generates directly in target language via targetLanguage parameter
+    
     const response = await analyzeWithAI(PROMPTS[type], 'Analyze', context, {
       provider: keys.provider,
       geminiKey: keys.gemini,
@@ -175,7 +175,7 @@ async function getAIResponse(
     return response;
   } catch (error) {
     console.error('Issue solver AI error:', error);
-    // Return mock response on error
+    
     return MOCK_RESPONSES[type];
   }
 }

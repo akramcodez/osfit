@@ -1,25 +1,16 @@
 #!/usr/bin/env npx ts-node
-/**
- * OSFIT API Key Testing Script
- * 
- * Comprehensive testing for:
- * - API key validation (valid/invalid/expired)
- * - Quota exceeded detection
- * - System vs User key priority
- * - Error response formats
- * - Endpoint response types
- */
+
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// ============ Configuration ============
+
 interface TestConfig {
   name: string;
   key: string | null;
   expectedResult: 'valid' | 'invalid' | 'quota_exceeded' | 'no_key';
 }
 
-// Test keys - replace with actual keys to test
+
 const TEST_KEYS: TestConfig[] = [
   {
     name: 'Valid System Key',
@@ -43,7 +34,7 @@ const TEST_KEYS: TestConfig[] = [
   }
 ];
 
-// ============ Utility Functions ============
+
 const colors = {
   reset: '\x1b[0m',
   bright: '\x1b[1m',
@@ -86,7 +77,7 @@ function info(msg: string) {
   console.log('  ℹ️  ' + msg);
 }
 
-// ============ Test Classes ============
+
 
 class TestResult {
   passed = 0;
@@ -110,11 +101,9 @@ class TestResult {
 
 const results = new TestResult();
 
-// ============ Test Functions ============
 
-/**
- * Test 1: Gemini API Key Validation
- */
+
+
 async function testGeminiKeyValidation(config: TestConfig): Promise<'valid' | 'invalid' | 'quota_exceeded' | 'no_key' | 'error'> {
   if (!config.key) {
     return 'no_key';
@@ -147,9 +136,7 @@ async function testGeminiKeyValidation(config: TestConfig): Promise<'valid' | 'i
   }
 }
 
-/**
- * Test 2: Effective Keys Priority Logic
- */
+
 function testEffectiveKeysPriority() {
   subheader('Testing Effective Keys Priority Logic');
   
@@ -165,7 +152,7 @@ function testEffectiveKeysPriority() {
     lingo: { key: string | null; source: 'user' | 'system' | 'none' };
   }
   
-  // Simulate system keys
+  
   const SYSTEM_GEMINI = 'system-gemini-key';
   const SYSTEM_APIFY = 'system-apify-key';
   const SYSTEM_LINGO = 'system-lingo-key';
@@ -187,7 +174,7 @@ function testEffectiveKeysPriority() {
     };
   }
   
-  // Test cases
+  
   const tests = [
     {
       name: 'No user keys → all system',
@@ -230,13 +217,11 @@ function testEffectiveKeysPriority() {
   }
 }
 
-/**
- * Test 3: Error Response Format
- */
+
 function testErrorResponseFormat() {
   subheader('Testing Error Response Formats');
   
-  // Simulate ApiKeyError
+  
   class ApiKeyError extends Error {
     service: 'gemini' | 'apify' | 'lingo';
     source: 'user' | 'system';
@@ -249,7 +234,7 @@ function testErrorResponseFormat() {
     }
   }
   
-  // Test structured error response
+  
   const tests = [
     { service: 'gemini' as const, source: 'system' as const, message: 'Quota exceeded' },
     { service: 'apify' as const, source: 'user' as const, message: 'API key invalid' },
@@ -259,7 +244,7 @@ function testErrorResponseFormat() {
   for (const test of tests) {
     const error = new ApiKeyError(test.service, test.source, test.message);
     
-    // Simulate JSON response
+    
     const response = {
       error: error.message,
       errorType: 'api_key_error',
@@ -267,7 +252,7 @@ function testErrorResponseFormat() {
       source: error.source
     };
     
-    // Validate response structure
+    
     const hasAllFields = 
       response.error && 
       response.errorType === 'api_key_error' && 
@@ -284,9 +269,7 @@ function testErrorResponseFormat() {
   }
 }
 
-/**
- * Test 4: Quota Error Detection
- */
+
 function testQuotaErrorDetection() {
   subheader('Testing Quota Error Detection');
   
@@ -318,9 +301,7 @@ function testQuotaErrorDetection() {
   }
 }
 
-/**
- * Test 5: Error Message Parsing
- */
+
 function testErrorMessageParsing() {
   subheader('Testing Error Message Parsing');
   
@@ -369,9 +350,7 @@ function testErrorMessageParsing() {
   }
 }
 
-/**
- * Test 6: API Key Validation Tests
- */
+
 async function testApiKeyValidation() {
   subheader('Testing API Key Validation (Live)');
   
@@ -384,7 +363,7 @@ async function testApiKeyValidation() {
       results.addPass();
     } else if (result === 'quota_exceeded' && config.expectedResult === 'valid') {
       warn(`${config.name} → ${result} (key valid but quota exceeded)`);
-      results.addPass(); // Still passes since key is technically valid
+      results.addPass(); 
     } else {
       fail(`${config.name} → ${result} (expected: ${config.expectedResult})`);
       results.addFail();
@@ -392,9 +371,7 @@ async function testApiKeyValidation() {
   }
 }
 
-/**
- * Test 7: Environment Variables Check
- */
+
 function testEnvironmentVariables() {
   subheader('Testing Environment Variables');
   
@@ -429,17 +406,15 @@ function testEnvironmentVariables() {
     } else {
       warn(`${varName} is not set (users must provide their own)`);
     }
-    results.addSkip(); // Don't count optional as pass/fail
+    results.addSkip(); 
   }
 }
 
-/**
- * Test 8: Response Type Validation
- */
+
 function testResponseTypes() {
   subheader('Testing Response Type Structures');
   
-  // Expected response types
+  
   interface SuccessResponse {
     response: string;
   }
@@ -451,7 +426,7 @@ function testResponseTypes() {
     source?: string;
   }
   
-  // Test success response structure
+  
   const successResp = { response: 'Hello, I am OSFIT!' };
   if (typeof successResp.response === 'string' && successResp.response.length > 0) {
     success('Success response has valid structure');
@@ -461,7 +436,7 @@ function testResponseTypes() {
     results.addFail();
   }
   
-  // Test error response structure
+  
   const errorResp = { error: 'Quota exceeded', errorType: 'api_key_error', service: 'gemini', source: 'system' };
   if (
     typeof errorResp.error === 'string' &&
@@ -476,7 +451,7 @@ function testResponseTypes() {
     results.addFail();
   }
   
-  // Test simple error response
+  
   const simpleError = { error: 'Something went wrong' };
   if (typeof simpleError.error === 'string') {
     success('Simple error response has valid structure');
@@ -487,14 +462,14 @@ function testResponseTypes() {
   }
 }
 
-// ============ Main ============
+
 
 async function main() {
   console.log('\n');
   header('🧪 OSFIT API KEY TESTING SCRIPT');
   info('This script tests the API key flow, error handling, and response types.\n');
   
-  // Run all tests
+  
   testEnvironmentVariables();
   testEffectiveKeysPriority();
   testQuotaErrorDetection();
@@ -502,7 +477,7 @@ async function main() {
   testErrorMessageParsing();
   testResponseTypes();
   
-  // Live API tests (may cost quota)
+  
   if (process.argv.includes('--live')) {
     await testApiKeyValidation();
   } else {
@@ -511,7 +486,7 @@ async function main() {
     info('Example: npx ts-node scripts/test-api-keys.ts --live');
   }
   
-  // Summary
+  
   const allPassed = results.summary();
   
   if (allPassed) {

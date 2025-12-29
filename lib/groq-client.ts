@@ -1,18 +1,14 @@
 import Groq from 'groq-sdk';
 
-// Default model for Groq
+
 const DEFAULT_MODEL = 'openai/gpt-oss-120b';
 
-/**
- * Create a Groq client with a specific API key
- */
+
 export function createGroqClient(apiKey: string): Groq {
   return new Groq({ apiKey });
 }
 
-/**
- * Generate a response using Groq
- */
+
 export async function generateGroqResponse(
   prompt: string,
   apiKey: string,
@@ -31,9 +27,7 @@ export async function generateGroqResponse(
   return completion.choices[0]?.message?.content || '';
 }
 
-/**
- * Analyze with context using Groq (matches Gemini signature)
- */
+
 export async function analyzeWithGroq(
   systemPrompt: string,
   userMessage: string,

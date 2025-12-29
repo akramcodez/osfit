@@ -14,7 +14,7 @@ export default function Spinner({ size = 'md', className = '' }: SpinnerProps) {
 
   return (
     <div 
-      className={`${sizeClasses[size]} border-white/20 border-t-[#3ECF8E] rounded-full animate-spin ${className}`}
+      className={`${sizeClasses[size]} border-white/20 border-t-primary rounded-full animate-spin ${className}`}
     />
   );
 }

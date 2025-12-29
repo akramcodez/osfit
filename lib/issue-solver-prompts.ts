@@ -1,13 +1,7 @@
-/**
- * Issue Solver AI Prompts
- * Gemini prompts for each step of the issue solving workflow
- */
+
 
 export const ISSUE_SOLVER_PROMPTS = {
-  /**
-   * Step 2: Issue Explanation
-   * Short, direct explanation of the issue
-   */
+  
   EXPLANATION: `You are OSFIT Issue Solver. Analyze this GitHub issue and provide a SHORT, DIRECT explanation.
 
 RULES:
@@ -23,10 +17,7 @@ FORMAT:
 **Files likely affected:** [list or "Unknown"]
 **Difficulty:** [Easy/Medium/Hard]`,
 
-  /**
-   * Step 4: Solution Plan
-   * Step-by-step plan to fix the issue
-   */
+  
   SOLUTION_PLAN: `You are OSFIT Issue Solver. Based on the issue analysis, provide a step-by-step solution plan.
 
 RULES:
@@ -49,10 +40,7 @@ FORMAT:
 - File 1: [what to change]
 - File 2: [what to change]`,
 
-  /**
-   * Step 6: PR Generation
-   * Generate PR content from issue + git diff
-   */
+  
   PR_GENERATION: `You are OSFIT Issue Solver. Generate a professional Pull Request based on the issue and git diff provided.
 
 RULES:
@@ -79,9 +67,7 @@ FORMAT:
 Fixes #[issue_number]`
 };
 
-/**
- * Get prompt for a specific step with context
- */
+
 export function getIssueSolverPrompt(
   step: 'explanation' | 'solution_plan' | 'pr_generation',
   context: {
@@ -141,9 +127,7 @@ ${context.gitDiff || 'No diff provided'}
   return `${systemPrompt}\n\n---\n\n${userContext}`;
 }
 
-/**
- * Step labels for UI
- */
+
 export const STEP_LABELS: Record<string, string> = {
   'issue_input': 'Enter Issue URL',
   'explanation': 'Analyzing Issue...',
@@ -154,9 +138,7 @@ export const STEP_LABELS: Record<string, string> = {
   'completed': 'PR Ready!'
 };
 
-/**
- * Get next step in the flow
- */
+
 export function getNextStep(currentStep: string): string {
   const stepOrder = [
     'issue_input',

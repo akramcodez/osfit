@@ -30,10 +30,23 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+  
+  
+  --color-brand: var(--color-brand);
+  --color-brand-dark: var(--color-brand-dark);
+  --color-success: var(--color-success);
+  --color-success-dark: var(--color-success-dark);
+  --color-surface-1: var(--color-surface-1);
+  --color-surface-2: var(--color-surface-2);
+  --color-surface-3: var(--color-surface-3);
+  --color-border-subtle: var(--color-border-subtle);
+  --color-border-strong: var(--color-border-strong);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-subtle: var(--color-text-subtle);
 }
 
 :root {
-  /* Supabase Dark Theme as Default */
+  
   --background: #1C1C1C;
   --foreground: #EDEDED;
   
@@ -43,7 +56,7 @@
   --popover: #1C1C1C;
   --popover-foreground: #EDEDED;
   
-  /* Supabase Green */
+  
   --primary: #3ECF8E; 
   --primary-foreground: #151515;
   
@@ -65,7 +78,7 @@
   
   --radius: 0.5rem;
   
-  /* Custom App Colors */
+  
   --color-brand: #3ECF8E;
   --color-brand-dark: #35b37b;
   --color-success: #22c55e;
@@ -122,11 +135,11 @@
     @apply bg-zinc-900 text-foreground h-screen overflow-hidden;
   }
   
-  /* ====== Minimal Scrollbar Utility ====== */
-  /* Use `.app-scroll` to opt-in minimal scrollbars */
+  
+  
   .app-scroll {
     scrollbar-width: thin;
-    scrollbar-color: #3a3a3a transparent;
+    scrollbar-color: var(--color-border-strong) transparent;
     scrollbar-gutter: stable;
   }
   
@@ -140,19 +153,19 @@
   }
   
   .app-scroll::-webkit-scrollbar-thumb {
-    background: #3a3a3a;
+    background: var(--color-border-strong);
     border-radius: 3px;
   }
   
   .app-scroll::-webkit-scrollbar-thumb:hover {
-    background: #4a4a4a;
+    background: var(--color-border-subtle);
   }
   
   .app-scroll::-webkit-scrollbar-corner {
     background: transparent;
   }
   
-  /* Force transparent background for code blocks to fix grey box issue */
+  
   .hljs {
     background: transparent !important;
   }
@@ -160,16 +173,16 @@
     padding: 0 !important;
   }
   
-  /* Nuclear option for stubborn backgrounds */
+  
   .clean-code-block,
   .clean-code-block * {
     background-color: transparent !important;
   }
 }
 
-/* ====== Custom Animations ====== */
 
-/* Message appear animation */
+
+
 @keyframes messageSlideIn {
   from {
     opacity: 0;
@@ -181,7 +194,7 @@
   }
 }
 
-/* Sidebar slide animation */
+
 @keyframes slideInLeft {
   from {
     opacity: 0;
@@ -204,7 +217,7 @@
   }
 }
 
-/* Fade animations */
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -221,32 +234,32 @@
   }
 }
 
-/* Scale bounce for buttons */
+
 @keyframes scaleBounce {
   0% { transform: scale(1); }
   50% { transform: scale(0.95); }
   100% { transform: scale(1); }
 }
 
-/* Subtle float for cards */
+
 @keyframes subtleFloat {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-2px); }
 }
 
-/* Typing indicator dots */
+
 @keyframes typingDot {
   0%, 60%, 100% { transform: translateY(0); }
   30% { transform: translateY(-4px); }
 }
 
 @layer utilities {
-  /* Message animations */
+  
   .animate-message-in {
     animation: messageSlideIn 0.3s ease-out forwards;
   }
   
-  /* Sidebar animations */
+  
   .animate-slide-in {
     animation: slideInLeft 0.3s ease-out forwards;
   }
@@ -255,7 +268,7 @@
     animation: slideOutLeft 0.2s ease-in forwards;
   }
   
-  /* Fade animations */
+  
   .animate-fade-in {
     animation: fadeIn 0.3s ease-out forwards;
   }
@@ -264,28 +277,28 @@
     animation: fadeInUp 0.4s ease-out forwards;
   }
   
-  /* Button press effect */
+  
   .animate-press {
     animation: scaleBounce 0.15s ease-in-out;
   }
   
-  /* Card hover float */
+  
   .hover-float:hover {
     animation: subtleFloat 2s ease-in-out infinite;
   }
   
-  /* Smooth transitions for all interactive elements */
+  
   .smooth-transition {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
-  /* Staggered animation delays */
+  
   .animation-delay-100 { animation-delay: 100ms; }
   .animation-delay-200 { animation-delay: 200ms; }
   .animation-delay-300 { animation-delay: 300ms; }
   .animation-delay-400 { animation-delay: 400ms; }
   
-  /* Typing dots animation */
+  
   .typing-dot-1 { animation: typingDot 1.4s ease-in-out infinite; }
   .typing-dot-2 { animation: typingDot 1.4s ease-in-out infinite 0.2s; }
   .typing-dot-3 { animation: typingDot 1.4s ease-in-out infinite 0.4s; }

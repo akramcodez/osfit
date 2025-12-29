@@ -5,10 +5,10 @@ import { encryptApiKey, decryptApiKey, isEncryptionConfigured } from '@/lib/encr
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-// Use service role for direct database access
+
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// Helper to get user from auth header
+
 async function getUserFromAuth(request: NextRequest) {
   const authHeader = request.headers.get('Authorization');
   if (!authHeader?.startsWith('Bearer ')) {
@@ -25,10 +25,7 @@ async function getUserFromAuth(request: NextRequest) {
   return user;
 }
 
-/**
- * GET /api/user/keys
- * Returns key status (configured/not configured) - NEVER returns actual keys
- */
+
 export async function GET(request: NextRequest) {
   const user = await getUserFromAuth(request);
   
@@ -42,11 +39,11 @@ export async function GET(request: NextRequest) {
     .eq('user_id', user.id)
     .single();
   
-  if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+  if (error && error.code !== 'PGRST116') { 
     return NextResponse.json({ error: 'Database error' }, { status: 500 });
   }
   
-  // Return only boolean status, never actual keys
+  
   return NextResponse.json({
     has_gemini: !!data?.gemini_key_encrypted,
     has_apify: !!data?.apify_key_encrypted,
@@ -57,11 +54,7 @@ export async function GET(request: NextRequest) {
   });
 }
 
-/**
- * POST /api/user/keys
- * Save or update user API keys (encrypted)
- * Body: { gemini_key?: string, apify_key?: string, lingo_key?: string }
- */
+
 export async function POST(request: NextRequest) {
   const user = await getUserFromAuth(request);
   
@@ -72,7 +65,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { gemini_key, apify_key, lingo_key, groq_key, ai_provider, preferred_language } = body;
   
-  // Check if any encrypted keys are being saved - only then require encryption
+  
   const hasKeysToEncrypt = gemini_key !== undefined || apify_key !== undefined || 
                            lingo_key !== undefined || groq_key !== undefined;
   
@@ -80,7 +73,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Encryption not configured' }, { status: 500 });
   }
   
-  // Build update object with only provided keys
+  
   const updateData: Record<string, string | null> = {
     user_id: user.id,
     updated_at: new Date().toISOString(),
@@ -105,7 +98,7 @@ export async function POST(request: NextRequest) {
     updateData.preferred_language = preferred_language;
   }
   
-  // Check if user already has a row
+  
   const { data: existing } = await supabase
     .from('user_api_keys')
     .select('id')
@@ -114,13 +107,13 @@ export async function POST(request: NextRequest) {
   
   let result;
   if (existing) {
-    // Update existing row
+    
     result = await supabase
       .from('user_api_keys')
       .update(updateData)
       .eq('user_id', user.id);
   } else {
-    // Insert new row
+    
     result = await supabase
       .from('user_api_keys')
       .insert(updateData);
@@ -134,11 +127,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ success: true });
 }
 
-/**
- * DELETE /api/user/keys
- * Remove a specific key
- * Query param: key_type (gemini, apify, or lingo)
- */
+
 export async function DELETE(request: NextRequest) {
   const user = await getUserFromAuth(request);
   
@@ -167,10 +156,7 @@ export async function DELETE(request: NextRequest) {
   return NextResponse.json({ success: true });
 }
 
-/**
- * Helper function to get decrypted user keys (for use by other API routes)
- * Returns null for keys that aren't set
- */
+
 export async function getUserApiKeys(userId: string): Promise<{
   gemini_key: string | null;
   apify_key: string | null;

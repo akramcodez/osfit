@@ -26,24 +26,24 @@ export default function ModeSelector({
         value={currentMode} 
         onValueChange={(value) => onModeChange(value as AssistantMode)}
         >
-        <SelectTrigger className="min-w-[200px] w-auto bg-[#2A2A2A] border-[#3E3E3E] text-white focus:ring-offset-0 focus:ring-0">
+        <SelectTrigger className="min-w-[200px] w-auto bg-secondary border-border-subtle text-white focus:ring-offset-0 focus:ring-0">
             <SelectValue />
         </SelectTrigger>
-        <SelectContent className="bg-[#1C1C1C] text-white border-[#3E3E3E]">
+        <SelectContent className="bg-surface-1 text-white border-border-subtle">
 
-            <SelectItem value="issue_solver" className="focus:bg-[#2A2A2A] focus:text-white">
+            <SelectItem value="issue_solver" className="focus:bg-secondary focus:text-white">
             <div className="flex items-center gap-2">
                 <Lightbulb className="h-4 w-4" />
                 {t('issueSolver', lang)}
             </div>
             </SelectItem>
-            <SelectItem value="file_explainer" className="focus:bg-[#2A2A2A] focus:text-white">
+            <SelectItem value="file_explainer" className="focus:bg-secondary focus:text-white">
             <div className="flex items-center gap-2">
                 <FileCode className="h-4 w-4" />
                 {t('fileExplainer', lang)}
             </div>
             </SelectItem>
-            <SelectItem value="mentor" className="focus:bg-[#2A2A2A] focus:text-white">
+            <SelectItem value="mentor" className="focus:bg-secondary focus:text-white">
             <div className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
                 {t('openSourceMentor', lang)}

@@ -1,9 +1,4 @@
-/**
- * Test Apify Actor and Lingo Translation
- * Tests the actual cloud services (uses API credits)
- * 
- * Run: npx tsx scripts/test-apify-lingo.ts
- */
+
 
 import * as dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
@@ -14,13 +9,13 @@ import { LingoDotDevEngine } from 'lingo.dev/sdk';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load .env.local from project root
+
 dotenv.config({ path: resolve(__dirname, '..', '.env.local') });
 
 const APIFY_KEY = process.env.APIFY_API_KEY!;
 const LINGO_KEY = process.env.LINGO_API_KEY!;
 
-// Colors for console output
+
 const colors = {
   reset: '\x1b[0m',
   green: '\x1b[32m',
@@ -42,9 +37,9 @@ function log(type: 'pass' | 'fail' | 'info' | 'section' | 'data', message: strin
   console.log(`${prefix[type]} ${message}`);
 }
 
-// ============================================
-// TEST 1: APIFY ACTOR - File Fetching
-// ============================================
+
+
+
 
 async function testApifyActor() {
   log('section', 'Testing APIFY ACTOR (GitHub File Scraper)');
@@ -53,7 +48,7 @@ async function testApifyActor() {
   const ACTOR_NAME = 'sincere_spinner/osfit-github-scraper';
   
   try {
-    // 1. Initialize Apify client
+    
     log('info', 'Initializing Apify client...');
     const apifyClient = new ApifyClient({
       token: APIFY_KEY,
@@ -65,7 +60,7 @@ async function testApifyActor() {
     }
     log('pass', `Apify key configured: ${APIFY_KEY.substring(0, 15)}...`);
     
-    // 2. Run the actor to fetch file
+    
     log('info', `Running actor: ${ACTOR_NAME}`);
     log('info', `Fetching: ${testFileUrl}`);
     
@@ -80,7 +75,7 @@ async function testApifyActor() {
     log('data', `Run ID: ${run.id}`);
     log('data', `Status: ${run.status}`);
     
-    // 3. Fetch results from dataset
+    
     log('info', 'Fetching results from dataset...');
     const { items } = await apifyClient.dataset(run.defaultDatasetId).listItems();
     
@@ -92,7 +87,7 @@ async function testApifyActor() {
     const fileData = items[0] as any;
     log('pass', `Got ${items.length} item(s) from dataset`);
     
-    // 4. Verify file data structure
+    
     log('info', 'Verifying file data structure...');
     
     const checks = [
@@ -120,7 +115,7 @@ async function testApifyActor() {
       }
     }
     
-    // 5. Show content preview
+    
     if (fileData.content) {
       log('info', 'Content preview (first 200 chars):');
       console.log(colors.dim + '  ┌' + '─'.repeat(60) + colors.reset);
@@ -131,7 +126,7 @@ async function testApifyActor() {
       console.log(colors.dim + '  └' + '─'.repeat(60) + colors.reset);
     }
     
-    // 6. Summary
+    
     log('info', 'File Data Summary:');
     log('data', `Path: ${fileData.path}`);
     log('data', `Language: ${fileData.language}`);
@@ -145,9 +140,9 @@ async function testApifyActor() {
   }
 }
 
-// ============================================
-// TEST 2: LINGO TRANSLATION
-// ============================================
+
+
+
 
 async function testLingoTranslation() {
   log('section', 'Testing LINGO.DEV Translation SDK');
@@ -168,7 +163,7 @@ git checkout -b my-feature
   const targetLanguages = ['es', 'fr', 'hi'];
   
   try {
-    // 1. Initialize Lingo client
+    
     log('info', 'Initializing Lingo.dev client...');
     
     if (!LINGO_KEY) {
@@ -183,7 +178,7 @@ git checkout -b my-feature
     
     log('pass', 'Lingo SDK initialized');
     
-    // 2. Show original text
+    
     log('info', 'Original text (English):');
     console.log(colors.dim + '  ┌' + '─'.repeat(60) + colors.reset);
     const origLines = testText.substring(0, 150).split('\n');
@@ -192,7 +187,7 @@ git checkout -b my-feature
     }
     console.log(colors.dim + '  └' + '─'.repeat(60) + colors.reset);
     
-    // 3. Test translations
+    
     let allPassed = true;
     
     for (const lang of targetLanguages) {
@@ -210,11 +205,11 @@ git checkout -b my-feature
         if (translated.text && translated.text !== testText) {
           log('pass', `${lang}: Translation successful (${elapsed}ms)`);
           
-          // Show preview
+          
           const preview = translated.text.substring(0, 100).replace(/\n/g, ' ');
           log('data', `Preview: "${preview}..."`);
           
-          // Check that markdown is preserved
+          
           const hasMarkdown = translated.text.includes('**') || 
                              translated.text.includes('##') || 
                              translated.text.includes('```');
@@ -241,9 +236,9 @@ git checkout -b my-feature
   }
 }
 
-// ============================================
-// TEST 3: Direct File Fetch (fallback method)
-// ============================================
+
+
+
 
 async function testDirectFetch() {
   log('section', 'Testing DIRECT FETCH (Development Mode Fallback)');
@@ -251,7 +246,7 @@ async function testDirectFetch() {
   const testFileUrl = 'https://github.com/facebook/react/blob/main/packages/react/src/ReactClient.js';
   
   try {
-    // 1. Convert to raw URL
+    
     const rawUrl = testFileUrl
       .replace('github.com', 'raw.githubusercontent.com')
       .replace('/blob/', '/');
@@ -270,7 +265,7 @@ async function testDirectFetch() {
     const content = await response.text();
     log('pass', `Fetched in ${elapsed}ms (${content.length} chars)`);
     
-    // 2. Extract path from URL
+    
     const urlParts = testFileUrl.split('/blob/');
     let path = '';
     if (urlParts.length > 1) {
@@ -281,7 +276,7 @@ async function testDirectFetch() {
     
     log('pass', `Extracted path: ${path}`);
     
-    // 3. Detect language
+    
     const fileName = path.split('/').pop() || '';
     const extension = fileName.split('.').pop()?.toLowerCase() || '';
     
@@ -296,7 +291,7 @@ async function testDirectFetch() {
     const language = languageMap[extension] || extension;
     log('pass', `Detected language: ${language} (from .${extension})`);
     
-    // 4. Show content preview
+    
     log('info', 'Content preview:');
     console.log(colors.dim + '  ┌' + '─'.repeat(60) + colors.reset);
     const lines = content.substring(0, 300).split('\n');
@@ -312,16 +307,16 @@ async function testDirectFetch() {
   }
 }
 
-// ============================================
-// MAIN
-// ============================================
+
+
+
 
 async function main() {
   console.log('\n' + colors.bold + '═'.repeat(60) + colors.reset);
   console.log(colors.bold + '  APIFY + LINGO SERVICE TEST' + colors.reset);
   console.log(colors.bold + '═'.repeat(60) + colors.reset);
   
-  // Check env vars
+  
   log('info', 'Checking environment variables...');
   
   if (!APIFY_KEY) {
@@ -342,12 +337,12 @@ async function main() {
     directFetch: false,
   };
   
-  // Run tests
+  
   results.directFetch = await testDirectFetch();
   results.apify = await testApifyActor();
   results.lingo = await testLingoTranslation();
   
-  // Summary
+  
   console.log('\n' + colors.bold + '═'.repeat(60) + colors.reset);
   console.log(colors.bold + '  TEST SUMMARY' + colors.reset);
   console.log(colors.bold + '═'.repeat(60) + colors.reset);

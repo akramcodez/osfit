@@ -24,11 +24,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       toastOptions={{
         classNames: {
-          toast: 'bg-[#2F2F2F] border-white/10 text-white',
+          toast: 'bg-secondary border-border-subtle text-white',
           title: 'text-white',
           description: 'text-gray-400',
           error: 'bg-red-500/20 border-red-500/50 text-red-400',
-          success: 'bg-green-500/20 border-green-500/50 text-green-400',
+          success: 'bg-success-dark/20 border-success/50 text-success',
           warning: 'bg-yellow-500/20 border-yellow-500/50 text-yellow-400',
           info: 'bg-blue-500/20 border-blue-500/50 text-blue-400',
         },

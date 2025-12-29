@@ -1,4 +1,4 @@
-// Quick test for apify-client in development mode
+
 import { fetchGitHubIssue, fetchGitHubFile } from '../lib/apify-client';
 
 async function test() {

@@ -23,7 +23,6 @@ interface FileExplainerCardProps {
   uiLanguage?: LanguageCode;
 }
 
-// Language display names
 const LANGUAGE_NAMES: Record<string, string> = {
   js: 'JavaScript',
   ts: 'TypeScript',
@@ -53,14 +52,13 @@ const LANGUAGE_NAMES: Record<string, string> = {
   dockerfile: 'Dockerfile',
 };
 
-// Demo code for testing when no file content is available
-const DEMO_CODE = `// API Key Required
-// 
-// To view file content, please configure your API keys:
-// 1. Click your profile avatar in the sidebar
-// 2. Add your Apify API key
-// 
-// Get your free key at: apify.com`;
+const DEMO_CODE = `API Key Required
+
+To view file content, please configure your API keys:
+1. Click your profile avatar in the sidebar
+2. Add your Apify API key
+
+Get your free key at: apify.com`;
 
 export default function FileExplainerCard({ data, isNew = false, onStreamComplete, onDelete, uiLanguage = 'en' }: FileExplainerCardProps) {
   const [isCodeExpanded, setIsCodeExpanded] = useState(true);
@@ -71,26 +69,22 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
   const streamRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const completedRef = useRef<boolean>(false);
 
-  // Line explanation state
   const [selectedLine, setSelectedLine] = useState<number | null>(null);
   const [lineExplanation, setLineExplanation] = useState<string>('');
   const [isExplainingLine, setIsExplainingLine] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'line' | 'diagram'>('overview');
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Diagram/Flowchart state
   const [flowchart, setFlowchart] = useState<string | null>(null);
   const [isGeneratingFlowchart, setIsGeneratingFlowchart] = useState(false);
   const [flowchartError, setFlowchartError] = useState<string | null>(null);
 
   const explanation = data.explanation || '';
-  // Use demo code if no file content is available
   const fileContent = data.file_content || DEMO_CODE;
   const fileName = data.file_path || data.file_url?.split('/').pop() || 'api-client.ts';
   const language = data.language || fileName.split('.').pop() || 'ts';
   const languageDisplay = LANGUAGE_NAMES[language.toLowerCase()] || language.toUpperCase();
 
-  // Streaming effect for explanation
   useEffect(() => {
     if (isNew && explanation && !completedRef.current) {
       const totalLength = explanation.length;
@@ -144,7 +138,6 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
     }
   };
 
-  // Handle line click - fetch explanation for specific line
   const handleLineClick = async (lineNumber: number, lineContent: string) => {
     setSelectedLine(lineNumber);
     setActiveTab('line');
@@ -152,7 +145,6 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
     setLineExplanation('');
 
     try {
-      // Get auth token for user key access
       const { data: { session } } = await supabase.auth.getSession();
       
       const response = await fetch('/api/explain-line', {
@@ -168,7 +160,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
           language,
           filePath: fileName,
           targetLanguage: uiLanguage,
-          useMockData: false // Use real AI
+          useMockData: false
         })
       });
 
@@ -186,13 +178,12 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
     }
   };
 
-  // If this is a user entry (just the URL), show a simple card
   if (data.role === 'user') {
     return (
       <div className="flex justify-end mb-4 animate-message-in">
         <div className="bg-primary/10 text-white px-4 py-2 rounded-xl max-w-[80%]">
           <div className="flex items-center gap-2 text-sm">
-            <FileCode className="h-4 w-4 text-[#3ECF8E]" />
+            <FileCode className="h-4 w-4 text-primary" />
             <span className="truncate">{data.file_url || data.explanation}</span>
           </div>
         </div>
@@ -200,15 +191,13 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
     );
   }
 
-  // Assistant response - full file explainer card with split view
   return (
     <div className="w-full mb-6 animate-message-in">
-      <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-[#141414] border-b border-[#2a2a2a]">
+      <div className="bg-surface-1 rounded-xl border border-border-subtle overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 bg-surface-2 border-b border-border-subtle">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-[#3ECF8E]/10 flex items-center justify-center">
-              <FileCode className="h-4 w-4 text-[#3ECF8E]" />
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <FileCode className="h-4 w-4 text-primary" />
             </div>
             <div>
               <h3 className="text-sm font-medium text-white">{fileName}</h3>
@@ -225,7 +214,6 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                 <ExternalLink className="h-4 w-4" />
               </button>
             )}
-            {/* Collapse entire card */}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               className="flex items-center gap-1 px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
@@ -284,7 +272,6 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
           </div>
         </div>
 
-        {/* Collapsible content with smooth animation */}
         <AnimatePresence initial={false}>
           {!isCollapsed && (
             <motion.div
@@ -303,10 +290,9 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
               opacity: isCodeExpanded ? 1 : 0,
             }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="bg-[#0d0d0d] border-r border-[#2a2a2a]"
+            className="bg-surface-3 border-r border-border-subtle"
             style={{ overflow: 'hidden' }}
           >
-            {/* Interactive Code Viewer */}
             <div className="p-2">
               <InteractiveCodeViewer
                 code={fileContent}
@@ -318,18 +304,16 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
             </div>
           </motion.div>
 
-          {/* Right: Explanation */}
           <motion.div
             initial={false}
             animate={{ flexBasis: isCodeExpanded ? '50%' : '100%' }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="bg-[#1a1a1a]"
+            className="bg-surface-1"
             style={{ overflow: 'hidden' }}
           >
-            {/* Explanation Header with Tabs */}
-            <div className="flex items-center justify-between px-4 py-2 border-b border-[#2a2a2a]">
+            <div className="flex items-center justify-between px-4 py-2 border-b border-border-subtle">
               <div className="flex items-center gap-2">
-                <div className="h-5 w-5 rounded bg-[#3ECF8E] flex items-center justify-center">
+                <div className="h-5 w-5 rounded bg-primary flex items-center justify-center">
                   <span className="text-[10px] font-bold text-black">OS</span>
                 </div>
                 <div className="flex gap-1">
@@ -337,7 +321,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                     onClick={() => setActiveTab('overview')}
                     className={`px-2 py-1 text-[10px] font-medium uppercase tracking-wider rounded transition-colors ${
                       activeTab === 'overview'
-                        ? 'bg-[#3ECF8E]/20 text-[#3ECF8E]'
+                        ? 'bg-primary/20 text-primary'
                         : 'text-gray-500 hover:text-gray-300'
                     }`}
                   >
@@ -347,7 +331,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                     onClick={() => setActiveTab('line')}
                     className={`px-2 py-1 text-[10px] font-medium uppercase tracking-wider rounded transition-colors ${
                       activeTab === 'line'
-                        ? 'bg-[#3ECF8E]/20 text-[#3ECF8E]'
+                        ? 'bg-primary/20 text-primary'
                         : 'text-gray-500 hover:text-gray-300'
                     }`}
                   >
@@ -356,12 +340,10 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                   <button
                     onClick={async () => {
                       setActiveTab('diagram');
-                      // Lazy load flowchart if not already loaded
                       if (!flowchart && !isGeneratingFlowchart && !flowchartError) {
                         setIsGeneratingFlowchart(true);
                         setFlowchartError(null);
                         try {
-                          // Get auth token for user key access
                           const { data: { session: authSession } } = await supabase.auth.getSession();
                           
                           const response = await fetch('/api/generate-flowchart', {
@@ -376,7 +358,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                               filePath: fileName,
                               explanationId: data.id,
                               targetLanguage: uiLanguage,
-                              useMockData: false // Use real AI
+                              useMockData: false
                             })
                           });
                           const result = await response.json();
@@ -395,7 +377,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                     }}
                     className={`px-2 py-1 text-[10px] font-medium uppercase tracking-wider rounded transition-colors ${
                       activeTab === 'diagram'
-                        ? 'bg-[#3ECF8E]/20 text-[#3ECF8E]'
+                        ? 'bg-primary/20 text-primary'
                         : 'text-gray-500 hover:text-gray-300'
                     }`}
                   >
@@ -404,9 +386,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                 </div>
               </div>
             </div>
-            {/* Explanation Content */}
             <div className="p-4 overflow-auto max-h-[500px] app-scroll">
-              {/* Overview Tab Content */}
               {activeTab === 'overview' && (
                 <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent">
                   <ReactMarkdown
@@ -418,7 +398,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                         const isInline = !className;
                         if (isInline) {
                           return (
-                            <code className="px-1.5 py-0.5 bg-white/10 rounded text-[#3ECF8E] text-sm" {...props}>
+                            <code className="px-1.5 py-0.5 bg-white/10 rounded text-primary text-sm" {...props}>
                               {children}
                             </code>
                           );
@@ -447,28 +427,28 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                         <li className="text-gray-200">{children}</li>
                       ),
                       a: ({ children, href }) => (
-                        <a href={href as string} target="_blank" rel="noopener noreferrer" className="text-[#3ECF8E] hover:underline">{children}</a>
+                        <a href={href as string} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{children}</a>
                       ),
                       blockquote: ({ children }) => (
-                        <blockquote className="border-l-2 border-[#3ECF8E] pl-3 text-gray-300 bg-[#0d0d0d]/40 rounded mb-3">{children}</blockquote>
+                        <blockquote className="border-l-2 border-primary pl-3 text-gray-300 bg-surface-3/40 rounded mb-3">{children}</blockquote>
                       ),
-                      hr: () => <hr className="border-[#2a2a2a] my-4" />,
+                      hr: () => <hr className="border-border-subtle my-4" />,
                       strong: ({ children }) => (
                         <strong className="font-semibold text-white">{children}</strong>
                       ),
                       table: ({ children }) => (
-                        <div className="my-3 overflow-hidden rounded-lg border border-[#2a2a2a]">
+                        <div className="my-3 overflow-hidden rounded-lg border border-border-subtle">
                           <table className="w-full text-left text-sm text-gray-200">{children}</table>
                         </div>
                       ),
                       thead: ({ children }) => (
-                        <thead className="bg-[#0d0d0d] text-gray-300">{children}</thead>
+                        <thead className="bg-surface-3 text-gray-300">{children}</thead>
                       ),
                       tbody: ({ children }) => (
-                        <tbody className="bg-[#111111]">{children}</tbody>
+                        <tbody className="bg-surface-3">{children}</tbody>
                       ),
                       tr: ({ children }) => (
-                        <tr className="border-t border-[#2a2a2a]">{children}</tr>
+                        <tr className="border-t border-border-subtle">{children}</tr>
                       ),
                       th: ({ children }) => (
                         <th className="px-3 py-2 font-medium">{children}</th>
@@ -481,12 +461,11 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                     {displayedExplanation}
                   </ReactMarkdown>
                   {isStreaming && (
-                    <span className="inline-block w-2 h-4 bg-[#3ECF8E] ml-1 animate-pulse" />
+                    <span className="inline-block w-2 h-4 bg-primary ml-1 animate-pulse" />
                   )}
                 </div>
               )}
 
-              {/* Line Tab Content */}
               {activeTab === 'line' && (
                 <div className="prose prose-invert prose-sm max-w-none">
                   {!selectedLine ? (
@@ -501,7 +480,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                   ) : lineExplanation ? (
                     <div>
                       <div className="flex items-center gap-2 mb-3">
-                        <span className="px-2 py-1 bg-[#3ECF8E]/20 text-[#3ECF8E] text-xs font-mono rounded">
+                        <span className="px-2 py-1 bg-primary/20 text-primary text-xs font-mono rounded">
                           Line {selectedLine}
                         </span>
                       </div>
@@ -514,7 +493,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                             const isInline = !className;
                             if (isInline) {
                               return (
-                                <code className="px-1.5 py-0.5 bg-white/10 rounded text-[#3ECF8E] text-sm" {...props}>
+                                <code className="px-1.5 py-0.5 bg-white/10 rounded text-primary text-sm" {...props}>
                                   {children}
                                 </code>
                               );
@@ -537,7 +516,6 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                 </div>
               )}
 
-              {/* Diagram Tab Content */}
               {activeTab === 'diagram' && (
                 <div className="prose prose-invert prose-sm max-w-none">
                   {isGeneratingFlowchart ? (
@@ -551,9 +529,9 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                       <button
                         onClick={() => {
                           setFlowchartError(null);
-                          setActiveTab('diagram'); // Re-trigger generation
+                          setActiveTab('diagram');
                         }}
-                        className="px-4 py-2 bg-[#3ECF8E]/20 text-[#3ECF8E] rounded-lg text-sm hover:bg-[#3ECF8E]/30 transition-colors"
+                        className="px-4 py-2 bg-primary/20 text-primary rounded-lg text-sm hover:bg-primary/30 transition-colors"
                       >
                         Try Again
                       </button>
@@ -580,8 +558,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
           )}
         </AnimatePresence>
 
-        {/* Footer with timestamp */}
-        <div className="px-4 py-2 border-t border-[#2a2a2a] bg-[#0d0d0d]">
+        <div className="px-4 py-2 border-t border-border-subtle bg-surface-3">
           <span className="text-[10px] text-gray-600">
             {new Date(data.created_at).toLocaleString([], {
               month: 'short',

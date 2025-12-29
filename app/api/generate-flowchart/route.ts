@@ -130,7 +130,7 @@ export async function POST(request: Request) {
           });
         }
       } catch {
-        // Cache check skipped
+        
       }
     }
 
@@ -181,11 +181,11 @@ ${fileContent.substring(0, 6000)}
       .replace(/```\n?/g, '')
       .trim();
     
-    // Sanitize: Remove problematic characters from node labels
-    // Replace arrows in labels with text
+    
+    
     cleanFlowchart = cleanFlowchart.replace(/→/g, ' to ');
     cleanFlowchart = cleanFlowchart.replace(/←/g, ' from ');
-    // Wrap labels with @ or * in quotes to prevent parse errors
+    
     cleanFlowchart = cleanFlowchart.replace(/\[([^\]]*[@*\/][^\]]*)\]/g, '["$1"]');
 
     if (explanationId) {
@@ -196,7 +196,7 @@ ${fileContent.substring(0, 6000)}
           .update({ flowchart: cleanFlowchart })
           .eq('id', explanationId);
       } catch {
-        // Save skipped
+        
       }
     }
 

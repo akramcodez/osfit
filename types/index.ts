@@ -1,7 +1,7 @@
 export type MessageRole = 'user' | 'assistant' | 'system';
 export type AssistantMode = 'issue_solver' | 'file_explainer' | 'mentor';
 
-// Base message for Mentor mode (messages table)
+
 export interface Message {
   id: string;
   session_id: string;
@@ -11,7 +11,7 @@ export interface Message {
   created_at: string;
 }
 
-// File Explainer mode (file_explanations table)
+
 export interface FileExplanation {
   id: string;
   session_id: string;
@@ -20,12 +20,12 @@ export interface FileExplanation {
   file_path?: string;
   file_content?: string;
   language?: string;
-  explanation: string; // This is the main content (user question or AI response)
+  explanation: string; 
   metadata?: Record<string, unknown>;
   created_at: string;
 }
 
-// Issue Solver mode (issue_solutions table)
+
 export interface IssueSolution {
   id: string;
   session_id: string;
@@ -47,7 +47,7 @@ export interface IssueSolution {
   created_at: string;
 }
 
-// Union type for all chat data types
+
 export type ChatData = Message | FileExplanation | IssueSolution;
 
 export interface ChatSession {

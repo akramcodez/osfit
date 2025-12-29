@@ -16,7 +16,6 @@ interface MessageInputProps {
   onClearError?: () => void;
 }
 
-// Mode-specific placeholders
 const MODE_PLACEHOLDERS: Record<AssistantMode, Record<LanguageCode, string>> = {
   mentor: {
     en: 'Ask anything about open source...',
@@ -27,7 +26,7 @@ const MODE_PLACEHOLDERS: Record<AssistantMode, Record<LanguageCode, string>> = {
     zh: '询问有关开源的任何问题...',
     ja: 'オープンソースについて何でも聞いてください...',
     ko: '오픈소스에 대해 무엇이든 물어보세요...',
-    pt: 'Pergunte qualquer coisa sobre código aberto...',
+    pt: 'Pergunte qualquer coisa sobre código abierto...',
     ru: 'Спросите что угодно об open source...',
     ar: 'اسأل أي شيء عن المصدر المفتوح...',
     bn: 'ওপেন সোর্স সম্পর্কে কিছু জিজ্ঞাসা করুন...',
@@ -62,11 +61,9 @@ const MODE_PLACEHOLDERS: Record<AssistantMode, Record<LanguageCode, string>> = {
   },
 };
 
-// Validation patterns
 const GITHUB_ISSUE_PATTERN = /github\.com\/[^\/]+\/[^\/]+\/issues\/\d+/;
 const GITHUB_FILE_PATTERN = /github\.com\/[^\/]+\/[^\/]+\/blob\/.+/;
 
-// Error messages for invalid input
 const ERROR_MESSAGES: Record<string, Record<LanguageCode, string>> = {
   issue_solver: {
     en: 'Please enter a valid GitHub issue URL (e.g. https://github.com/org/repo/issues/123)',
@@ -103,16 +100,12 @@ export default function MessageInput({ onSend, disabled, language = 'en', mode =
   const [localError, setLocalError] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Get mode-specific placeholder
   const placeholder = MODE_PLACEHOLDERS[mode]?.[language] || MODE_PLACEHOLDERS.mentor[language];
   
-  // Check if mode requires URL only
   const isUrlMode = mode === 'issue_solver' || mode === 'file_explainer';
 
-  // Display error from props or local state
   const displayError = error || localError;
 
-  // Validate input based on mode
   const validateInput = (text: string): boolean => {
     if (mode === 'issue_solver') {
       return GITHUB_ISSUE_PATTERN.test(text);
@@ -120,14 +113,13 @@ export default function MessageInput({ onSend, disabled, language = 'en', mode =
     if (mode === 'file_explainer') {
       return GITHUB_FILE_PATTERN.test(text);
     }
-    return true; // Mentor mode accepts anything
+    return true;
   };
 
   const handleSend = () => {
     const trimmedInput = input.trim();
     if (!trimmedInput) return;
 
-    // Validate URL for issue_solver and file_explainer modes
     if (isUrlMode && !validateInput(trimmedInput)) {
       setLocalError(ERROR_MESSAGES[mode]?.[language] || ERROR_MESSAGES[mode]?.en || 'Invalid input');
       return;
@@ -150,10 +142,8 @@ export default function MessageInput({ onSend, disabled, language = 'en', mode =
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
-    // Clear error on new input
     if (localError) setLocalError('');
     if (onClearError) onClearError();
-    // Auto-resize
     e.target.style.height = 'auto';
     e.target.style.height = `${e.target.scrollHeight}px`;
   };
@@ -165,7 +155,6 @@ export default function MessageInput({ onSend, disabled, language = 'en', mode =
 
   return (
     <div className="w-full max-w-3xl relative mb-2">
-      {/* Error Banner - Above Input */}
       {displayError && (
         <div className="mb-3 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm flex items-center justify-between gap-3 animate-fade-in">
           <span>{displayError}</span>
@@ -178,9 +167,8 @@ export default function MessageInput({ onSend, disabled, language = 'en', mode =
         </div>
       )}
 
-      <div className="relative flex items-end w-full p-3 bg-[#2F2F2F] rounded-2xl border border-white/10 shadow-lg focus-within:border-white/20 transition-colors">
+      <div className="relative flex items-end w-full p-3 bg-secondary rounded-2xl border border-white/10 shadow-lg focus-within:border-white/20 transition-colors">
         
-        {/* Icon changes based on mode */}
         <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white mb-1 mr-2 rounded-full">
             {isUrlMode ? <Link className="h-5 w-5" /> : <Paperclip className="h-5 w-5" />}
         </Button>

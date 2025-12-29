@@ -11,10 +11,8 @@ import 'highlight.js/styles/atom-one-dark.css';
 
 import { CodeBlock } from '@/components/chat/CodeBlock';
 
-// Union type for display items
 type DisplayItem = Message | FileExplanation;
 
-// Helper to get content from either type
 function getContent(item: DisplayItem): string {
   if ('content' in item) return item.content;
   if ('explanation' in item) return item.explanation || '';
@@ -35,13 +33,11 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
   const streamRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const completedRef = useRef<boolean>(false);
 
-  // Fast streaming - complete in ~1-2 seconds max
   useEffect(() => {
     if (!isUser && isNew && content && !completedRef.current) {
       const totalLength = content.length;
       
-      // Calculate speed to finish in ~3-4 seconds (like ChatGPT/Gemini)
-      const targetDuration = 3500; // ms
+      const targetDuration = 3500;
       const baseChunkSize = Math.max(2, Math.ceil(totalLength / (targetDuration / 25)));
       
       const streamContent = () => {
@@ -50,19 +46,16 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
             setIsStreaming(false);
             if (!completedRef.current) {
               completedRef.current = true;
-              // Defer callback to avoid setState during render
               setTimeout(() => onStreamComplete?.(), 0);
             }
             return totalLength;
           }
           
-          // Variable chunk size for natural feel
           const remaining = totalLength - prev;
           const chunkSize = Math.min(baseChunkSize + Math.floor(Math.random() * 3), remaining);
           const newLength = prev + chunkSize;
           
-          // Continue streaming
-          streamRef.current = setTimeout(streamContent, 16); // 60fps
+          streamRef.current = setTimeout(streamContent, 16);
           
           return newLength;
         });
@@ -74,11 +67,10 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
         if (streamRef.current) clearTimeout(streamRef.current);
       };
     } else if (!isNew || isUser) {
-      setDisplayedLength(content.length);
+      setTimeout(() => setDisplayedLength(content.length), 0);
     }
   }, [content, isUser, isNew, onStreamComplete]);
 
-  // Memoize displayed content to reduce re-renders
   const displayedContent = useMemo(() => {
     if (displayedLength >= content.length) {
       return content;
@@ -86,8 +78,6 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
     return content.slice(0, displayedLength);
   }, [content, displayedLength]);
 
-  // For streaming, show plain text to avoid layout jumps
-  // Once complete, render full markdown
   const shouldRenderMarkdown = !isStreaming || displayedLength >= content.length;
 
   return (
@@ -116,7 +106,7 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
                     const isInline = !className;
                     if (isInline) {
                       return (
-                        <code className="px-1.5 py-0.5 bg-white/10 rounded text-[#3ECF8E] text-sm" {...props}>
+                        <code className="px-1.5 py-0.5 bg-white/10 rounded text-primary text-sm" {...props}>
                           {children}
                         </code>
                       );
@@ -136,28 +126,28 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
                     <p className="text-gray-200 leading-relaxed mb-3 last:mb-0">{children}</p>
                   ),
                   a: ({ children, href }) => (
-                    <a href={href as string} target="_blank" rel="noopener noreferrer" className="text-[#3ECF8E] hover:underline">{children}</a>
+                    <a href={href as string} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{children}</a>
                   ),
                   blockquote: ({ children }) => (
-                    <blockquote className="border-l-2 border-[#3ECF8E] pl-3 py-1 text-gray-300 bg-[#0d0d0d]/40 rounded my-3">{children}</blockquote>
+                    <blockquote className="border-l-2 border-primary pl-3 py-1 text-gray-300 bg-surface-3/40 rounded my-3">{children}</blockquote>
                   ),
-                  hr: () => <hr className="border-[#2a2a2a] my-4" />,
+                  hr: () => <hr className="border-border-subtle my-4" />,
                   strong: ({ children }) => (
                     <strong className="font-semibold text-white">{children}</strong>
                   ),
                   table: ({ children }) => (
-                    <div className="my-4 overflow-hidden rounded-lg border border-[#2a2a2a]">
+                    <div className="my-4 overflow-hidden rounded-lg border border-border-subtle">
                       <table className="w-full text-left text-sm text-gray-200">{children}</table>
                     </div>
                   ),
                   thead: ({ children }) => (
-                    <thead className="bg-[#0d0d0d] text-gray-300">{children}</thead>
+                    <thead className="bg-surface-3 text-gray-300">{children}</thead>
                   ),
                   tbody: ({ children }) => (
-                    <tbody className="bg-[#141414]">{children}</tbody>
+                    <tbody className="bg-surface-2">{children}</tbody>
                   ),
                   tr: ({ children }) => (
-                    <tr className="border-t border-[#2a2a2a]">{children}</tr>
+                    <tr className="border-t border-border-subtle">{children}</tr>
                   ),
                   th: ({ children }) => (
                     <th className="px-3 py-2 font-medium">{children}</th>
@@ -179,15 +169,13 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
                 {displayedContent}
               </ReactMarkdown>
             ) : (
-              // While streaming: show plain text with whitespace preserved
               <pre className="whitespace-pre-wrap font-sans text-base leading-relaxed m-0 p-0 bg-transparent">
                 {displayedContent}
-                <span className="inline-block w-2 h-4 bg-[#3ECF8E] ml-1 animate-pulse align-middle" />
+                <span className="inline-block w-2 h-4 bg-primary ml-1 animate-pulse align-middle" />
               </pre>
             )}
-            {/* Cursor after markdown complete */}
             {shouldRenderMarkdown && isStreaming && (
-              <span className="inline-block w-2 h-4 bg-[#3ECF8E] ml-1 animate-pulse" />
+              <span className="inline-block w-2 h-4 bg-primary ml-1 animate-pulse" />
             )}
           </div>
         </Card>

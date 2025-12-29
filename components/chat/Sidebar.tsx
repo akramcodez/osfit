@@ -54,10 +54,9 @@ export default function Sidebar({
     }
   }, [currentSessionId, refreshTrigger, user]);
 
-  // Translate session titles when language changes or sessions load
   useEffect(() => {
     const translateTitles = async () => {
-      if (sessions.length === 0 || language === 'en') {
+      if (!sessions.length || language === 'en') {
         setTranslatedTitles({});
         setIsTranslating(false);
         return;
@@ -105,7 +104,6 @@ export default function Sidebar({
 
   return (
     <>
-      {/* Collapsed state - Menu toggle button */}
       <div 
         className={`absolute top-4 left-4 z-30 transition-all duration-300 ease-out ${
           isOpen || hideToggleButton ? 'opacity-0 pointer-events-none -translate-x-10' : 'opacity-100 translate-x-0'
@@ -115,15 +113,14 @@ export default function Sidebar({
           variant="ghost" 
           size="icon" 
           onClick={toggleSidebar} 
-          className="text-gray-400 hover:text-white hover:scale-110 active:scale-95 transition-transform duration-150 bg-[#1C1C1C]/80 backdrop-blur-sm"
+          className="text-gray-400 hover:text-white hover:scale-110 active:scale-95 transition-transform duration-150 bg-background/80 backdrop-blur-sm"
         >
           <PanelLeftClose className="h-6 w-6 rotate-180" />
         </Button>
       </div>
 
-      {/* Sidebar - Always in DOM, animated with transform */}
       <div 
-        className={`h-full bg-[#1C1C1C] flex flex-col border-r border-[#2A2A2A] relative z-20 flex-shrink-0 transition-all duration-300 ease-out ${
+        className={`h-full bg-background flex flex-col border-r border-border-subtle relative z-20 flex-shrink-0 transition-all duration-300 ease-out ${
           isOpen 
             ? 'w-[260px] translate-x-0 opacity-100' 
             : 'w-0 -translate-x-full opacity-0 overflow-hidden'
@@ -134,7 +131,7 @@ export default function Sidebar({
             <Button 
               onClick={onNewChat}
               variant="ghost" 
-              className="flex-1 justify-start gap-3 border border-[#3E3E3E] hover:bg-[#2A2A2A] hover:border-[#3ECF8E]/50 text-sm font-normal text-white px-3 py-5 rounded-lg transition-all duration-200 active:scale-[0.98]"
+              className="flex-1 justify-start gap-3 border border-border-strong hover:bg-secondary hover:border-primary/50 text-sm font-normal text-white px-3 py-5 rounded-lg transition-all duration-200 active:scale-[0.98]"
               disabled={!user}
             >
               <MessageSquarePlus className="h-4 w-4" />
@@ -164,8 +161,8 @@ export default function Sidebar({
                         key={session.id}
                         className={`group flex items-center justify-between px-3 py-2 text-sm rounded-lg cursor-pointer transition-all duration-150 hover:translate-x-1 active:scale-[0.98] ${
                           currentSessionId === session.id 
-                            ? 'bg-[#2A2A2A] text-white font-medium' 
-                            : 'text-gray-300 hover:bg-[#2A2A2A] hover:text-white'
+                            ? 'bg-secondary text-white font-medium' 
+                            : 'text-gray-300 hover:bg-secondary hover:text-white'
                         }`}
                         style={{ 
                           transitionDelay: isOpen ? `${index * 30}ms` : '0ms',
@@ -220,7 +217,7 @@ export default function Sidebar({
               </>
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center px-6">
-                <div className="h-12 w-12 bg-[#1A1A1A] rounded-xl flex items-center justify-center mb-3 border border-[#2A2A2A]">
+                <div className="h-12 w-12 bg-surface-1 rounded-xl flex items-center justify-center mb-3 border border-border-subtle">
                   <User className="h-6 w-6 text-gray-400" />
                 </div>
                 <h3 className="text-sm font-medium text-white mb-1">{t('welcomeToOsfit', language) || 'Welcome to OSFIT'}</h3>
@@ -234,26 +231,24 @@ export default function Sidebar({
           <div className="p-3 border-t border-white/10">
             {user ? (
               <>
-                {/* User info - clickable to open settings */}
                 <button 
                   onClick={onShowUserSettings}
-                  className="w-full flex items-center gap-3 px-2 py-2 mb-2 rounded-lg hover:bg-[#2A2A2A] transition-colors cursor-pointer group"
+                  className="w-full flex items-center gap-3 px-2 py-2 mb-2 rounded-lg hover:bg-secondary transition-colors cursor-pointer group"
                 >
-                  <div className="h-8 w-8 rounded-full bg-[#3ECF8E] flex items-center justify-center text-xs font-bold text-black">
+                  <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-black">
                     {username?.charAt(0).toUpperCase() || 'U'}
                   </div>
                   <div className="flex-1 min-w-0 text-left">
                     <p className="text-sm font-medium text-white truncate">{username}</p>
                   </div>
-                  {/* Settings badge */}
-                  <div className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#3ECF8E]/10 text-[#3ECF8E] border border-[#3ECF8E]/20 group-hover:bg-[#3ECF8E]/20 transition-colors">
+                  <div className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20 group-hover:bg-primary/20 transition-colors">
                     API Keys
                   </div>
                 </button>
                 
                 <Button 
                   variant="ghost" 
-                  className="w-full justify-start gap-3 text-sm font-normal text-gray-400 hover:text-white hover:bg-[#2F2F2F] transition-all duration-150 active:scale-[0.98]"
+                  className="w-full justify-start gap-3 text-sm font-normal text-gray-400 hover:text-white hover:bg-secondary/80 transition-all duration-150 active:scale-[0.98]"
                   onClick={onLogout}
                 >
                   <LogOut className="h-4 w-4" />
@@ -264,7 +259,7 @@ export default function Sidebar({
               <div className="flex flex-col gap-2">
                 <Button 
                   size="sm"
-                  className="w-full bg-[#166534] border border-[#22c55e] text-white hover:bg-[#15803d] text-xs font-medium h-8 transition-colors"
+                  className="w-full bg-success-dark border border-success text-white hover:bg-success-dark/90 text-xs font-medium h-8 transition-colors"
                   onClick={() => onAuthRequest?.('signup')}
                 >
                   {t('signUp', language) || 'Sign Up'}
@@ -272,7 +267,7 @@ export default function Sidebar({
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="w-full border-[#2A2A2A] bg-transparent text-gray-400 hover:text-white hover:border-[#4A4A4A] text-xs h-8 transition-colors"
+                  className="w-full border-border-subtle bg-transparent text-gray-400 hover:text-white hover:border-border-strong text-xs h-8 transition-colors"
                   onClick={() => onAuthRequest?.('signin')}
                 >
                   {t('signIn', language) || 'Sign In'}

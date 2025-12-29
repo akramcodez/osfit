@@ -1,9 +1,6 @@
 #!/usr/bin/env ts-node
-/**
- * Test script for the explain-line and generate-flowchart APIs
- * Run with: npx ts-node scripts/test-apis.ts
- */
-// Make this file a module
+
+
 export {};
 
 const BASE_URL = 'http://localhost:3000';
@@ -17,7 +14,7 @@ interface TestResult {
 
 const results: TestResult[] = [];
 
-// Sample code snippets for testing
+
 const TEST_CODES = {
   typescript: `import axios from 'axios';
 
@@ -100,7 +97,7 @@ async function testExplainLine(
       };
     }
 
-    // Validate explanation contains expected content
+    
     const explanation = data.explanation;
     const hasLineReference = explanation.includes(`${lineNumber}`) || explanation.includes('Line');
     
@@ -160,7 +157,7 @@ async function testGenerateFlowchart(
       };
     }
 
-    // Validate flowchart structure
+    
     const flowchart = data.flowchart;
     const hasFlowchartDeclaration = flowchart.includes('flowchart') || flowchart.includes('graph');
     const hasNodes = flowchart.includes('[') && flowchart.includes(']');
@@ -196,37 +193,37 @@ async function runAllTests() {
   console.log('🧪 Running API Tests...\n');
   console.log('=' .repeat(60));
 
-  // Test 1: Explain Line - TypeScript import (mock)
+  
   results.push(await testExplainLine(1, TEST_CODES.typescript, 'typescript', true));
 
-  // Test 2: Explain Line - TypeScript export function (mock)
+  
   results.push(await testExplainLine(3, TEST_CODES.typescript, 'typescript', true));
 
-  // Test 3: Explain Line - TypeScript async function (mock)
+  
   results.push(await testExplainLine(8, TEST_CODES.typescript, 'typescript', true));
 
-  // Test 4: Explain Line - JavaScript require (mock)
+  
   results.push(await testExplainLine(1, TEST_CODES.javascript, 'javascript', true));
 
-  // Test 5: Explain Line - JavaScript middleware (mock)
+  
   results.push(await testExplainLine(4, TEST_CODES.javascript, 'javascript', true));
 
-  // Test 6: Explain Line - Python import (mock)
+  
   results.push(await testExplainLine(1, TEST_CODES.python, 'python', true));
 
-  // Test 7: Explain Line - Python function def (mock)
+  
   results.push(await testExplainLine(4, TEST_CODES.python, 'python', true));
 
-  // Test 8: Generate Flowchart - TypeScript (mock)
+  
   results.push(await testGenerateFlowchart(TEST_CODES.typescript, 'typescript', true));
 
-  // Test 9: Generate Flowchart - JavaScript (mock)
+  
   results.push(await testGenerateFlowchart(TEST_CODES.javascript, 'javascript', true));
 
-  // Test 10: Generate Flowchart - Python (mock)
+  
   results.push(await testGenerateFlowchart(TEST_CODES.python, 'python', true));
 
-  // Print results
+  
   console.log('\n📊 Test Results:\n');
   
   let passed = 0;

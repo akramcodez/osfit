@@ -8,10 +8,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useEffect, useRef } from 'react';
 import { t, LanguageCode } from '@/lib/translations';
 
-// Union type for display items
 type DisplayItem = Message | FileExplanation;
 
-// Helper to get content from either type
 function getContent(item: DisplayItem): string {
   if ('content' in item) return item.content;
   if ('explanation' in item) return item.explanation || '';
@@ -42,9 +40,8 @@ export default function MessageList({
   const scrollRef = useRef<HTMLDivElement>(null);
   const hasInitialScrolledForStreamRef = useRef<string | null>(null);
 
-  // Scroll to bottom when mode changes (component mounts/switches)
   useEffect(() => {
-    hasInitialScrolledForStreamRef.current = null; // Reset tracking on mode change
+    hasInitialScrolledForStreamRef.current = null;
     
     const timeoutId = setTimeout(() => {
       const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
@@ -54,14 +51,12 @@ export default function MessageList({
           behavior: 'smooth'
         });
       }
-    }, 200); // Increased delay to ensure data has loaded
+    }, 200);
 
     return () => clearTimeout(timeoutId);
   }, [currentMode]);
 
-  // Auto-scroll to bottom when messages change or loading
   useEffect(() => {
-    // Small delay to ensure DOM has updated
     const timeoutId = setTimeout(() => {
       const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
       if (scrollContainer) {
@@ -75,31 +70,25 @@ export default function MessageList({
     return () => clearTimeout(timeoutId);
   }, [messages.length, isLoading]);
 
-  // Scroll once when streaming starts - no continuous scrolling
   useEffect(() => {
-    // Reset tracking when streaming ends
     if (!streamingMessageId) {
       hasInitialScrolledForStreamRef.current = null;
       return;
     }
     
-    // Skip if already scrolled for this streaming message
     if (hasInitialScrolledForStreamRef.current === streamingMessageId) return;
 
     const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
     if (!scrollContainer) return;
 
-    // Mark as scrolled for this streaming message
     hasInitialScrolledForStreamRef.current = streamingMessageId;
     
-    // Single scroll when streaming starts
     scrollContainer.scrollTo({
       top: scrollContainer.scrollHeight,
       behavior: 'smooth'
     });
   }, [streamingMessageId]);
 
-  // Show centered spinner when loading a session
   if (isSessionLoading) {
     return (
       <div className="w-full h-full flex items-center justify-center">
@@ -123,15 +112,13 @@ export default function MessageList({
                     onClick={() => onModeSelect?.('issue_solver')}
                     className={`col-span-1 md:col-span-2 relative overflow-hidden group p-[1px] rounded-xl cursor-pointer transition-transform duration-300 hover:scale-[1.01]`}
                 >
-                    {/* Border Background: Wavy gradient when idle, Solid Green when selected */}
                     <div className={`absolute inset-0 transition-opacity duration-300 ${
                         currentMode === 'issue_solver' 
-                            ? 'bg-[#3ECF8E] opacity-100' 
-                            : 'bg-gradient-to-r from-[#3ECF8E] via-[#2a2a2a] to-[#3ECF8E] animate-gradient opacity-50 group-hover:opacity-70'
+                            ? 'bg-primary opacity-100' 
+                            : 'bg-gradient-to-r from-primary via-secondary to-primary animate-gradient opacity-50 group-hover:opacity-70'
                     }`}></div>
                     
-                    {/* Inner content container */}
-                    <div className="relative h-full bg-[#2a2a2a] rounded-[11px] p-5 z-10 flex flex-col justify-center">
+                    <div className="relative h-full bg-secondary rounded-[11px] p-5 z-10 flex flex-col justify-center">
                          <div className="flex items-center gap-2 mb-1">
                             <h3 className="text-lg font-semibold text-white">{t('solveGitHubIssue', language)}</h3>
                         </div>
@@ -140,8 +127,8 @@ export default function MessageList({
                 </div>
                  <div 
                     onClick={() => onModeSelect?.('file_explainer')}
-                    className={`bg-[#2a2a2a] p-4 rounded-xl border hover:bg-[#3E3E3E] cursor-pointer transition-colors text-left ${
-                      currentMode === 'file_explainer' ? 'border-[#3ECF8E]' : 'border-[#3E3E3E]'
+                    className={`bg-secondary p-4 rounded-xl border hover:bg-secondary/80 cursor-pointer transition-colors text-left ${
+                      currentMode === 'file_explainer' ? 'border-primary' : 'border-border'
                     }`}
                 >
                     <h3 className="text-sm font-medium text-white mb-1">{t('explainCodeFile', language)}</h3>
@@ -149,8 +136,8 @@ export default function MessageList({
                 </div>
                  <div 
                     onClick={() => onModeSelect?.('mentor')}
-                    className={`bg-[#2a2a2a] p-4 rounded-xl border hover:bg-[#3E3E3E] cursor-pointer transition-colors text-left ${
-                      currentMode === 'mentor' ? 'border-[#3ECF8E]' : 'border-[#3E3E3E]'
+                    className={`bg-secondary p-4 rounded-xl border hover:bg-secondary/80 cursor-pointer transition-colors text-left ${
+                      currentMode === 'mentor' ? 'border-primary' : 'border-border'
                     }`}
                 >
                     <h3 className="text-sm font-medium text-white mb-1">{t('openSourceMentor', language)}</h3>
@@ -170,7 +157,7 @@ export default function MessageList({
             ))}
             {isLoading && (
               <div className="flex gap-4 w-full">
-                <div className="w-8 h-8 rounded-full bg-[#3ECF8E] flex items-center justify-center text-xs font-bold text-black flex-shrink-0 mt-1">
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-black flex-shrink-0 mt-1">
                     OS
                 </div>
                 <div className="pt-2">

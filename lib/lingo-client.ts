@@ -5,8 +5,8 @@ export interface TranslateRequest {
   text: string;
   targetLanguage: string;
   sourceLanguage?: string;
-  userLingoKey?: string | null; // User-provided Lingo API key from DB
-  userGeminiKey?: string | null; // User-provided Gemini key for fallback translation
+  userLingoKey?: string | null; 
+  userGeminiKey?: string | null; 
 }
 
 export const SUPPORTED_LANGUAGES = [
@@ -31,25 +31,21 @@ const languageNames: Record<string, string> = {
   ko: 'Korean', hi: 'Hindi', ar: 'Arabic', ru: 'Russian', bn: 'Bengali',
 };
 
-/**
- * Translate text
- * - Uses Lingo.dev SDK if a Lingo key is available (user key or system key)
- * - Falls back to Gemini AI for translation if no Lingo key
- */
+
 export async function translateText(request: TranslateRequest): Promise<string> {
-  // Skip translation if target is English
+  
   if (request.targetLanguage === 'en') {
     return request.text;
   }
 
   const targetLang = languageNames[request.targetLanguage] || request.targetLanguage;
 
-  // Determine which Lingo key to use: user key > system key
+  
   const effectiveLingoKey = request.userLingoKey || process.env.LINGO_API_KEY;
 
   try {
     if (effectiveLingoKey) {
-      // Use Lingo.dev SDK with the effective key
+      
       const lingoClient = new LingoDotDevEngine({
         apiKey: effectiveLingoKey,
       });
@@ -61,7 +57,7 @@ export async function translateText(request: TranslateRequest): Promise<string> 
       });
       return translated.text || request.text;
     } else {
-      // Fallback: use Gemini for translation
+      
       const prompt = `Translate the following text to ${targetLang}. 
 Maintain the same formatting (markdown, bullet points, code blocks, etc.).
 Only output the translated text, nothing else.

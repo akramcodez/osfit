@@ -8,16 +8,16 @@ import { getUserApiKeys } from '@/app/api/user/keys/route';
 import { getSupabase } from '@/lib/supabase';
 import { geminiClient, getGeminiClient } from '@/lib/gemini-client';
 
-// Helper to determine if we should use mock data
-// In development: use mocks by default UNLESS user has configured their own keys
-// In production: always use real AI
+
+
+
 const isDevelopment = process.env.NODE_ENV === 'development';
 const forceRealAI = process.env.USE_REAL_AI === 'true';
 
-// Lingo is provided by the app (system key fallback)
+
 const SYSTEM_LINGO_KEY = process.env.LINGO_API_KEY || '';
 
-// Type for tracking which keys are being used and their source
+
 interface EffectiveKeys {
   gemini: { key: string | null; source: 'user' | 'none' };
   apify: { key: string | null; source: 'user' | 'none' };
@@ -25,11 +25,7 @@ interface EffectiveKeys {
   groq: { key: string | null; source: 'user' | 'none' };
 }
 
-/**
- * Get effective keys
- * - Gemini/Groq/Apify: User keys only (no system fallback)
- * - Lingo: App provides system key as fallback
- */
+
 function getEffectiveKeys(userKeys: { gemini_key: string | null; apify_key: string | null; lingo_key: string | null; groq_key: string | null }): EffectiveKeys {
   return {
     gemini: {
@@ -51,7 +47,7 @@ function getEffectiveKeys(userKeys: { gemini_key: string | null; apify_key: stri
   };
 }
 
-// Custom error class for API key failures
+
 class ApiKeyError extends Error {
   service: 'gemini' | 'apify' | 'lingo';
   source: 'user' | 'system';
@@ -64,7 +60,7 @@ class ApiKeyError extends Error {
   }
 }
 
-// Helper to check if error is a quota/rate limit error
+
 function isQuotaError(error: unknown): boolean {
   if (error instanceof Error) {
     const msg = error.message.toLowerCase();
@@ -74,12 +70,12 @@ function isQuotaError(error: unknown): boolean {
   return false;
 }
 
-// Helper to check if user has any keys configured
+
 function userHasKeys(userKeys: { gemini_key: string | null; apify_key: string | null; lingo_key: string | null; groq_key: string | null }): boolean {
   return !!(userKeys.gemini_key || userKeys.apify_key || userKeys.lingo_key || userKeys.groq_key);
 }
 
-// Helper to route AI calls to the correct provider based on user preference
+
 interface UserKeysWithProvider {
   gemini_key: string | null;
   groq_key: string | null;
@@ -104,7 +100,7 @@ async function analyzeWithProvider(
   });
 }
 
-// Helper to get user from auth header
+
 async function getUserFromRequest(request: Request) {
   const authHeader = request.headers.get('Authorization');
   if (!authHeader?.startsWith('Bearer ')) {
@@ -125,22 +121,22 @@ async function getUserFromRequest(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    // Check auth
+    
     const user = await getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Fetch user's API keys
+    
     const userKeys = await getUserApiKeys(user.id);
     
-    // Get effective keys
+    
     const effectiveKeys = getEffectiveKeys(userKeys);
     
-    // Check if user has any AI keys configured
+    
     const hasAIKey = effectiveKeys.gemini.key || effectiveKeys.groq.key;
     
-    // If no AI keys in production, return friendly guidance message
+    
     if (!hasAIKey && !isDevelopment) {
       return NextResponse.json({ 
         response: `## Welcome to OSFIT!
@@ -174,18 +170,18 @@ To get started, please add your API keys in **Settings**.
       });
     }
     
-    // Determine if we should use mock AI (dev mode without keys)
+    
     const USE_MOCK_AI = isDevelopment && !forceRealAI && !userHasKeys(userKeys);
 
     const body = await request.json();
     const { message, mode, language = 'en', conversationHistory = [], sessionId, metadata } = body;
 
-    // Title is now generated when session is created (in ChatInterface.tsx)
-    // No need to generate it here anymore
+    
+    
 
-    // Return mock response if enabled
+    
     if (USE_MOCK_AI) {
-        // specific check for hi=== request for mentor
+        
         if (mode === 'mentor' && message.trim() === 'hi===') {
              return NextResponse.json({ response: 'hi===' });
         }
@@ -197,10 +193,9 @@ To get started, please add your API keys in **Settings**.
         else if (mode === 'issue_solver') mockResponse = MOCK_RESPONSES.issue_solver;
         else if (mode === 'file_explainer') {
           mockResponse = MOCK_RESPONSES.file_explainer;
-          // Provide mock file info for file explainer mode
+          
           mockFileInfo = {
-            path: 'src/utils/api-client.ts',
-            content: `// Mock API Client\nimport axios from 'axios';\n\nexport const apiClient = axios.create({\n  baseURL: '/api',\n  timeout: 10000,\n});\n\nexport async function fetchData(endpoint: string) {\n  const response = await apiClient.get(endpoint);\n  return response.data;\n}`,
+            content: 'console.log("Mock code");',
             language: 'typescript',
             url: 'https://github.com/example/repo/blob/main/src/utils/api-client.ts'
           };
@@ -213,7 +208,7 @@ To get started, please add your API keys in **Settings**.
     let response = '';
     let fileInfo: { path?: string; content?: string; language?: string; url?: string } | null = null;
 
-    // Pass effective keys to handlers for proper key usage
+    
     try {
       switch (mode) {
         case 'idle':
@@ -234,7 +229,7 @@ To get started, please add your API keys in **Settings**.
           response = 'Mode not recognized. Please select a valid mode.';
       }
     } catch (modeError) {
-      // Check if this is a Gemini API error and wrap it with source info
+      
       if (isQuotaError(modeError)) {
         throw new ApiKeyError('gemini', effectiveKeys.gemini.source as 'user' | 'system', 
           modeError instanceof Error ? modeError.message : 'API quota exceeded');
@@ -242,14 +237,14 @@ To get started, please add your API keys in **Settings**.
       throw modeError;
     }
 
-    // Language is now handled directly by AI via targetLanguage parameter
-    // No separate translation step needed - AI generates in target language
+    
+    
 
     return NextResponse.json({ response, fileInfo });
   } catch (error: unknown) {
     console.error('Process error:', error);
     
-    // Handle ApiKeyError with specific error info
+    
     if (error instanceof ApiKeyError) {
       return NextResponse.json({
         error: error.message,
@@ -305,7 +300,7 @@ async function handleIssueSolver(
   const currentStep = metadata?.currentStep || 'issue_input';
   const issueData = metadata?.issueData || {};
 
-  // Step 1: Check for GitHub issue URL (initial input)
+  
   const issueUrlMatch = message.match(/github\.com\/[^\/]+\/[^\/]+\/issues\/\d+/);
 
   if (issueUrlMatch || currentStep === 'issue_input') {
@@ -316,10 +311,10 @@ async function handleIssueSolver(
       }
 
       try {
-        // Fetch the issue
+        
         const issue = await fetchGitHubIssue(issueUrl);
 
-        // Generate short explanation (Step 2)
+        
         const explanationPrompt = `You are OSFIT Issue Solver. Give a SHORT, DIRECT explanation of this issue.
 
 RULES:
@@ -342,7 +337,7 @@ Labels: ${issue.labels.join(', ') || 'None'}`;
 
         const explanation = await analyzeWithProvider(explanationPrompt, 'Analyze this issue', context, userKeys!, effectiveKeys, targetLanguage);
 
-        // Return explanation with metadata for frontend to track step
+        
         return JSON.stringify({
           type: 'issue_explanation',
           issueUrl,
@@ -359,7 +354,7 @@ Labels: ${issue.labels.join(', ') || 'None'}`;
       }
     }
 
-    // No URL provided - guide user
+    
     return `Share a GitHub issue URL to get started!
 
 **Example:** https://github.com/owner/repo/issues/123
@@ -367,7 +362,7 @@ Labels: ${issue.labels.join(', ') || 'None'}`;
 I'll analyze it and help you create a solution.`;
   }
 
-  // Step 3→4: User wants solution plan
+  
   if (currentStep === 'awaiting_plan' || message.toLowerCase().includes('solution') || message.toLowerCase().includes('plan')) {
     const solutionPrompt = `You are OSFIT Issue Solver. Create a step-by-step solution plan.
 
@@ -400,7 +395,7 @@ Previous analysis: ${issueData.explanation || message}`;
     });
   }
 
-  // Step 5→6: User submitted git diff - generate PR
+  
   if (currentStep === 'awaiting_diff' || message.includes('diff --git') || message.includes('@@')) {
     const prPrompt = `You are OSFIT Issue Solver. Generate a professional Pull Request.
 
@@ -445,7 +440,7 @@ ${message.substring(0, 3000)}
     });
   }
 
-  // Default: guide user
+  
   return `I'm in Issue Solver mode! Share a GitHub issue URL and I'll help you:
 
 1. **Understand the issue** - Quick summary
@@ -467,20 +462,20 @@ async function handleFileExplainer(
   userKeys: UserKeysWithProvider,
   targetLanguage: string = 'en'
 ): Promise<FileExplainerResult> {
-  // Check if message contains a GitHub file URL
+  
   const fileUrlMatch = message.match(/github\.com\/[^\/]+\/[^\/]+\/blob\/[^\s]+/);
 
-  if (fileUrlMatch) {
-    let fileUrl = fileUrlMatch[0];
-    if (!fileUrl.startsWith('http')) {
-      fileUrl = 'https://' + fileUrl;
-    }
+    if (fileUrlMatch) {
+      let fileUrl = fileUrlMatch[0];
+      if (!fileUrl.startsWith('http')) {
+        fileUrl = 'https://' + fileUrl;
+      }
 
     try {
-      // Fetch the file
+      
       const file = await fetchGitHubFile(fileUrl);
 
-      // Analyze with Gemini
+      
       const systemPrompt = `You are OSFIT File Explainer.
 
 Rules:
@@ -543,7 +538,7 @@ ${file.content.substring(0, 4000)}${file.content.length > 4000 ? '\n... (truncat
     }
   }
 
-  // If no URL, guide the user
+  
   return {
     response: `I'm in File Explainer mode! Share a GitHub file URL and I'll explain:
 

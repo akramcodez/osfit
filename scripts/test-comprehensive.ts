@@ -1,36 +1,14 @@
 #!/usr/bin/env npx ts-node
-/**
- * ================================================
- * OSFIT COMPREHENSIVE TEST SUITE
- * ================================================
- * 
- * A massive test script that validates all critical systems:
- * 
- * 1. Environment Configuration
- * 2. Encryption System (API key security)
- * 3. Translation System (12 languages)
- * 4. API Key Priority Logic (user > system)
- * 5. Error Handling & Detection
- * 6. GitHub URL Parsing (issue/file detection)
- * 7. Response Format Validation
- * 8. Mock Responses
- * 9. API Clients (Gemini, Apify, Lingo)
- * 10. Security Checks
- * 
- * Usage:
- *   npx ts-node scripts/test-comprehensive.ts           # Unit tests only
- *   npx ts-node scripts/test-comprehensive.ts --live    # Include live API tests
- *   npx ts-node scripts/test-comprehensive.ts --verbose # Detailed output
- */
+
 
 import crypto from 'crypto';
 
-// ===================== CONFIGURATION =====================
+
 
 const VERBOSE = process.argv.includes('--verbose');
 const LIVE_TESTS = process.argv.includes('--live');
 
-// ===================== TEST UTILITIES =====================
+
 
 const colors = {
   reset: '\x1b[0m',
@@ -118,29 +96,29 @@ function section(title: string) {
   console.log('\n' + c('blue', '  ▶ ') + c('bright', title));
 }
 
-// ===================== TEST DATA =====================
 
-// Translation keys that must exist
+
+
 const REQUIRED_TRANSLATION_KEYS = [
   'newChat', 'recent', 'logOut', 'messagePlaceholder',
   'issueSolver', 'fileExplainer', 'openSourceMentor',
   'settings', 'save', 'delete', 'cancel', 'apiKeys'
 ];
 
-// All supported languages
+
 const SUPPORTED_LANGUAGES = ['en', 'es', 'fr', 'de', 'hi', 'zh', 'ja', 'ko', 'pt', 'ru', 'ar', 'bn'];
 
-// GitHub URL patterns to test
+
 const GITHUB_URL_TESTS = [
   { url: 'https://github.com/owner/repo/issues/123', type: 'issue', valid: true },
   { url: 'github.com/owner/repo/issues/456', type: 'issue', valid: true },
   { url: 'https://github.com/owner/repo/blob/main/src/file.ts', type: 'file', valid: true },
-  { url: 'github.com/repo/blob/master/index.js', type: null, valid: false }, // missing owner - should be rejected
+  { url: 'github.com/repo/blob/master/index.js', type: null, valid: false }, 
   { url: 'https://gitlab.com/owner/repo/issues/123', type: null, valid: false },
   { url: 'not a url at all', type: null, valid: false },
 ];
 
-// Mock error messages to test detection
+
 const ERROR_DETECTION_TESTS = [
   { msg: 'You exceeded your current quota', isQuota: true, isInvalid: false },
   { msg: '[429 Too Many Requests]', isQuota: true, isInvalid: false },
@@ -152,9 +130,9 @@ const ERROR_DETECTION_TESTS = [
   { msg: 'Model not found', isQuota: false, isInvalid: false },
 ];
 
-// ===================== MOCK IMPLEMENTATIONS =====================
 
-// Simulate getEffectiveKeys logic from process/route.ts
+
+
 interface EffectiveKeys {
   gemini: { key: string | null; source: 'user' | 'system' | 'none' };
   apify: { key: string | null; source: 'user' | 'system' | 'none' };
@@ -181,7 +159,7 @@ function getEffectiveKeys(
   };
 }
 
-// Simulate encryption functions
+
 function simulateEncryption(plaintext: string, secret: string): string {
   const key = crypto.createHash('sha256').update(secret).digest();
   const iv = crypto.randomBytes(16);
@@ -205,7 +183,7 @@ function simulateDecryption(ciphertext: string, secret: string): string {
   return decrypted.toString('utf8');
 }
 
-// Simulate error detection
+
 function isQuotaError(error: string): boolean {
   const msg = error.toLowerCase();
   return msg.includes('quota') || msg.includes('rate limit') || msg.includes('429') || 
@@ -221,7 +199,7 @@ function isInvalidKeyError(error: string): boolean {
          (msg.includes('401') && !msg.includes('quota'));
 }
 
-// GitHub URL patterns
+
 const GITHUB_ISSUE_PATTERN = /github\.com\/[^\/]+\/[^\/]+\/issues\/\d+/;
 const GITHUB_FILE_PATTERN = /github\.com\/[^\/]+\/[^\/]+\/blob\/.+/;
 
@@ -235,7 +213,7 @@ function parseGitHubUrl(url: string): { type: 'issue' | 'file' | null; valid: bo
   return { type: null, valid: false };
 }
 
-// ApiKeyError simulation
+
 class ApiKeyError extends Error {
   service: 'gemini' | 'apify' | 'lingo';
   source: 'user' | 'system';
@@ -248,7 +226,7 @@ class ApiKeyError extends Error {
   }
 }
 
-// Error response parser (from ChatInterface.tsx)
+
 interface ApiErrorResponse {
   error: string;
   errorType?: 'api_key_error';
@@ -267,7 +245,7 @@ function parseApiErrorResponse(response: ApiErrorResponse): string {
   return response.error;
 }
 
-// ===================== TEST SUITES =====================
+
 
 function testEnvironment(): TestSuite {
   const suite = new TestSuite('Environment Configuration');
@@ -311,7 +289,7 @@ function testEncryption(): TestSuite {
     'simple-api-key',
     'key-with-special-chars!@#$%^&*()',
     'very-long-api-key-' + 'x'.repeat(100),
-    '',  // Empty string
+    '',  
   ];
   
   for (const data of testData) {
@@ -332,18 +310,18 @@ function testEncryption(): TestSuite {
   
   section('Encryption Security');
   
-  // Test that different secrets produce different ciphertext
+  
   const plaintext = 'test-api-key';
   const enc1 = simulateEncryption(plaintext, 'secret1');
   const enc2 = simulateEncryption(plaintext, 'secret2');
   suite.assert(enc1 !== enc2, 'Different secrets produce different ciphertext');
   
-  // Test that same plaintext produces different ciphertext (random IV)
+  
   const encA = simulateEncryption(plaintext, testSecret);
   const encB = simulateEncryption(plaintext, testSecret);
   suite.assert(encA !== encB, 'Same plaintext produces different ciphertext (random IV)');
   
-  // Test decryption fails with wrong secret
+  
   try {
     simulateDecryption(encA, 'wrong-secret');
     suite.fail('Decryption with wrong secret should fail');
@@ -359,8 +337,8 @@ function testTranslations(): TestSuite {
   
   section('Translation Keys');
   
-  // Simulate translation check (we can't import the actual file in ts-node easily)
-  // So we verify the structure we expect
+  
+  
   
   for (const key of REQUIRED_TRANSLATION_KEYS) {
     suite.pass(`Key "${key}" should exist in translations`);
@@ -374,7 +352,7 @@ function testTranslations(): TestSuite {
   
   section('Translation Fallback');
   
-  // Verify fallback logic exists
+  
   suite.pass('Fallback to English for missing translations');
   suite.pass('Returns key name if translation not found');
   
@@ -565,7 +543,7 @@ function testMockResponses(): TestSuite {
   
   section('Mock Response Structure');
   
-  // Simulate mock responses
+  
   const MOCK_RESPONSES = {
     mentor: 'Welcome to OSFIT! I\'m your open source mentor...',
     issue_solver: 'I\'m ready to help you understand GitHub issues...',
@@ -662,7 +640,7 @@ async function testLiveApis(): Promise<TestSuite> {
   return suite;
 }
 
-// ===================== MAIN =====================
+
 
 async function main() {
   console.log('\n');
@@ -676,7 +654,7 @@ async function main() {
   
   const suites: TestSuite[] = [];
   
-  // Run all test suites
+  
   header('1. Environment Configuration');
   suites.push(testEnvironment());
   
@@ -707,7 +685,7 @@ async function main() {
   header('10. Live API Tests');
   suites.push(await testLiveApis());
   
-  // Summary
+  
   console.log('\n');
   console.log(c('cyan', '╔' + '═'.repeat(58) + '╗'));
   console.log(c('cyan', '║') + c('bright', '  TEST SUMMARY                                             ') + c('cyan', '║'));
@@ -746,7 +724,7 @@ async function main() {
     console.log(c('red', '  │  Review errors above and fix issues.  │'));
     console.log(c('red', '  ╰───────────────────────────────────────╯'));
     
-    // Show failed tests
+    
     console.log(c('dim', '\n  Failed tests:'));
     for (const suite of suites) {
       for (const error of suite.errors) {

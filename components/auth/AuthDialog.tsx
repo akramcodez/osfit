@@ -27,14 +27,15 @@ export default function AuthDialog({ isOpen, onClose, onSuccess, initialMode = '
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Reset form when dialog opens
   useEffect(() => {
     if (isOpen) {
-      setUsername('');
-      setPassword('');
-      setConfirmPassword('');
-      setError('');
-      setIsSignUp(initialMode === 'signup');
+      setTimeout(() => {
+        setUsername('');
+        setPassword('');
+        setConfirmPassword('');
+        setError('');
+        setIsSignUp(initialMode === 'signup');
+      }, 0);
     }
   }, [isOpen, initialMode]);
 
@@ -94,13 +95,12 @@ export default function AuthDialog({ isOpen, onClose, onSuccess, initialMode = '
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[380px] p-0 bg-[#111111] border-[#222222] text-white overflow-hidden rounded-xl">
+      <DialogContent className="sm:max-w-[380px] p-0 bg-surface-3 border-border-subtle text-white overflow-hidden rounded-xl">
         <VisuallyHidden.Root>
           <DialogTitle>Authentication</DialogTitle>
         </VisuallyHidden.Root>
 
         <div className="p-6">
-          {/* Header */}
           <div className="flex flex-col items-center mb-6">
             <AnimatePresence mode="wait">
               <motion.div
@@ -128,7 +128,7 @@ export default function AuthDialog({ isOpen, onClose, onSuccess, initialMode = '
                 placeholder={t('username', language) || 'Username'}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="pl-10 bg-[#1A1A1A] border-[#2A2A2A] text-white placeholder:text-gray-500 h-10 rounded-lg focus-visible:ring-0 focus-visible:border-[#3ECF8E] transition-colors"
+                className="pl-10 bg-surface-1 border-border-subtle text-white placeholder:text-gray-500 h-10 rounded-lg focus-visible:ring-0 focus-visible:border-primary transition-colors"
               />
             </div>
 
@@ -139,7 +139,7 @@ export default function AuthDialog({ isOpen, onClose, onSuccess, initialMode = '
                 placeholder={t('password', language) || 'Password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 bg-[#1A1A1A] border-[#2A2A2A] text-white placeholder:text-gray-500 h-10 rounded-lg focus-visible:ring-0 focus-visible:border-[#3ECF8E] transition-colors"
+                className="pl-10 bg-surface-1 border-border-subtle text-white placeholder:text-gray-500 h-10 rounded-lg focus-visible:ring-0 focus-visible:border-primary transition-colors"
               />
             </div>
 
@@ -158,7 +158,7 @@ export default function AuthDialog({ isOpen, onClose, onSuccess, initialMode = '
                       placeholder={t('confirmPassword', language) || 'Confirm Password'}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="pl-10 bg-[#1A1A1A] border-[#2A2A2A] text-white placeholder:text-gray-500 h-10 rounded-lg focus-visible:ring-0 focus-visible:border-[#3ECF8E] transition-colors"
+                      className="pl-10 bg-surface-1 border-border-subtle text-white placeholder:text-gray-500 h-10 rounded-lg focus-visible:ring-0 focus-visible:border-primary transition-colors"
                     />
                   </div>
                 </motion.div>
@@ -181,7 +181,7 @@ export default function AuthDialog({ isOpen, onClose, onSuccess, initialMode = '
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full h-10 bg-[#166534] border border-[#22c55e] hover:bg-[#15803d] text-white font-medium rounded-lg transition-colors"
+              className="w-full h-10 bg-success-dark border border-success hover:bg-success-dark/90 text-white font-medium rounded-lg transition-colors"
             >
               {isLoading ? (
                 <Spinner size="sm" className="border-black/30 border-t-black" />
@@ -194,12 +194,12 @@ export default function AuthDialog({ isOpen, onClose, onSuccess, initialMode = '
             </Button>
           </form>
 
-          <div className="mt-5 pt-5 border-t border-[#222222] text-center">
+          <div className="mt-5 pt-5 border-t border-border-subtle text-center">
             <p className="text-xs text-gray-500">
               {isSignUp ? t('alreadyHaveAccount', language) : t('dontHaveAccount', language)}{' '}
               <button
                 onClick={toggleMode}
-                className="text-[#3ECF8E] font-medium hover:underline"
+                className="text-primary font-medium hover:underline"
               >
                 {isSignUp ? t('signIn', language) : t('signUp', language)}
               </button>
