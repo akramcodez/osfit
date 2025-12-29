@@ -154,22 +154,22 @@ export default function MessageInput({ onSend, disabled, language = 'en', mode =
   };
 
   return (
-    <div className="w-full max-w-3xl relative mb-2">
+    <div className="w-full max-w-3xl relative mb-2 px-2 sm:px-0">
       {displayError && (
-        <div className="mb-3 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm flex items-center justify-between gap-3 animate-fade-in">
-          <span>{displayError}</span>
+        <div className="mb-3 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm flex items-center justify-between gap-3 animate-fade-in shadow-lg">
+          <span className="flex-1">{displayError}</span>
           <button 
             onClick={handleDismissError}
-            className="p-1 hover:bg-red-500/20 rounded-full transition-colors"
+            className="p-1.5 hover:bg-red-500/20 rounded-full transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
       )}
 
-      <div className="relative flex items-end w-full p-3 bg-secondary rounded-2xl border border-white/10 shadow-lg focus-within:border-white/20 transition-colors">
+      <div className="relative flex items-end w-full p-2 md:p-3 bg-secondary rounded-2xl border border-white/10 shadow-lg focus-within:border-white/20 transition-colors">
         
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white mb-1 mr-2 rounded-full">
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white mb-1 mr-1 md:mr-2 rounded-full hidden sm:flex">
             {isUrlMode ? <Link className="h-5 w-5" /> : <Paperclip className="h-5 w-5" />}
         </Button>
 
@@ -179,12 +179,12 @@ export default function MessageInput({ onSend, disabled, language = 'en', mode =
           onChange={handleInput}
           onKeyDown={handleKeyPress}
           placeholder={placeholder}
-          className="flex-1 min-h-[24px] max-h-[200px] bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 text-white placeholder:text-gray-400 resize-none py-2"
+          className="flex-1 min-h-[24px] max-h-[160px] md:max-h-[200px] bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 text-sm md:text-base text-white placeholder:text-gray-400 resize-none py-2 px-2 sm:px-0"
           rows={1}
           disabled={disabled}
         />
 
-        <div className="flex items-center gap-1 ml-2 mb-0.5">
+        <div className="flex items-center gap-1 ml-1 md:ml-2 mb-0.5">
             <Button 
               onClick={handleSend} 
               disabled={disabled || !input.trim()}

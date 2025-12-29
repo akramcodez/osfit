@@ -26,7 +26,7 @@ export default function ModeSelector({
         value={currentMode} 
         onValueChange={(value) => onModeChange(value as AssistantMode)}
         >
-        <SelectTrigger className="min-w-[200px] w-auto bg-secondary border-border-subtle text-white focus:ring-offset-0 focus:ring-0">
+        <SelectTrigger className="w-auto min-w-[140px] md:min-w-[180px] bg-secondary border-border-subtle text-white focus:ring-offset-0 focus:ring-0 text-sm md:text-base">
             <SelectValue />
         </SelectTrigger>
         <SelectContent className="bg-surface-1 text-white border-border-subtle">

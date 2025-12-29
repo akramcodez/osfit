@@ -99,54 +99,52 @@ export default function MessageList({
 
   return (
     <ScrollArea className="w-full h-full" ref={scrollRef}>
-      <div className="flex flex-col items-center w-full py-4 pb-48 space-y-6">
+      <div className="flex flex-col items-center w-full py-4 pb-12 space-y-6">
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-[50vh] text-center px-4 mt-20">
-            <div className="h-12 w-12 bg-white text-black rounded-full flex items-center justify-center text-2xl font-bold mb-6">
+          <div className="flex flex-col items-center justify-center h-full min-h-[50vh] text-center px-4">
+            <div className="h-16 w-16 bg-white text-black rounded-full flex items-center justify-center text-2xl font-bold mb-8 shadow-xl flex-shrink-0 aspect-square">
                 OS
             </div>
-            <h2 className="text-2xl font-semibold text-white mb-8">{t('howCanIHelp', language)}</h2>
+            <h2 className="text-2xl md:text-3xl font-semibold text-white mb-8 max-w-sm md:max-w-none">{t('howCanIHelp', language)}</h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 max-w-3xl w-full">
                 <div 
                     onClick={() => onModeSelect?.('issue_solver')}
-                    className={`col-span-1 md:col-span-2 relative overflow-hidden group p-[1px] rounded-xl cursor-pointer transition-transform duration-300 hover:scale-[1.01]`}
+                    className={`col-span-1 md:col-span-2 group p-5 rounded-2xl cursor-pointer transition-all duration-300 border h-full flex flex-col justify-center ${
+                      currentMode === 'issue_solver' 
+                        ? 'bg-primary/10 border-primary ring-1 ring-primary/50' 
+                        : 'bg-secondary border-border-subtle hover:border-primary/50 hover:bg-secondary/80'
+                    }`}
                 >
-                    <div className={`absolute inset-0 transition-opacity duration-300 ${
-                        currentMode === 'issue_solver' 
-                            ? 'bg-primary opacity-100' 
-                            : 'bg-gradient-to-r from-primary via-secondary to-primary animate-gradient opacity-50 group-hover:opacity-70'
-                    }`}></div>
-                    
-                    <div className="relative h-full bg-secondary rounded-[11px] p-5 z-10 flex flex-col justify-center">
-                         <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-lg font-semibold text-white">{t('solveGitHubIssue', language)}</h3>
-                        </div>
-                        <p className="text-sm text-gray-300">{t('solveGitHubIssueDesc', language)}</p>
+                     <div className="flex items-center gap-2 mb-2">
+                        <h3 className="text-lg font-semibold text-white">{t('solveGitHubIssue', language)}</h3>
                     </div>
+                    <p className="text-sm text-gray-400 text-left">{t('solveGitHubIssueDesc', language)}</p>
                 </div>
+
                  <div 
                     onClick={() => onModeSelect?.('file_explainer')}
-                    className={`bg-secondary p-4 rounded-xl border hover:bg-secondary/80 cursor-pointer transition-colors text-left ${
-                      currentMode === 'file_explainer' ? 'border-primary' : 'border-border'
+                    className={`bg-secondary p-4 rounded-xl border cursor-pointer transition-all duration-200 text-left h-full ${
+                      currentMode === 'file_explainer' ? 'border-primary bg-primary/5' : 'border-border-subtle hover:border-primary/50 hover:bg-secondary/80'
                     }`}
                 >
-                    <h3 className="text-sm font-medium text-white mb-1">{t('explainCodeFile', language)}</h3>
-                    <p className="text-xs text-gray-400">{t('explainCodeFileDesc', language)}</p>
+                    <h3 className="text-sm font-medium text-white mb-2">{t('explainCodeFile', language)}</h3>
+                    <p className="text-xs text-gray-400 leading-relaxed">{t('explainCodeFileDesc', language)}</p>
                 </div>
+
                  <div 
                     onClick={() => onModeSelect?.('mentor')}
-                    className={`bg-secondary p-4 rounded-xl border hover:bg-secondary/80 cursor-pointer transition-colors text-left ${
-                      currentMode === 'mentor' ? 'border-primary' : 'border-border'
+                    className={`bg-secondary p-4 rounded-xl border cursor-pointer transition-all duration-200 text-left h-full ${
+                      currentMode === 'mentor' ? 'border-primary bg-primary/5' : 'border-border-subtle hover:border-primary/50 hover:bg-secondary/80'
                     }`}
                 >
-                    <h3 className="text-sm font-medium text-white mb-1">{t('openSourceMentor', language)}</h3>
-                    <p className="text-xs text-gray-400">{t('getGuidance', language)}</p>
+                    <h3 className="text-sm font-medium text-white mb-2">{t('openSourceMentor', language)}</h3>
+                    <p className="text-xs text-gray-400 leading-relaxed">{t('getGuidance', language)}</p>
                 </div>
             </div>
           </div>
         ) : (
-          <div className="w-full max-w-3xl px-4 flex flex-col space-y-6 pb-4">
+          <div className="w-full max-w-3xl px-2 md:px-4 flex flex-col space-y-6 pb-4">
             {messages.map((message) => (
               <MessageBubble 
                 key={message.id} 
@@ -156,8 +154,8 @@ export default function MessageList({
               />
             ))}
             {isLoading && (
-              <div className="flex gap-4 w-full">
-                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-black flex-shrink-0 mt-1">
+              <div className="flex gap-2 md:gap-4 w-full px-2 md:px-0">
+                <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-primary flex items-center justify-center text-[10px] md:text-xs font-bold text-black flex-shrink-0 mt-1">
                     OS
                 </div>
                 <div className="pt-2">

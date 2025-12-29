@@ -110,7 +110,6 @@ FORMAT:
 
 - \`file1.ts\`: what changed
 
----
 
 Closes #[issue_number]`
 };
@@ -354,7 +353,6 @@ ${git_diff.substring(0, 5000)}
       const { data: updated } = await supabase
         .from('issue_solutions')
         .update({
-          git_diff,
           pr_solution: prSolution,
           status: 'completed',
           current_step: 'completed'

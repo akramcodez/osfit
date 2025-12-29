@@ -8,6 +8,8 @@ import MessageList from './MessageList';
 import FileExplainerList from './FileExplainerList';
 import IssueSolverBanner from './IssueSolverBanner';
 import MessageInput from './MessageInput';
+import { MessageSquarePlus, PanelLeftOpen } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import ModeSelector from './ModeSelector';
 import LanguageSelector from './LanguageSelector';
 import Sidebar from './Sidebar';
@@ -955,32 +957,61 @@ export default function ChatInterface() {
               transition={{ duration: 0.2, ease: 'easeOut' }}
               className="flex flex-col h-full"
             >
-              <div className="h-14 flex items-center justify-between px-4 fixed top-0 left-0 right-0 md:static z-20 bg-background md:bg-transparent">
-                   {!isSidebarOpen && <div className="w-8"></div>} 
-                   
-                   <div className="flex-1 flex justify-start pl-4 md:pl-0">
+              <div className="h-14 flex items-center justify-between px-2 md:px-4 fixed top-0 left-0 right-0 md:static z-20 bg-background md:bg-transparent border-b border-border-subtle md:border-0">
+                   <div className="flex items-center gap-1">
+                      <AnimatePresence>
+                        {!isSidebarOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => setIsSidebarOpen(true)} 
+                              className="text-gray-400 hover:text-white"
+                            >
+                              <PanelLeftOpen className="h-5 w-5" />
+                            </Button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setSessionId('');
+                          setMessages([]);
+                          setFileExplanations([]);
+                        }}
+                        className="md:hidden text-gray-400"
+                        title="New Chat"
+                      >
+                        <MessageSquarePlus className="h-5 w-5" />
+                      </Button>
                    </div>
 
-                   <div className="flex-1 flex justify-center">
-                   </div>
-                   
-                   <div className="flex-1 flex justify-end pr-4 md:pr-0 gap-3">
+                   <div className="flex-1 flex justify-end pr-1 md:pr-0 gap-1 md:gap-3">
                        <ModeSelector 
                           currentMode={currentMode} 
                           onModeChange={handleModeChange}
                           currentLanguage={currentLanguage}
                           onLanguageChange={setCurrentLanguage}
                       />
-                      <LanguageSelector 
-                          currentLanguage={currentLanguage}
-                          onLanguageChange={setCurrentLanguage}
-                      />
+                      <div className="hidden md:flex items-center">
+                        <LanguageSelector 
+                            currentLanguage={currentLanguage}
+                            onLanguageChange={setCurrentLanguage}
+                        />
+                      </div>
                    </div> 
               </div>
 
               <div className="flex-1 relative w-full h-full flex flex-col">
                   
-                  <div className="absolute inset-0 pb-32">
+                  <div className="absolute top-14 md:top-0 bottom-0 left-0 right-0 pb-20 md:pb-28">
                       {currentMode === 'file_explainer' ? (
                           <FileExplainerList
                               explanations={fileExplanations}
@@ -1008,7 +1039,7 @@ export default function ChatInterface() {
                   </div>
 
                   {currentMode === 'issue_solver' && (issueSolverStep === 'solution_step' || issueSolverStep === 'pr_context') ? (
-                    <div className="absolute bottom-0 left-0 right-0 w-full flex justify-center p-4 bg-gradient-to-t from-background from-50% via-background/80 to-transparent pt-20 pb-6 z-10">
+                    <div className="absolute bottom-0 left-0 right-0 w-full flex justify-center p-2 md:p-4 bg-gradient-to-t from-background from-50% via-background/80 to-transparent pt-12 md:pt-20 pb-4 md:pb-6 z-10">
                       <div className="w-full max-w-3xl">
                         <IssueSolverBanner
                           currentStep={issueSolverStep}
@@ -1024,7 +1055,7 @@ export default function ChatInterface() {
                       </div>
                     </div>
                   ) : (
-                    <div className="absolute bottom-0 left-0 right-0 w-full flex justify-center p-4 bg-gradient-to-t from-background from-50% via-background/80 to-transparent pt-20 pb-6 z-10">
+                    <div className="absolute bottom-0 left-0 right-0 w-full flex justify-center p-2 md:p-4 bg-gradient-to-t from-background from-50% via-background/80 to-transparent pt-12 md:pt-20 pb-4 md:pb-6 z-10">
                       <MessageInput 
                         onSend={handleSendMessage} 
                         disabled={isLoading} 

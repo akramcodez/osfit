@@ -104,32 +104,27 @@ export default function Sidebar({
 
   return (
     <>
-      <div 
-        className={`absolute top-4 left-4 z-30 transition-all duration-300 ease-out ${
-          isOpen || hideToggleButton ? 'opacity-0 pointer-events-none -translate-x-10' : 'opacity-100 translate-x-0'
-        }`}
-      >
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={toggleSidebar} 
-          className="text-gray-400 hover:text-white hover:scale-110 active:scale-95 transition-transform duration-150 bg-background/80 backdrop-blur-sm"
-        >
-          <PanelLeftClose className="h-6 w-6 rotate-180" />
-        </Button>
-      </div>
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden animate-fade-in"
+          onClick={toggleSidebar}
+        />
+      )}
 
       <div 
-        className={`h-full bg-background flex flex-col border-r border-border-subtle relative z-20 flex-shrink-0 transition-all duration-300 ease-out ${
+        className={`fixed md:relative top-0 bottom-0 left-0 z-50 md:z-20 h-full bg-background flex flex-col border-border-subtle transition-[width,transform,opacity] duration-300 ease-in-out overflow-hidden shadow-2xl md:shadow-none will-change-[width,transform] ${
           isOpen 
-            ? 'w-[260px] translate-x-0 opacity-100' 
-            : 'w-0 -translate-x-full opacity-0 overflow-hidden'
+            ? 'w-[280px] md:w-[260px] opacity-100 translate-x-0 border-r' 
+            : 'w-0 opacity-0 -translate-x-full md:opacity-0 md:translate-x-0 border-r-0'
         }`}
       >
-        <div className="w-[260px] h-full flex flex-col">
+        <div className="w-[280px] md:w-[260px] h-full flex flex-col">
           <div className="p-3 flex items-center justify-between">
             <Button 
-              onClick={onNewChat}
+              onClick={() => {
+                onNewChat();
+                if (window.innerWidth < 768) toggleSidebar();
+              }}
               variant="ghost" 
               className="flex-1 justify-start gap-3 border border-border-strong hover:bg-secondary hover:border-primary/50 text-sm font-normal text-white px-3 py-5 rounded-lg transition-all duration-200 active:scale-[0.98]"
               disabled={!user}
@@ -142,7 +137,7 @@ export default function Sidebar({
               variant="ghost" 
               size="icon" 
               onClick={toggleSidebar} 
-              className="ml-2 text-gray-400 hover:text-white hover:scale-110 hover:rotate-180 active:scale-95 transition-all duration-300"
+              className="ml-2 text-gray-400 hover:text-white hover:scale-110 active:scale-95 transition-all duration-300"
             >
               <PanelLeftClose className="h-5 w-5" />
             </Button>
@@ -172,7 +167,10 @@ export default function Sidebar({
                       >
                         <span 
                           className="truncate flex-1"
-                          onClick={() => onLoadSession?.(session.id)}
+                          onClick={() => {
+                            onLoadSession?.(session.id);
+                            if (window.innerWidth < 768) toggleSidebar();
+                          }}
                         >
                           {isTranslating && language !== 'en' ? (
                             <span className="inline-block h-4 w-24 bg-gray-700/50 rounded animate-pulse" />
@@ -238,7 +236,10 @@ export default function Sidebar({
                   <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-black">
                     {username?.charAt(0).toUpperCase() || 'U'}
                   </div>
-                  <div className="flex-1 min-w-0 text-left">
+                  <div className="flex-1 min-w-0 text-left" onClick={() => {
+                    onShowUserSettings?.();
+                    if (window.innerWidth < 768) toggleSidebar();
+                  }}>
                     <p className="text-sm font-medium text-white truncate">{username}</p>
                   </div>
                   <div className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20 group-hover:bg-primary/20 transition-colors">

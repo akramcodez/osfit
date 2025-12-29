@@ -179,15 +179,15 @@ export default function IssueSolverBanner({
             </a>
           )}
           
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-white text-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <span className="text-white text-sm leading-relaxed">
               {t('wantSolutionPlan')}
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <button
                 onClick={onNo}
                 disabled={isLoading}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-transparent border border-gray-600 hover:border-gray-500 text-gray-300 text-sm rounded-lg transition-colors disabled:opacity-50"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 bg-transparent border border-gray-600 hover:border-gray-500 text-gray-300 text-sm rounded-lg transition-colors disabled:opacity-50"
               >
                 <X className="h-3.5 w-3.5" />
                 {t('no')}
@@ -195,7 +195,7 @@ export default function IssueSolverBanner({
               <button
                 onClick={onYes}
                 disabled={isLoading}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary/80 text-black text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 bg-primary hover:bg-primary/80 text-black text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
               >
                 {isLoading ? (
                   <>

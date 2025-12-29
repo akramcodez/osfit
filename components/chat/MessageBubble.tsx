@@ -94,17 +94,17 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
 
   return (
     <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} mb-2 animate-message-in`}>
-      <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-[85%]`}>
+      <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-[95%] md:max-w-[90%]`}>
         <Card className={`border-0 ${
           isUser 
-            ? 'p-3 bg-primary/10 text-primary-foreground text-white' 
+            ? 'p-2.5 md:p-3 bg-primary/10 text-primary-foreground text-white' 
             : 'p-0 bg-transparent shadow-none'
         }`}>
           <div 
             className={`prose max-w-none prose-headings:font-semibold ${
               isUser 
-                ? 'prose-p:text-gray-100 prose-a:text-white prose-sm' 
-                : 'prose-base prose-invert prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent prose-pre:border-0'
+                ? 'prose-p:text-gray-100 prose-a:text-white prose-sm md:prose-base' 
+                : 'prose-sm md:prose-base prose-invert prose-p:leading-relaxed'
             }`}
             style={{ minHeight: isStreaming ? '1.5em' : 'auto' }}
           >
@@ -141,7 +141,7 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
                     <a href={href as string} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{children}</a>
                   ),
                   blockquote: ({ children }) => (
-                    <blockquote className="border-l-2 border-primary pl-3 py-1 text-gray-300 bg-surface-3/40 rounded my-3">{children}</blockquote>
+                    <blockquote className="border-l-2 border-primary pl-3 py-1 text-gray-300 rounded my-3">{children}</blockquote>
                   ),
                   hr: () => <hr className="border-border-subtle my-4" />,
                   strong: ({ children }) => (
