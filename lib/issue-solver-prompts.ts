@@ -63,8 +63,7 @@ FORMAT:
 - \`file1.ts\`: [what changed]
 - \`file2.ts\`: [what changed]
 
-## Related Issue
-Fixes #[issue_number]`
+Closes #[issue_number]`
 };
 
 

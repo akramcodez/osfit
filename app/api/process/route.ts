@@ -418,8 +418,7 @@ FORMAT:
 - \`file1.ts\`: what changed
 - \`file2.ts\`: what changed
 
-## Closes
-#[issue_number]`;
+Closes #[issue_number]`;
 
     const context = `
 Issue: ${issueData.issueTitle || 'Unknown'}

@@ -110,9 +110,9 @@ FORMAT:
 
 - \`file1.ts\`: what changed
 
-**CLOSES**
+---
 
-> #[issue_number]`
+Closes #[issue_number]`
 };
 
 const WELCOME_MESSAGE = `## Welcome to OSFIT!

@@ -4,6 +4,7 @@ import { Message, FileExplanation } from '@/types';
 import { Card } from '@/components/ui/card';
 import ReactMarkdown from 'react-markdown';
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { Copy, Check } from 'lucide-react';
 
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -32,6 +33,17 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
   const [isStreaming, setIsStreaming] = useState(!isUser && isNew && content.length > 0);
   const streamRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const completedRef = useRef<boolean>(false);
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
 
   useEffect(() => {
     if (!isUser && isNew && content && !completedRef.current) {
@@ -181,6 +193,17 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
         </Card>
         
         <div className={`flex items-center gap-2 mt-1 px-1 ${isUser ? 'flex-row' : 'flex-row-reverse justify-end'}`}>
+            <button
+              onClick={handleCopy}
+              className="p-1 rounded hover:bg-surface-2 transition-colors group/copy"
+              title={isCopied ? 'Copied!' : 'Copy markdown'}
+            >
+              {isCopied ? (
+                <Check className="h-3 w-3 text-primary" />
+              ) : (
+                <Copy className="h-3 w-3 text-gray-600 group-hover/copy:text-gray-400 transition-colors" />
+              )}
+            </button>
           <span className="text-[10px] text-gray-600">
             {new Date(message.created_at).toLocaleTimeString([], { 
               hour: '2-digit', 
