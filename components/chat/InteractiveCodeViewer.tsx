@@ -48,8 +48,8 @@ export default function InteractiveCodeViewer({
   };
 
   return (
-    <div className="font-mono text-sm overflow-auto max-h-[500px] app-scroll">
-      <table className="w-full border-collapse">
+    <div className="w-full overflow-x-auto overflow-y-auto max-h-[350px] sm:max-h-[500px] app-scroll">
+      <table className="border-collapse font-mono text-xs sm:text-sm" style={{ minWidth: '100%', width: 'max-content' }}>
         <tbody>
           {highlightedLines.map((line) => {
             const isSelected = selectedLine === line.number;
@@ -74,7 +74,7 @@ export default function InteractiveCodeViewer({
               >
                 <td 
                   className={`
-                    w-12 px-3 py-0.5 text-right select-none
+                    w-8 sm:w-12 px-2 sm:px-3 py-0.5 text-right select-none flex-shrink-0
                     ${isSelected 
                       ? 'text-primary font-semibold' 
                       : 'text-gray-500 group-hover:text-gray-400'
@@ -84,14 +84,14 @@ export default function InteractiveCodeViewer({
                   {line.number}
                 </td>
                 
-                <td className="px-4 py-0.5 whitespace-pre">
+                <td className="px-2 sm:px-4 py-0.5 whitespace-nowrap">
                   <code 
-                    className="hljs"
+                    className="hljs text-[11px] sm:text-xs"
                     dangerouslySetInnerHTML={{ __html: line.highlighted || '&nbsp;' }}
                   />
                 </td>
                 
-                <td className="w-8 px-2">
+                <td className="w-6 sm:w-8 px-1 sm:px-2 flex-shrink-0">
                   {(isHovered && !isSelected && !isLoading) && (
                     <span className="text-[10px] text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
                       ▶

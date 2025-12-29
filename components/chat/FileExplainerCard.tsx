@@ -192,57 +192,58 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
   }
 
   return (
-    <div className="w-full mb-6 animate-message-in">
-      <div className="bg-surface-1 rounded-xl border border-border-subtle overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 bg-surface-2 border-b border-border-subtle">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+    <div className="w-full mb-6 animate-message-in min-w-0 max-w-[calc(100vw-2rem)] overflow-hidden">
+      <div className="bg-surface-1 rounded-xl border border-border-subtle overflow-hidden min-w-0 w-full">
+        <div className="flex items-center justify-between px-3 sm:px-4 py-3 bg-surface-2 border-b border-border-subtle min-w-0 overflow-hidden">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 overflow-hidden">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
               <FileCode className="h-4 w-4 text-primary" />
             </div>
-            <div>
-              <h3 className="text-sm font-medium text-white">{fileName}</h3>
-              <p className="text-xs text-gray-500">{languageDisplay}</p>
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <h3 className="text-sm font-medium text-white truncate">{fileName}</h3>
+              <p className="text-xs text-gray-500 truncate">{languageDisplay}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             {data.file_url && (
               <button
                 onClick={openInGitHub}
-                className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                className="p-1.5 sm:p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
                 title="Open in GitHub"
               >
-                <ExternalLink className="h-4 w-4" />
+                <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </button>
             )}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+              className="flex items-center gap-1 px-2 sm:px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
             >
               {isCollapsed ? (
                 <>
                   <ChevronsDown className="h-3 w-3" />
-                  <span>Expand</span>
+                  <span className="hidden sm:inline">Expand</span>
                 </>
               ) : (
                 <>
                   <ChevronsUp className="h-3 w-3" />
-                  <span>Collapse</span>
+                  <span className="hidden sm:inline">Collapse</span>
                 </>
               )}
             </button>
             <button
               onClick={() => setIsCodeExpanded(!isCodeExpanded)}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+              className="flex items-center gap-1 px-2 sm:px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap"
+              title={isCodeExpanded ? "Hide Code" : "Show Code"}
             >
               {isCodeExpanded ? (
                 <>
                   <ChevronLeft className="h-3 w-3" />
-                  <span>Hide Code</span>
+                  <span className="hidden sm:inline">Code</span>
                 </>
               ) : (
                 <>
                   <ChevronRight className="h-3 w-3" />
-                  <span>Show Code</span>
+                  <span className="hidden sm:inline">Code</span>
                 </>
               )}
             </button>
@@ -282,44 +283,37 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
               transition={{ duration: 0.25, ease: 'easeOut' }}
               style={{ overflow: 'hidden' }}
             >
-              <div className="flex">
-          <motion.div
-            initial={false}
-            animate={{
-              flexBasis: isCodeExpanded ? '50%' : 0,
-              opacity: isCodeExpanded ? 1 : 0,
-            }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="bg-surface-3 border-r border-border-subtle"
-            style={{ overflow: 'hidden' }}
-          >
-            <div className="p-2">
-              <InteractiveCodeViewer
-                code={fileContent}
-                language={language}
-                selectedLine={selectedLine}
-                onLineClick={handleLineClick}
-                isLoading={isExplainingLine}
-              />
-            </div>
-          </motion.div>
+              <div className="flex flex-col min-w-0 w-full max-w-full overflow-hidden">
+          <AnimatePresence initial={false}>
+            {isCodeExpanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+                className="bg-surface-3 border-b border-border-subtle min-w-0 w-full max-w-full overflow-hidden"
+              >
+                <InteractiveCodeViewer
+                  code={fileContent}
+                  language={language}
+                  selectedLine={selectedLine}
+                  onLineClick={handleLineClick}
+                  isLoading={isExplainingLine}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          <motion.div
-            initial={false}
-            animate={{ flexBasis: isCodeExpanded ? '50%' : '100%' }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="bg-surface-1"
-            style={{ overflow: 'hidden' }}
-          >
-            <div className="flex items-center justify-between px-4 py-2 border-b border-border-subtle">
-              <div className="flex items-center gap-2">
-                <div className="h-5 w-5 rounded bg-primary flex items-center justify-center">
+          <div className="bg-surface-1 min-w-0 w-full max-w-full overflow-hidden flex-1">
+            <div className="flex items-center justify-between px-2 sm:px-4 py-2 border-b border-border-subtle min-w-0 max-w-full">
+              <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto">
+                <div className="h-5 w-5 rounded bg-primary flex items-center justify-center flex-shrink-0">
                   <span className="text-[10px] font-bold text-black">OS</span>
                 </div>
-                <div className="flex gap-1">
+                <div className="flex gap-1 flex-nowrap flex-shrink-0">
                   <button
                     onClick={() => setActiveTab('overview')}
-                    className={`px-2 py-1 text-[10px] font-medium uppercase tracking-wider rounded transition-colors ${
+                    className={`px-2 py-1 text-[10px] font-medium uppercase tracking-wider rounded transition-colors whitespace-nowrap ${
                       activeTab === 'overview'
                         ? 'bg-primary/20 text-primary'
                         : 'text-gray-500 hover:text-gray-300'
@@ -329,7 +323,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                   </button>
                   <button
                     onClick={() => setActiveTab('line')}
-                    className={`px-2 py-1 text-[10px] font-medium uppercase tracking-wider rounded transition-colors ${
+                    className={`px-2 py-1 text-[10px] font-medium uppercase tracking-wider rounded transition-colors whitespace-nowrap ${
                       activeTab === 'line'
                         ? 'bg-primary/20 text-primary'
                         : 'text-gray-500 hover:text-gray-300'
@@ -375,7 +369,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                         }
                       }
                     }}
-                    className={`px-2 py-1 text-[10px] font-medium uppercase tracking-wider rounded transition-colors ${
+                    className={`px-2 py-1 text-[10px] font-medium uppercase tracking-wider rounded transition-colors whitespace-nowrap ${
                       activeTab === 'diagram'
                         ? 'bg-primary/20 text-primary'
                         : 'text-gray-500 hover:text-gray-300'
@@ -386,25 +380,25 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                 </div>
               </div>
             </div>
-            <div className="p-4 overflow-auto max-h-[500px] app-scroll">
+            <div className="p-3 sm:p-4 overflow-x-hidden overflow-y-auto max-h-[400px] sm:max-h-[500px] app-scroll w-full max-w-full">
               {activeTab === 'overview' && (
-                <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent">
+                <div className="prose prose-invert prose-sm max-w-full prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent prose-p:break-words prose-strong:break-words prose-li:break-words overflow-hidden" style={{ maxWidth: '100%', wordBreak: 'break-word' }}>
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeHighlight]}
                     components={{
                       pre: ({ children, ...props }) => <CodeBlock {...props}>{children}</CodeBlock>,
-                      code: ({ className, children, ...props }) => {
-                        const isInline = !className;
-                        if (isInline) {
-                          return (
-                            <code className="px-1.5 py-0.5 bg-white/10 rounded text-primary text-sm" {...props}>
-                              {children}
-                            </code>
-                          );
-                        }
-                        return <code className={className} {...props}>{children}</code>;
-                      },
+                          code: ({ className, children, ...props }) => {
+                            const isInline = !className;
+                            if (isInline) {
+                              return (
+                                <code className="px-1.5 py-0.5 bg-white/10 rounded text-primary text-sm break-all" {...props}>
+                                  {children}
+                                </code>
+                              );
+                            }
+                            return <code className={`${className} break-words`} {...props}>{children}</code>;
+                          },
                       h1: ({ children }) => (
                         <h1 className="text-xl font-semibold text-white mb-2 tracking-tight">{children}</h1>
                       ),
@@ -415,7 +409,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                         <h3 className="text-base font-semibold text-white mb-2">{children}</h3>
                       ),
                       p: ({ children }) => (
-                        <p className="text-gray-200 leading-relaxed mb-2">{children}</p>
+                        <p className="text-gray-200 leading-relaxed mb-2 break-words overflow-wrap-anywhere">{children}</p>
                       ),
                       ul: ({ children }) => (
                         <ul className="list-disc list-outside ml-6 space-y-1 mb-3">{children}</ul>
@@ -424,7 +418,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                         <ol className="list-decimal list-outside ml-6 space-y-1 mb-3">{children}</ol>
                       ),
                       li: ({ children }) => (
-                        <li className="text-gray-200">{children}</li>
+                        <li className="text-gray-200 break-words">{children}</li>
                       ),
                       a: ({ children, href }) => (
                         <a href={href as string} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{children}</a>
@@ -434,11 +428,11 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                       ),
                       hr: () => <hr className="border-border-subtle my-4" />,
                       strong: ({ children }) => (
-                        <strong className="font-semibold text-white">{children}</strong>
+                        <strong className="font-semibold text-white break-words">{children}</strong>
                       ),
                       table: ({ children }) => (
-                        <div className="my-3 overflow-hidden rounded-lg border border-border-subtle">
-                          <table className="w-full text-left text-sm text-gray-200">{children}</table>
+                        <div className="my-3 overflow-x-auto rounded-lg border border-border-subtle">
+                          <table className="w-full text-left text-sm text-gray-200 min-w-full">{children}</table>
                         </div>
                       ),
                       thead: ({ children }) => (
@@ -467,7 +461,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
               )}
 
               {activeTab === 'line' && (
-                <div className="prose prose-invert prose-sm max-w-none">
+                <div className="prose prose-invert prose-sm max-w-full prose-p:break-words prose-strong:break-words prose-li:break-words overflow-hidden" style={{ maxWidth: '100%', wordBreak: 'break-word' }}>
                   {!selectedLine ? (
                     <div className="text-center py-8">
                       <p className="text-gray-500">👆 Click any line in the code to explain it</p>
@@ -501,7 +495,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                             return <code className={className} {...props}>{children}</code>;
                           },
                           p: ({ children }) => (
-                            <p className="text-gray-200 leading-relaxed mb-2">{children}</p>
+                            <p className="text-gray-200 leading-relaxed mb-2 break-words overflow-wrap-anywhere">{children}</p>
                           ),
                         }}
                       >
@@ -517,7 +511,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
               )}
 
               {activeTab === 'diagram' && (
-                <div className="prose prose-invert prose-sm max-w-none">
+                <div className="prose prose-invert prose-sm max-w-full overflow-hidden" style={{ maxWidth: '100%' }}>
                   {isGeneratingFlowchart ? (
                     <div className="flex flex-col items-center justify-center py-12 gap-3">
                       <Spinner size="md" />
@@ -552,7 +546,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                 </div>
               )}
             </div>
-          </motion.div>
+          </div>
               </div>
             </motion.div>
           )}

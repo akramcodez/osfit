@@ -118,9 +118,9 @@ export default function FileExplainerList({
 
   return (
     <ScrollArea className="w-full h-full" ref={scrollRef}>
-      <div className="flex flex-col items-center w-full py-4 pb-12">
+      <div className="flex flex-col items-center w-full py-4 pb-12 px-3 md:px-4 overflow-hidden">
         {explanations.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full min-h-[50vh] text-center px-4">
+          <div className="flex flex-col items-center justify-center h-full min-h-[50vh] text-center px-3 md:px-4 max-w-full">
             <div className="h-16 w-16 bg-white text-black rounded-full flex items-center justify-center text-2xl font-bold mb-8 shadow-xl flex-shrink-0 aspect-square">
                 OS
             </div>
@@ -163,7 +163,7 @@ export default function FileExplainerList({
             </div>
           </div>
         ) : (
-          <div className="w-full max-w-5xl px-4 flex flex-col">
+          <div className="w-full max-w-4xl flex flex-col overflow-hidden px-0">
             {explanations.map((item) => (
               <FileExplainerCard
                 key={item.id}

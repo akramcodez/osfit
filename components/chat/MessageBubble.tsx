@@ -93,20 +93,25 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
   const shouldRenderMarkdown = !isStreaming || displayedLength >= content.length;
 
   return (
-    <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} mb-2 animate-message-in`}>
-      <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-[95%] md:max-w-[90%]`}>
-        <Card className={`border-0 ${
+    <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} mb-2 animate-message-in overflow-hidden`}>
+      <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} w-full max-w-[calc(100vw-2rem)] md:max-w-[85%] min-w-0`}>
+        <Card className={`border-0 w-full overflow-hidden ${
           isUser 
             ? 'p-2.5 md:p-3 bg-primary/10 text-primary-foreground text-white' 
             : 'p-0 bg-transparent shadow-none'
         }`}>
           <div 
-            className={`prose max-w-none prose-headings:font-semibold ${
+            className={`prose max-w-none prose-headings:font-semibold overflow-hidden ${
               isUser 
-                ? 'prose-p:text-gray-100 prose-a:text-white prose-sm md:prose-base' 
-                : 'prose-sm md:prose-base prose-invert prose-p:leading-relaxed'
+                ? 'prose-p:text-gray-100 prose-a:text-white prose-sm md:prose-base prose-p:break-words prose-strong:break-words' 
+                : 'prose-sm md:prose-base prose-invert prose-p:leading-relaxed prose-p:break-words prose-strong:break-words prose-li:break-words'
             }`}
-            style={{ minHeight: isStreaming ? '1.5em' : 'auto' }}
+            style={{ 
+              minHeight: isStreaming ? '1.5em' : 'auto',
+              maxWidth: '100%',
+              wordWrap: 'break-word',
+              overflowWrap: 'break-word'
+            }}
           >
             {shouldRenderMarkdown ? (
               <ReactMarkdown 
@@ -118,12 +123,12 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
                     const isInline = !className;
                     if (isInline) {
                       return (
-                        <code className="px-1.5 py-0.5 bg-white/10 rounded text-primary text-sm" {...props}>
+                        <code className="px-1.5 py-0.5 bg-white/10 rounded text-primary text-sm break-all" {...props}>
                           {children}
                         </code>
                       );
                     }
-                    return <code className={className} {...props}>{children}</code>;
+                    return <code className={`${className} whitespace-pre-wrap break-words`} {...props}>{children}</code>;
                   },
                   h1: ({ children }) => (
                     <h1 className="text-xl font-semibold text-white mb-3 mt-4 first:mt-0 tracking-tight">{children}</h1>
@@ -135,7 +140,7 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
                     <h3 className="text-base font-semibold text-white mb-2 mt-3 first:mt-0">{children}</h3>
                   ),
                   p: ({ children }) => (
-                    <p className="text-gray-200 leading-relaxed mb-3 last:mb-0">{children}</p>
+                    <p className="text-gray-200 leading-relaxed mb-3 last:mb-0 break-words overflow-wrap-anywhere">{children}</p>
                   ),
                   a: ({ children, href }) => (
                     <a href={href as string} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{children}</a>
@@ -145,11 +150,11 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
                   ),
                   hr: () => <hr className="border-border-subtle my-4" />,
                   strong: ({ children }) => (
-                    <strong className="font-semibold text-white">{children}</strong>
+                    <strong className="font-semibold text-white break-words">{children}</strong>
                   ),
                   table: ({ children }) => (
-                    <div className="my-4 overflow-hidden rounded-lg border border-border-subtle">
-                      <table className="w-full text-left text-sm text-gray-200">{children}</table>
+                    <div className="my-4 overflow-x-auto rounded-lg border border-border-subtle">
+                      <table className="w-full text-left text-sm text-gray-200 min-w-full">{children}</table>
                     </div>
                   ),
                   thead: ({ children }) => (
@@ -174,7 +179,7 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
                     <ol className="list-decimal list-outside ml-6 space-y-1 mb-3">{children}</ol>
                   ),
                   li: ({ children }) => (
-                    <li className="text-gray-200">{children}</li>
+                    <li className="text-gray-200 break-words">{children}</li>
                   ),
                 }}
               >

@@ -178,6 +178,104 @@
   .clean-code-block * {
     background-color: transparent !important;
   }
+  
+  /* Ensure proper word breaking and overflow handling */
+  .prose {
+    max-width: 100% !important;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+  }
+  
+  .prose p,
+  .prose li,
+  .prose td,
+  .prose th,
+  .prose strong,
+  .prose em,
+  .prose span,
+  .prose a {
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+    hyphens: auto;
+  }
+  
+  .prose pre {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden;
+  }
+  
+  .prose code {
+    word-break: break-all !important;
+    white-space: pre-wrap !important;
+  }
+  
+  .prose pre code {
+    white-space: pre !important;
+    word-break: normal !important;
+  }
+  
+  .prose table {
+    display: block !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    width: max-content !important;
+  }
+  
+  /* Utility class for anywhere overflow wrap */
+  .overflow-wrap-anywhere {
+    overflow-wrap: anywhere !important;
+  }
+  
+  /* Ensure code tables don't overflow container */
+  .hljs {
+    display: inline-block;
+    max-width: 100%;
+  }
+  
+  /* Prevent horizontal scroll on small screens for main containers */
+  @media (max-width: 768px) {
+    body {
+      overflow-x: hidden;
+    }
+    
+    #__next,
+    main {
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
+    
+    /* Force code tables in prose to be constrained on mobile */
+    .prose table {
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+    
+    .prose table tbody,
+    .prose table thead,
+    .prose table tr {
+      display: table;
+      width: 100%;
+      table-layout: fixed;
+    }
+    
+    /* Ensure code doesn't overflow */
+    .prose code,
+    .hljs {
+      max-width: 100%;
+      overflow-wrap: break-word;
+      word-break: break-all;
+    }
+    
+    /* Force inline code to break */
+    .prose code:not(pre code) {
+      white-space: pre-wrap !important;
+      word-break: break-all !important;
+    }
+  }
 }
 
 
