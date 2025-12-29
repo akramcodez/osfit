@@ -34,19 +34,19 @@ export default function ModeSelector({
             <SelectItem value="issue_solver" className="focus:bg-secondary focus:text-white">
             <div className="flex items-center gap-2">
                 <Lightbulb className="h-4 w-4" />
-                {t('issueSolver', lang)}
+                <span className='text-xs sm:text-sm'>{t('issueSolver', lang)}</span>
             </div>
             </SelectItem>
             <SelectItem value="file_explainer" className="focus:bg-secondary focus:text-white">
             <div className="flex items-center gap-2">
                 <FileCode className="h-4 w-4" />
-                {t('fileExplainer', lang)}
+                <span className='text-xs sm:text-sm'>{t('fileExplainer', lang)}</span>
             </div>
             </SelectItem>
             <SelectItem value="mentor" className="focus:bg-secondary focus:text-white">
             <div className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
-                {t('openSourceMentor', lang)}
+                <span className='text-xs sm:text-sm'>{t('openSourceMentor', lang)}</span>
             </div>
             </SelectItem>
         </SelectContent>
