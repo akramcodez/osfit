@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server';
 import { analyzeWithAI, AIProvider } from '@/lib/ai-client';
-import { fetchGitHubIssue, fetchGitHubFile } from '@/lib/apify-client';
+import { fetchGitHubIssue, fetchGitHubFile, usingApifyFallback } from '@/lib/apify-client';
 import { MOCK_RESPONSES } from '@/lib/mock-responses';
 import { createClient } from '@supabase/supabase-js';
 import { getUserApiKeys } from '@/app/api/user/keys/route';
 
 import { getSupabase } from '@/lib/supabase';
 import { geminiClient, getGeminiClient } from '@/lib/gemini-client';
-
-
 
 
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -77,6 +75,7 @@ function userHasKeys(userKeys: { gemini_key: string | null; apify_key: string | 
 
 
 interface UserKeysWithProvider {
+  apify_key: string | null;
   gemini_key: string | null;
   groq_key: string | null;
   ai_provider: 'gemini' | 'groq';
@@ -240,7 +239,14 @@ To get started, please add your API keys in **Settings**.
     
     
 
-    return NextResponse.json({ response, fileInfo });
+    return NextResponse.json({ 
+      response, 
+      fileInfo,
+      apifyWarning: (mode === 'issue_solver' || mode === 'file_explainer') && !userKeys.apify_key ? {
+        show: true,
+        message: "For better reliability and to avoid rate limits, add your own Apify API key in Settings. Get a free key at apify.com"
+      } : undefined
+    });
   } catch (error: unknown) {
     console.error('Process error:', error);
     
@@ -312,7 +318,7 @@ async function handleIssueSolver(
 
       try {
         
-        const issue = await fetchGitHubIssue(issueUrl);
+        const issue = await fetchGitHubIssue(issueUrl, userKeys?.apify_key);
 
         
         const explanationPrompt = `You are OSFIT Issue Solver. Give a SHORT, DIRECT explanation of this issue.

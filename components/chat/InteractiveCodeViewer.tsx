@@ -48,8 +48,8 @@ export default function InteractiveCodeViewer({
   };
 
   return (
-    <div className="w-full overflow-x-auto overflow-y-auto max-h-[350px] sm:max-h-[500px] app-scroll">
-      <table className="border-collapse font-mono text-xs sm:text-sm" style={{ minWidth: '100%', width: 'max-content' }}>
+    <div className="w-full overflow-x-auto overflow-y-auto max-h-[350px] lg:max-h-[500px] app-scroll">
+      <table className="border-collapse font-mono text-xs sm:text-sm w-full" style={{ minWidth: '100%' }}>
         <tbody>
           {highlightedLines.map((line) => {
             const isSelected = selectedLine === line.number;
@@ -74,24 +74,26 @@ export default function InteractiveCodeViewer({
               >
                 <td 
                   className={`
-                    w-8 sm:w-12 px-2 sm:px-3 py-0.5 text-right select-none flex-shrink-0
+                    w-10 sm:w-12 px-2 sm:px-3 py-0.5 text-right select-none align-top
                     ${isSelected 
                       ? 'text-primary font-semibold' 
                       : 'text-gray-500 group-hover:text-gray-400'
                     }
                   `}
+                  style={{ verticalAlign: 'top' }}
                 >
                   {line.number}
                 </td>
                 
-                <td className="px-2 sm:px-4 py-0.5 whitespace-nowrap">
+                <td className="px-3 sm:px-4 py-0.5 whitespace-pre text-left align-top" style={{ verticalAlign: 'top' }}>
                   <code 
-                    className="hljs text-[11px] sm:text-xs"
+                    className="hljs text-[11px] sm:text-xs block"
+                    style={{ textAlign: 'left' }}
                     dangerouslySetInnerHTML={{ __html: line.highlighted || '&nbsp;' }}
                   />
                 </td>
                 
-                <td className="w-6 sm:w-8 px-1 sm:px-2 flex-shrink-0">
+                <td className="w-6 sm:w-8 px-1 sm:px-2 align-top" style={{ verticalAlign: 'top' }}>
                   {(isHovered && !isSelected && !isLoading) && (
                     <span className="text-[10px] text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
                       ▶

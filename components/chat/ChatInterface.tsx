@@ -189,6 +189,7 @@ export default function ChatInterface() {
   const [isSessionLoading, setIsSessionLoading] = useState(false);
   const [apiError, setApiError] = useState<string>('');
   const [sessionError, setSessionError] = useState<string>('');
+  const [apifyWarning, setApifyWarning] = useState<string>('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [refreshSidebarTrigger, setRefreshSidebarTrigger] = useState(0);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
@@ -428,6 +429,11 @@ export default function ChatInterface() {
         return;
       }
 
+      // Show apify warning if present
+      if (responseData.apifyWarning?.show) {
+        setApifyWarning(responseData.apifyWarning.message);
+      }
+
       const aiResponse = responseData.response;
 
       const assistantMessage: Message = {
@@ -524,6 +530,11 @@ export default function ChatInterface() {
         setApiError(parseApiErrorResponse(responseData, currentLanguage));
         setFileExplanations(prev => prev.filter(fe => fe.id !== tempUserEntry.id));
         return;
+      }
+
+      // Show apify warning if present
+      if (responseData.apifyWarning?.show) {
+        setApifyWarning(responseData.apifyWarning.message);
       }
 
       const aiResponse = responseData.response;
@@ -634,6 +645,11 @@ export default function ChatInterface() {
         return;
       }
 
+      // Show apify warning if present
+      if (data.apifyWarning?.show) {
+        setApifyWarning(data.apifyWarning.message);
+      }
+
       const issue = data.issue;
       setCurrentIssueId(issue.id);
       setIssueSolverStep(issue.current_step);
@@ -690,6 +706,11 @@ export default function ChatInterface() {
       if (data.error) {
         setApiError(parseAnyError(data, currentLanguage));
         return;
+      }
+
+      // Show apify warning if present
+      if (data.apifyWarning?.show) {
+        setApifyWarning(data.apifyWarning.message);
       }
 
       const issue = data.issue;
@@ -772,6 +793,11 @@ export default function ChatInterface() {
       if (data.error) {
         setApiError(parseAnyError(data, currentLanguage));
         return;
+      }
+
+      // Show apify warning if present
+      if (data.apifyWarning?.show) {
+        setApifyWarning(data.apifyWarning.message);
       }
 
       const issue = data.issue;
@@ -1061,8 +1087,8 @@ export default function ChatInterface() {
                         disabled={isLoading} 
                         language={currentLanguage as LanguageCode} 
                         mode={currentMode}
-                        error={apiError}
-                        onClearError={() => setApiError('')}
+                        error={apiError || apifyWarning}
+                        onClearError={() => { setApiError(''); setApifyWarning(''); }}
                       />
                     </div>
                   )}

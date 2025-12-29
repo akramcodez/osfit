@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { analyzeWithAI, AIProvider } from '@/lib/ai-client';
-import { fetchGitHubIssue } from '@/lib/apify-client';
+import { fetchGitHubIssue, usingApifyFallback } from '@/lib/apify-client';
 import { getUserApiKeys } from '@/app/api/user/keys/route';
 
 function getSupabase() {
@@ -217,7 +217,7 @@ export async function POST(request: Request) {
 
     if (createError) throw createError;
 
-    const issue = await fetchGitHubIssue(issue_url);
+    const issue = await fetchGitHubIssue(issue_url, userKeys.apify_key);
 
     await supabase
       .from('issue_solutions')
@@ -253,7 +253,11 @@ Labels: ${issue.labels?.join(', ') || 'None'}`;
 
     return NextResponse.json({ 
       issue: updated,
-      message: 'Issue analyzed successfully'
+      message: 'Issue analyzed successfully',
+      apifyWarning: !userKeys.apify_key ? {
+        show: true,
+        message: "⚠️ You're using the system Apify key. For better reliability and to avoid rate limits, add your own Apify API key in Settings. Get a free key at apify.com"
+      } : undefined
     });
 
   } catch (error) {

@@ -283,15 +283,19 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
               transition={{ duration: 0.25, ease: 'easeOut' }}
               style={{ overflow: 'hidden' }}
             >
-              <div className="flex flex-col min-w-0 w-full max-w-full overflow-hidden">
+              <div className="flex flex-col lg:flex-row min-w-0 w-full max-w-full overflow-hidden">
           <AnimatePresence initial={false}>
             {isCodeExpanded && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
+                animate={{ 
+                  height: 'auto', 
+                  opacity: 1,
+                  flexBasis: '50%'
+                }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.25, ease: 'easeOut' }}
-                className="bg-surface-3 border-b border-border-subtle min-w-0 w-full max-w-full overflow-hidden"
+                className="bg-surface-3 lg:border-r border-b lg:border-b-0 border-border-subtle min-w-0 w-full lg:w-auto overflow-hidden"
               >
                 <InteractiveCodeViewer
                   code={fileContent}
@@ -304,7 +308,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
             )}
           </AnimatePresence>
 
-          <div className="bg-surface-1 min-w-0 w-full max-w-full overflow-hidden flex-1">
+          <div className="bg-surface-1 min-w-0 w-full lg:w-auto overflow-hidden lg:flex-1">
             <div className="flex items-center justify-between px-2 sm:px-4 py-2 border-b border-border-subtle min-w-0 max-w-full">
               <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto">
                 <div className="h-5 w-5 rounded bg-primary flex items-center justify-center flex-shrink-0">

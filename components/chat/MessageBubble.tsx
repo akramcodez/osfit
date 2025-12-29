@@ -94,16 +94,16 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
 
   return (
     <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} mb-2 animate-message-in overflow-hidden`}>
-      <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} w-full max-w-[calc(100vw-2rem)] md:max-w-[85%] min-w-0`}>
-        <Card className={`border-0 w-full overflow-hidden ${
+      <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-[calc(100vw-2rem)] md:max-w-[85%] min-w-0`}>
+        <Card className={`border-0 overflow-hidden ${
           isUser 
-            ? 'p-2.5 md:p-3 bg-primary/10 text-primary-foreground text-white' 
-            : 'p-0 bg-transparent shadow-none'
+            ? 'px-3 py-2 md:px-4 md:py-2.5 bg-primary/10 text-primary-foreground text-white inline-block' 
+            : 'p-0 bg-transparent shadow-none w-full'
         }`}>
           <div 
             className={`prose max-w-none prose-headings:font-semibold overflow-hidden ${
               isUser 
-                ? 'prose-p:text-gray-100 prose-a:text-white prose-sm md:prose-base prose-p:break-words prose-strong:break-words' 
+                ? 'prose-p:text-gray-100 prose-a:text-white prose-sm md:prose-base prose-p:break-words prose-strong:break-words prose-p:my-0 prose-p:leading-normal' 
                 : 'prose-sm md:prose-base prose-invert prose-p:leading-relaxed prose-p:break-words prose-strong:break-words prose-li:break-words'
             }`}
             style={{ 
