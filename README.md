@@ -1,54 +1,8 @@
-# OSFIT - Open Source File Intelligence Tool
+# OSFIT
 
-A multilingual AI-powered web application for analyzing GitHub code files and solving GitHub issues. Built with Next.js 16, powered by Gemini/Groq AI, with real-time translation support via Lingo.dev.
+AI-powered tool for analyzing GitHub files and solving issues. Supports 20+ languages.
 
-## Features
-
-### File Explainer
-- Paste any GitHub file URL to get a detailed explanation
-- AI analyzes the code structure, purpose, and logic flow
-- Visual flowchart generation using Mermaid.js
-- Supports 20+ languages including Hindi, Bengali, Spanish, French, Japanese, and more
-
-### Issue Solver
-- Paste a GitHub issue URL to get an actionable solution plan
-- Automatically fetches and analyzes referenced files
-- Generates step-by-step fix instructions
-- Full multilingual support
-
-### Chat Interface
-- Conversational AI assistant for general coding questions
-- Streaming responses with markdown rendering
-- Session history with persistent storage
-
-### Multilingual Support
-- 20+ language options for output
-- Optional Lingo.dev integration for professional-grade translations
-- Language preference saved per user
-
-## Tech Stack
-
-| Category | Technology |
-|----------|------------|
-| Framework | Next.js 16 |
-| Language | TypeScript |
-| Database | Supabase (PostgreSQL) |
-| Auth | Supabase Auth |
-| AI Models | Google Gemini, Groq (Llama) |
-| Translation | Lingo.dev SDK |
-| Flowcharts | Mermaid.js |
-| Styling | Tailwind CSS |
-| UI Components | Radix UI |
-| Deployment | Vercel |
-
-## Getting Started
-
-### Prerequisites
-- Node.js 18+
-- Supabase account
-- API keys for Gemini and/or Groq
-
-### Installation
+## Setup
 
 ```bash
 git clone https://github.com/akramcodez/osfit.git
@@ -56,87 +10,188 @@ cd osfit
 npm install
 ```
 
-### Environment Variables
-
-Copy `.env.example` to `.env.local` and configure:
+Create `.env.local`:
 
 ```env
-# Supabase
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-
-# Encryption for user API keys
 ENCRYPTION_SECRET=your_32_character_secret_key
 
-# AI API Keys (fallback when user has none)
+# Required: Choose ONE AI provider
 GEMINI_API_KEY=your_gemini_key
+# OR
 GROQ_API_KEY=your_groq_key
-LINGO_API_KEY=your_lingo_key
+
+# Optional: For better GitHub content fetching
 APIFY_API_KEY=your_apify_key
+
+# Optional: For translating app's content in multiple languages (fallback uses Gemini)
+LINGO_API_KEY=your_lingo_key
 ```
 
-### Run Development Server
+Minimal setup requires Supabase + one AI key (Gemini or Groq). Add Apify for better file/issue analysis. Add Lingo for professional translations for app's every component.
+
+### Database Setup
+
+Run these SQL queries in your Supabase SQL Editor:
+
+```sql
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- User API Keys table
+CREATE TABLE user_api_keys (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  gemini_key_encrypted TEXT,
+  apify_key_encrypted TEXT,
+  lingo_key_encrypted TEXT,
+  groq_key_encrypted TEXT,
+  ai_provider TEXT DEFAULT 'gemini',
+  preferred_language TEXT DEFAULT 'en',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id)
+);
+
+-- Chat Sessions table
+CREATE TABLE chat_sessions (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  session_token UUID DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  title TEXT,
+  mode TEXT DEFAULT 'mentor',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  last_active TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Messages table
+CREATE TABLE messages (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  session_id UUID REFERENCES chat_sessions(id) ON DELETE CASCADE,
+  role TEXT NOT NULL,
+  content TEXT NOT NULL,
+  metadata JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- File Explanations table
+CREATE TABLE file_explanations (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  session_id UUID REFERENCES chat_sessions(id) ON DELETE CASCADE,
+  file_url TEXT NOT NULL,
+  file_path TEXT,
+  role TEXT,
+  language TEXT,
+  explanation TEXT,
+  flowchart TEXT,
+  metadata JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Issue Solutions table
+CREATE TABLE issue_solutions (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  session_id UUID REFERENCES chat_sessions(id) ON DELETE CASCADE,
+  issue_url TEXT NOT NULL,
+  issue_title TEXT,
+  issue_body TEXT,
+  explanation TEXT,
+  solution_plan TEXT,
+  pr_files_changed TEXT[],
+  pr_title TEXT,
+  pr_description TEXT,
+  pr_solution TEXT,
+  current_step TEXT,
+  status TEXT,
+  role TEXT,
+  metadata JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable Row Level Security
+ALTER TABLE user_api_keys ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chat_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE file_explanations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE issue_solutions ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for user_api_keys
+CREATE POLICY "Users can view own API keys" ON user_api_keys
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own API keys" ON user_api_keys
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own API keys" ON user_api_keys
+  FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own API keys" ON user_api_keys
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- RLS Policies for chat_sessions
+CREATE POLICY "Users can view own sessions" ON chat_sessions
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own sessions" ON chat_sessions
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete own sessions" ON chat_sessions
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- RLS Policies for messages
+CREATE POLICY "Users can view messages from own sessions" ON messages
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM chat_sessions WHERE chat_sessions.id = messages.session_id AND chat_sessions.user_id = auth.uid())
+  );
+CREATE POLICY "Users can insert messages to own sessions" ON messages
+  FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM chat_sessions WHERE chat_sessions.id = messages.session_id AND chat_sessions.user_id = auth.uid())
+  );
+CREATE POLICY "Users can delete messages from own sessions" ON messages
+  FOR DELETE USING (
+    EXISTS (SELECT 1 FROM chat_sessions WHERE chat_sessions.id = messages.session_id AND chat_sessions.user_id = auth.uid())
+  );
+
+-- RLS Policies for file_explanations
+CREATE POLICY "Users can view explanations from own sessions" ON file_explanations
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM chat_sessions WHERE chat_sessions.id = file_explanations.session_id AND chat_sessions.user_id = auth.uid())
+  );
+CREATE POLICY "Users can insert explanations to own sessions" ON file_explanations
+  FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM chat_sessions WHERE chat_sessions.id = file_explanations.session_id AND chat_sessions.user_id = auth.uid())
+  );
+CREATE POLICY "Users can delete explanations from own sessions" ON file_explanations
+  FOR DELETE USING (
+    EXISTS (SELECT 1 FROM chat_sessions WHERE chat_sessions.id = file_explanations.session_id AND chat_sessions.user_id = auth.uid())
+  );
+
+-- RLS Policies for issue_solutions
+CREATE POLICY "Users can view solutions from own sessions" ON issue_solutions
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM chat_sessions WHERE chat_sessions.id = issue_solutions.session_id AND chat_sessions.user_id = auth.uid())
+  );
+CREATE POLICY "Users can insert solutions to own sessions" ON issue_solutions
+  FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM chat_sessions WHERE chat_sessions.id = issue_solutions.session_id AND chat_sessions.user_id = auth.uid())
+  );
+CREATE POLICY "Users can update solutions in own sessions" ON issue_solutions
+  FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM chat_sessions WHERE chat_sessions.id = issue_solutions.session_id AND chat_sessions.user_id = auth.uid())
+  );
+CREATE POLICY "Users can delete solutions from own sessions" ON issue_solutions
+  FOR DELETE USING (
+    EXISTS (SELECT 1 FROM chat_sessions WHERE chat_sessions.id = issue_solutions.session_id AND chat_sessions.user_id = auth.uid())
+  );
+```
+
+Run:
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+## Stack
 
-## Project Structure
-
-```
-osfit/
-├── app/                    # Next.js app router
-│   ├── api/               # API routes
-│   │   ├── chat/          # Chat endpoint
-│   │   ├── explain-line/  # Line explanation
-│   │   ├── generate-flowchart/  # Mermaid generation
-│   │   ├── github/        # GitHub data fetching
-│   │   ├── issue-solver/  # Issue analysis
-│   │   ├── process/       # File processing
-│   │   ├── session/       # Session management
-│   │   ├── translate/     # Translation endpoint
-│   │   └── user/          # User settings/keys
-│   └── page.tsx           # Main page
-├── components/
-│   ├── chat/              # Chat UI components
-│   │   ├── ChatInterface.tsx
-│   │   ├── FileExplainerCard.tsx
-│   │   ├── IssueSolverBanner.tsx
-│   │   ├── MermaidRenderer.tsx
-│   │   └── ...
-│   ├── auth/              # Authentication
-│   └── ui/                # Radix UI components
-├── lib/                   # Utilities
-│   ├── ai-client.ts       # AI provider abstraction
-│   ├── gemini-client.ts   # Gemini integration
-│   ├── groq-client.ts     # Groq integration
-│   ├── lingo-client.ts    # Lingo.dev translation
-│   ├── supabase.ts        # Database client
-│   └── encryption.ts      # API key encryption
-└── apify-actor/           # Standalone actor (separate)
-```
-
-## API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/chat` | POST | Chat with AI assistant |
-| `/api/process` | POST | Analyze GitHub file |
-| `/api/issue-solver` | POST | Analyze GitHub issue |
-| `/api/generate-flowchart` | POST | Generate Mermaid flowchart |
-| `/api/translate` | POST | Translate text via Lingo.dev |
-| `/api/session` | GET/POST/DELETE | Manage chat sessions |
-
-## Apify Actor
-
-For programmatic access or standalone usage, a fully-featured Apify Actor is available:
-
-[Multilingual GitHub Scraper on Apify](https://apify.com/sincere_spinner/multilingual-github-scraper)
-
-The actor provides the same functionality with pay-per-event pricing.
+Next.js 16, TypeScript, Supabase, Gemini/Groq AI, Tailwind CSS
 
 ## License
 

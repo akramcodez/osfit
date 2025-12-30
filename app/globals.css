@@ -105,6 +105,34 @@
   100% { background-position: 0% 50%; }
 }
 
+/* Global Custom Scrollbar Styles */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3E3E3E transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #3E3E3E;
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #3ECF8E;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 .dark {
   --background: #1C1C1C;
   --foreground: #EDEDED;
@@ -133,36 +161,6 @@
   }
   body {
     @apply bg-zinc-900 text-foreground h-screen overflow-hidden;
-  }
-  
-  
-  
-  .app-scroll {
-    scrollbar-width: thin;
-    scrollbar-color: var(--color-border-strong) transparent;
-    scrollbar-gutter: stable;
-  }
-  
-  .app-scroll::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  
-  .app-scroll::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  .app-scroll::-webkit-scrollbar-thumb {
-    background: var(--color-border-strong);
-    border-radius: 3px;
-  }
-  
-  .app-scroll::-webkit-scrollbar-thumb:hover {
-    background: var(--color-border-subtle);
-  }
-  
-  .app-scroll::-webkit-scrollbar-corner {
-    background: transparent;
   }
   
   

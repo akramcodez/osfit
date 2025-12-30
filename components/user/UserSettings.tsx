@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase-auth';
 import { User } from '@supabase/supabase-js';
 import LanguageSelector from '@/components/chat/LanguageSelector';
 import { LanguageCode, t } from '@/lib/translations';
+import { CiLock } from "react-icons/ci";
 
 interface UserSettingsProps {
   user: User;
@@ -346,7 +347,8 @@ export default function UserSettings({ user, username, onBack, language, onLangu
                       {config.show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  <Button
+                  {!config.hasKey && (
+                    <Button
                     onClick={() => saveKey(config.type, config.value)}
                     disabled={savingKey === config.type || !config.value.trim()}
                     className="bg-primary hover:bg-primary/90 text-black"
@@ -357,23 +359,65 @@ export default function UserSettings({ user, username, onBack, language, onLangu
                       <Save className="h-4 w-4" />
                     )}
                   </Button>
+                  )}
                   {config.hasKey && (
                     <Button
                       variant="outline"
                       onClick={() => deleteKey(config.type)}
                       disabled={deletingKey === config.type}
-                      className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                      className="border-red-500/30 text-red-400 hover:bg-red-900/40 hover:border-red-600/50"
                     >
                       {deletingKey === config.type ? (
                         <div className="h-4 w-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
                       ) : (
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4 text-red-600" />
                       )}
                     </Button>
                   )}
                 </div>
               </motion.div>
             ))}
+
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="mt-8 p-4 bg-surface-2/50 rounded-lg border border-border-subtle/50"
+            >
+              <div className="flex gap-2 items-center mb-2">
+                <CiLock />
+                <h3 className="text-sm font-medium text-white">How Your API Keys Are Stored</h3>
+              </div>
+              <p className="text-xs text-gray-400 mb-3">
+                Your API keys are encrypted using AES-256-GCM encryption before being stored in our database. 
+                Only you can decrypt and use them. We never store plain-text keys, and they are never shared 
+                with third parties.
+              </p>
+              <p className="text-xs text-gray-400 mb-3">
+                If you don't trust our implementation, you can review the entire source code yourself. 
+                This is an open-source project, and transparency is our priority.
+              </p>
+              <div className="flex items-center gap-2">
+                <a 
+                  href="https://github.com/akramcodez/osfit" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  View Source Code on GitHub
+                </a>
+                <span className="text-gray-600">•</span>
+                <a 
+                  href="https://github.com/akramcodez/osfit#readme" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                >
+                  Step-by-Step Setup Guide
+                </a>
+              </div>
+            </motion.div>
           </motion.div>
         </div>
       </div>
