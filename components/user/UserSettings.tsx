@@ -222,7 +222,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
               href="https://github.com/akramcodez/osfit"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex gap-2 h-9 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+              className="flex gap-2 h-9 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             >
               <FaGithub className='h-4 w-4 text-gray-500 mr-2'/>
               <Star className="h-4 w-4 text-gray-500" />
