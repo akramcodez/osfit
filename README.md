@@ -36,6 +36,9 @@ Minimal setup requires Supabase + one AI key (Gemini or Groq). Add Apify for bet
 
 Run these SQL queries in your Supabase SQL Editor:
 
+<details>
+<summary>Show SQL schema</summary>
+
 ```sql
 -- Enable gen_random_uuid()
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
@@ -372,6 +375,8 @@ BEGIN
 END
 $$;
 ```
+
+</details>
 
 Run:
 
