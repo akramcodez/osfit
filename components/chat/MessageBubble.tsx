@@ -131,10 +131,10 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
                     return <code className={`${className} whitespace-pre-wrap break-words`} {...props}>{children}</code>;
                   },
                   h1: ({ children }) => (
-                    <h1 className="text-xl font-semibold text-white mb-3 mt-4 first:mt-0 tracking-tight">{children}</h1>
+                    <h1 className="text-lg sm:text-xl font-semibold text-white mb-3 mt-4 first:mt-0 tracking-tight">{children}</h1>
                   ),
                   h2: ({ children }) => (
-                    <h2 className="text-lg font-semibold text-white mb-2 mt-4 first:mt-0 tracking-tight">{children}</h2>
+                    <h2 className="text-base sm:text-lg font-semibold text-white mb-2 mt-4 first:mt-0 tracking-tight">{children}</h2>
                   ),
                   h3: ({ children }) => (
                     <h3 className="text-base font-semibold text-white mb-2 mt-3 first:mt-0">{children}</h3>

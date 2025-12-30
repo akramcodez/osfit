@@ -172,7 +172,7 @@ export default function IssueSolverBanner({
               href={issueUrl} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm text-gray-400 hover:text-primary mb-3 transition-colors"
+              className="flex items-center gap-2 text-xs sm:text-sm text-gray-400 hover:text-primary mb-3 transition-colors"
             >
               <ExternalLink className="h-4 w-4" />
               <span className="truncate">{issueTitle}</span>
@@ -180,14 +180,14 @@ export default function IssueSolverBanner({
           )}
           
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <span className="text-white text-sm leading-relaxed">
+            <span className="text-white text-xs sm:text-sm leading-relaxed">
               {t('wantSolutionPlan')}
             </span>
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <button
                 onClick={onNo}
                 disabled={isLoading}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 bg-transparent border border-gray-600 hover:border-gray-500 text-gray-300 text-sm rounded-lg transition-colors disabled:opacity-50"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 bg-transparent border border-gray-600 hover:border-gray-500 text-gray-300 text-xs sm:text-sm rounded-lg transition-colors disabled:opacity-50"
               >
                 <X className="h-3.5 w-3.5" />
                 {t('no')}
@@ -195,7 +195,7 @@ export default function IssueSolverBanner({
               <button
                 onClick={onYes}
                 disabled={isLoading}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 bg-primary hover:bg-primary/80 text-black text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 bg-primary hover:bg-primary/80 text-black text-xs sm:text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
               >
                 {isLoading ? (
                   <>
@@ -219,7 +219,7 @@ export default function IssueSolverBanner({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <GitBranch className="h-4 w-4 text-primary" />
-              <span className="text-white text-sm">
+              <span className="text-white text-xs sm:text-sm">
                 {t('pasteGitDiff')} <code className="px-1.5 py-0.5 bg-black/30 rounded text-primary text-xs">git diff</code>
               </span>
             </div>
@@ -238,14 +238,14 @@ export default function IssueSolverBanner({
             placeholder="$ git diff
 diff --git a/src/file.ts b/src/file.ts
 ..."
-            className="w-full h-28 bg-black/30 border border-gray-700 rounded-xl p-3 text-gray-200 text-sm font-mono placeholder:text-gray-600 focus:outline-none focus:border-primary/50 resize-none"
+            className="w-full h-28 bg-black/30 border border-gray-700 rounded-xl p-3 text-gray-200 text-xs sm:text-sm font-mono placeholder:text-gray-600 focus:outline-none focus:border-primary/50 resize-none"
           />
           
           <div className="flex justify-end">
             <button
               onClick={handleSubmitDiff}
               disabled={isLoading || !gitDiff.trim()}
-              className="flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary/80 text-black text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary/80 text-black text-xs sm:text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
             >
               {isLoading ? (
                 <>

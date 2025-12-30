@@ -111,10 +111,10 @@ export default function AuthDialog({ isOpen, onClose, onSuccess, initialMode = '
                 transition={{ duration: 0.15 }}
                 className="text-center"
               >
-                <h2 className="text-xl font-semibold text-white">
+                <h2 className="text-lg sm:text-xl font-semibold text-white">
                   {isSignUp ? t('createAccount', language) : t('welcomeBack', language)}
                 </h2>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">
                   {isSignUp ? t('joinCommunity', language) : t('enterCredentials', language)}
                 </p>
               </motion.div>

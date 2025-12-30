@@ -182,7 +182,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
     return (
       <div className="flex justify-end mb-4 animate-message-in">
         <div className="bg-primary/10 text-white px-4 py-2 rounded-xl max-w-[80%]">
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-2 text-xs sm:text-sm">
             <FileCode className="h-4 w-4 text-primary" />
             <span className="truncate">{data.file_url || data.explanation}</span>
           </div>
@@ -200,7 +200,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
               <FileCode className="h-4 w-4 text-primary" />
             </div>
             <div className="min-w-0 flex-1 overflow-hidden">
-              <h3 className="text-sm font-medium text-white truncate">{fileName}</h3>
+              <h3 className="text-xs sm:text-sm font-medium text-white truncate">{fileName}</h3>
               <p className="text-xs text-gray-500 truncate">{languageDisplay}</p>
             </div>
           </div>
@@ -404,10 +404,10 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                             return <code className={`${className} break-words`} {...props}>{children}</code>;
                           },
                       h1: ({ children }) => (
-                        <h1 className="text-xl font-semibold text-white mb-2 tracking-tight">{children}</h1>
+                        <h1 className="text-lg sm:text-xl font-semibold text-white mb-2 tracking-tight">{children}</h1>
                       ),
                       h2: ({ children }) => (
-                        <h2 className="text-lg font-semibold text-white mb-2 tracking-tight">{children}</h2>
+                        <h2 className="text-base sm:text-lg font-semibold text-white mb-2 tracking-tight">{children}</h2>
                       ),
                       h3: ({ children }) => (
                         <h3 className="text-base font-semibold text-white mb-2">{children}</h3>

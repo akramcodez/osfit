@@ -217,7 +217,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
         </Button>
         
         <div className="flex items-center gap-3">
-          <div className="flex items-center">
+          <div className="hidden sm:flex items-center">
             <a
               href="https://github.com/akramcodez/osfit"
               target="_blank"
@@ -226,7 +226,6 @@ export default function UserSettings({ user, username, onBack, language, onLangu
             >
               <FaGithub className='h-4 w-4 text-gray-500 mr-2'/>
               <Star className="h-4 w-4 text-gray-500" />
-              {/* <span>{t('starRepo', language)}</span> */}
               {starCount !== null && (
                 <span className="px-1 py-0.5 text-primary text-sm font-medium">
                   {starCount}
@@ -251,12 +250,12 @@ export default function UserSettings({ user, username, onBack, language, onLangu
             className="mb-8"
           >
             <div className="flex items-center gap-4 mb-4">
-              <div className="h-16 w-16 rounded-full bg-primary flex items-center justify-center text-2xl font-bold text-black">
+              <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-primary flex items-center justify-center text-xl sm:text-2xl font-bold text-black">
                 {username.charAt(0).toUpperCase()}
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-white">{username}</h1>
-                <p className="text-sm text-gray-400">{t('ossWarrior', language)}</p>
+                <h1 className="text-lg sm:text-xl font-semibold text-white">{username}</h1>
+                <p className="text-xs sm:text-sm text-gray-400">{t('ossWarrior', language)}</p>
               </div>
             </div>
           </motion.div>
@@ -272,7 +271,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
               }`}
             >
               {message.type === 'success' ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
-              <span className="text-sm">{message.text}</span>
+              <span className="text-xs sm:text-sm">{message.text}</span>
             </motion.div>
           )}
 
@@ -284,17 +283,17 @@ export default function UserSettings({ user, username, onBack, language, onLangu
           >
             <div className="flex items-center gap-2 mb-4">
               <Key className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-medium text-white">{t('apiKeys', language)}</h2>
+              <h2 className="text-base sm:text-lg font-medium text-white">{t('apiKeys', language)}</h2>
             </div>
             
-            <p className="text-sm text-gray-400 mb-6">
+            <p className="text-xs sm:text-sm text-gray-400 mb-6">
               {t('apiKeysDescription', language)}
             </p>
 
             <div className="p-4 bg-surface-2 rounded-lg border border-border-subtle mb-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-medium text-white">{t('aiProvider', language)}</h3>
+                <div className="mr-2">
+                  <h3 className="text-xs sm:text-sm font-medium text-white">{t('aiProvider', language)}</h3>
                   <p className="text-xs text-gray-500">{t('aiProviderDesc', language)}</p>
                 </div>
                 <Select 
@@ -339,7 +338,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
               >
                 <div className="flex items-center justify-between mb-2">
                   <div>
-                    <h3 className="text-sm font-medium text-white">{config.label}</h3>
+                    <h3 className="text-xs sm:text-sm font-medium text-white">{config.label}</h3>
                     <p className="text-xs text-gray-500">{config.description}</p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -417,7 +416,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
             >
               <div className="flex gap-2 items-center mb-2">
                 <CiLock />
-                <h3 className="text-sm font-medium text-white">{t('securityTitle', language)}</h3>
+                <h3 className="text-xs sm:text-sm font-medium text-white">{t('securityTitle', language)}</h3>
               </div>
               <p className="text-xs text-gray-400 mb-3">
                 {t('securityDescription1', language)}

@@ -126,7 +126,7 @@ export default function Sidebar({
                 if (window.innerWidth < 768) toggleSidebar();
               }}
               variant="ghost" 
-              className="flex-1 justify-start gap-3 border border-border-strong hover:bg-secondary hover:border-primary/50 text-sm font-normal text-white px-3 py-5 rounded-lg transition-all duration-200 active:scale-[0.98]"
+              className="flex-1 justify-start gap-3 border border-border-strong hover:bg-secondary hover:border-primary/50 text-xs sm:text-sm font-normal text-white px-3 py-5 rounded-lg transition-all duration-200 active:scale-[0.98]"
               disabled={!user}
             >
               <MessageSquarePlus className="h-4 w-4" />
@@ -154,7 +154,7 @@ export default function Sidebar({
                     sessions.map((session, index) => (
                       <div 
                         key={session.id}
-                        className={`group flex items-center justify-between px-3 py-2 text-sm rounded-lg cursor-pointer transition-all duration-150 hover:translate-x-1 active:scale-[0.98] ${
+                        className={`group flex items-center justify-between px-3 py-2 text-xs sm:text-sm rounded-lg cursor-pointer transition-all duration-150 hover:translate-x-1 active:scale-[0.98] ${
                           currentSessionId === session.id 
                             ? 'bg-secondary text-white font-medium' 
                             : 'text-gray-300 hover:bg-secondary hover:text-white'
@@ -218,7 +218,7 @@ export default function Sidebar({
                 <div className="h-12 w-12 bg-surface-1 rounded-xl flex items-center justify-center mb-3 border border-border-subtle">
                   <User className="h-6 w-6 text-gray-400" />
                 </div>
-                <h3 className="text-sm font-medium text-white mb-1">{t('welcomeToOsfit', language) || 'Welcome to OSFIT'}</h3>
+                <h3 className="text-xs sm:text-sm font-medium text-white mb-1">{t('welcomeToOsfit', language) || 'Welcome to OSFIT'}</h3>
                 <p className="text-xs text-gray-500">
                   {t('signInToSave', language) || 'Sign in to save your chats'}
                 </p>
@@ -240,7 +240,7 @@ export default function Sidebar({
                     onShowUserSettings?.();
                     if (window.innerWidth < 768) toggleSidebar();
                   }}>
-                    <p className="text-sm font-medium text-white truncate">{username}</p>
+                    <p className="text-xs sm:text-sm font-medium text-white truncate">{username}</p>
                   </div>
                   <div className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20 group-hover:bg-primary/20 transition-colors">
                     API Keys

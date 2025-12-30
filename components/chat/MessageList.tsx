@@ -102,10 +102,10 @@ export default function MessageList({
       <div className="flex flex-col items-center w-full py-4 pb-12 space-y-6 px-3 md:px-4 overflow-hidden">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full min-h-[50vh] text-center px-3 md:px-4 max-w-full">
-            <div className="h-16 w-16 bg-white text-black rounded-full flex items-center justify-center text-2xl font-bold mb-8 shadow-xl flex-shrink-0 aspect-square">
+            <div className="h-12 w-12 sm:h-16 sm:w-16 bg-white text-black rounded-full flex items-center justify-center text-xl sm:text-2xl font-bold mb-6 sm:mb-8 shadow-xl flex-shrink-0 aspect-square">
                 OS
             </div>
-            <h2 className="text-2xl md:text-3xl font-semibold text-white mb-8 max-w-sm md:max-w-none">{t('howCanIHelp', language)}</h2>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-white mb-6 sm:mb-8 max-w-sm md:max-w-none">{t('howCanIHelp', language)}</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 max-w-3xl w-full">
                 <div 
@@ -117,9 +117,9 @@ export default function MessageList({
                     }`}
                 >
                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-lg font-semibold text-white">{t('solveGitHubIssue', language)}</h3>
+                        <h3 className="text-base sm:text-lg font-semibold text-white">{t('solveGitHubIssue', language)}</h3>
                     </div>
-                    <p className="text-sm text-gray-400 text-left">{t('solveGitHubIssueDesc', language)}</p>
+                    <p className="text-xs sm:text-sm text-gray-400 text-left">{t('solveGitHubIssueDesc', language)}</p>
                 </div>
 
                  <div 
@@ -128,7 +128,7 @@ export default function MessageList({
                       currentMode === 'file_explainer' ? 'border-primary bg-primary/5' : 'border-border-subtle hover:border-primary/50 hover:bg-secondary/80'
                     }`}
                 >
-                    <h3 className="text-sm font-medium text-white mb-2">{t('explainCodeFile', language)}</h3>
+                    <h3 className="text-xs sm:text-sm font-medium text-white mb-2">{t('explainCodeFile', language)}</h3>
                     <p className="text-xs text-gray-400 leading-relaxed">{t('explainCodeFileDesc', language)}</p>
                 </div>
 
@@ -138,7 +138,7 @@ export default function MessageList({
                       currentMode === 'mentor' ? 'border-primary bg-primary/5' : 'border-border-subtle hover:border-primary/50 hover:bg-secondary/80'
                     }`}
                 >
-                    <h3 className="text-sm font-medium text-white mb-2">{t('openSourceMentor', language)}</h3>
+                    <h3 className="text-xs sm:text-sm font-medium text-white mb-2">{t('openSourceMentor', language)}</h3>
                     <p className="text-xs text-gray-400 leading-relaxed">{t('getGuidance', language)}</p>
                 </div>
             </div>

@@ -156,7 +156,7 @@ export default function MessageInput({ onSend, disabled, language = 'en', mode =
   return (
     <div className="w-full max-w-3xl relative mb-2 px-2 sm:px-0">
       {displayError && (
-        <div className="mb-3 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm flex items-center justify-between gap-3 animate-fade-in shadow-lg">
+        <div className="mb-3 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-xs sm:text-sm flex items-center justify-between gap-3 animate-fade-in shadow-lg">
           <span className="flex-1">{displayError}</span>
           <button 
             onClick={handleDismissError}
