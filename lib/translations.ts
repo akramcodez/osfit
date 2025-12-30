@@ -50,6 +50,7 @@ export interface TranslationStrings {
   lingoApiKeyDesc?: string;
   groqApiKey?: string;
   groqApiKeyDesc?: string;
+  starRepo?: string;
   
   
   welcomeBack?: string;
@@ -118,6 +119,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: 'Enables translation features',
     groqApiKey: 'Groq API Key',
     groqApiKeyDesc: 'Powers OSS AI model (GPT-OSS-120B)',
+    starRepo: 'Star Repo',
     
     welcomeBack: 'Welcome back',
     createAccount: 'Create account',
@@ -180,6 +182,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: 'Habilita funciones de traducción',
     groqApiKey: 'Clave API de Groq',
     groqApiKeyDesc: 'Potencia el modelo AI OSS (GPT-OSS-120B)',
+    starRepo: 'Dar Estrella',
     
     welcomeBack: 'Bienvenido de nuevo',
     createAccount: 'Crear cuenta',
@@ -239,6 +242,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: 'Active les fonctions de traduction',
     groqApiKey: 'Clé API Groq',
     groqApiKeyDesc: 'Alimente le modèle AI OSS (GPT-OSS-120B)',
+    starRepo: 'Étoiler Repo',
     
     welcomeBack: 'Bon retour',
     createAccount: 'Créer un compte',
@@ -298,6 +302,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: 'Aktiviert Übersetzungsfunktionen',
     groqApiKey: 'Groq API-Schlüssel',
     groqApiKeyDesc: 'Betreibt das OSS-AI-Modell (GPT-OSS-120B)',
+    starRepo: 'Repo Sternen',
     
     welcomeBack: 'Willkommen zurück',
     createAccount: 'Konto erstellen',
@@ -357,6 +362,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: 'अनुवाद सुविधाएं सक्षम करता है',
     groqApiKey: 'Groq API कुंजी',
     groqApiKeyDesc: 'OSS AI मॉडल (GPT-OSS-120B) को सक्षम करता है',
+    starRepo: 'स्टार रेपो',
     
     welcomeBack: 'वापस स्वागत है',
     createAccount: 'खाता बनाएं',
@@ -416,6 +422,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: '启用翻译功能',
     groqApiKey: 'Groq API 密钥',
     groqApiKeyDesc: '驱动 OSS AI 模型 (GPT-OSS-120B)',
+    starRepo: '收藏仓库',
     
     welcomeBack: '欢迎回来',
     createAccount: '创建账户',
@@ -475,6 +482,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: '翻訳機能を有効化',
     groqApiKey: 'Groq APIキー',
     groqApiKeyDesc: 'OSS AIモデル (GPT-OSS-120B) を実行',
+    starRepo: 'スター付ける',
     
     welcomeBack: 'おかえりなさい',
     createAccount: 'アカウント作成',
@@ -534,6 +542,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: '번역 기능 활성화',
     groqApiKey: 'Groq API 키',
     groqApiKeyDesc: 'OSS AI 모델 (GPT-OSS-120B) 지원',
+    starRepo: '스타 주기',
     
     welcomeBack: '다시 오신 것을 환영합니다',
     createAccount: '계정 만들기',
@@ -593,6 +602,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: 'Habilita recursos de tradução',
     groqApiKey: 'Chave API Groq',
     groqApiKeyDesc: 'Alimenta o modelo AI OSS (GPT-OSS-120B)',
+    starRepo: 'Dar Estrela',
     
     welcomeBack: 'Bem-vindo de volta',
     createAccount: 'Criar conta',
@@ -652,6 +662,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: 'Включает функции перевода',
     groqApiKey: 'API-ключ Groq',
     groqApiKeyDesc: 'Обеспечивает модель OSS AI (GPT-OSS-120B)',
+    starRepo: 'Звезда Репо',
     
     welcomeBack: 'С возвращением',
     createAccount: 'Создать аккаунт',
@@ -711,6 +722,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: 'يفعل ميزات الترجمة',
     groqApiKey: 'مفتاح API لـ Groq',
     groqApiKeyDesc: 'يشغل نموذج AI OSS (GPT-OSS-120B)',
+    starRepo: 'نجمة المستودع',
     
     welcomeBack: 'مرحباً بعودتك',
     createAccount: 'إنشاء حساب',
@@ -770,6 +782,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     lingoApiKeyDesc: 'অনুবাদ বৈশিষ্ট্য সক্ষম করে',
     groqApiKey: 'Groq API কী',
     groqApiKeyDesc: 'OSS AI মডেল (GPT-OSS-120B) চালায়',
+    starRepo: 'স্টার রেপো',
     
     welcomeBack: 'স্বাগতম',
     createAccount: 'অ্যাকাউন্ট তৈরি করুন',

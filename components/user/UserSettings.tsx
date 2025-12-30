@@ -5,7 +5,8 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Key, Eye, EyeOff, Check, X, ArrowLeft, Save, Trash2, ExternalLink } from 'lucide-react';
+import { Key, Eye, EyeOff, Check, X, ArrowLeft, Save, Trash2, ExternalLink, Star } from 'lucide-react';
+import { FaGithub } from "react-icons/fa";
 import { supabase } from '@/lib/supabase-auth';
 import { User } from '@supabase/supabase-js';
 import LanguageSelector from '@/components/chat/LanguageSelector';
@@ -51,10 +52,22 @@ export default function UserSettings({ user, username, onBack, language, onLangu
   const [selectedProvider, setSelectedProvider] = useState<'gemini' | 'groq'>('gemini');
   
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [starCount, setStarCount] = useState<number | null>(null);
 
   useEffect(() => {
     fetchKeyStatus();
+    fetchStarCount();
   }, []);
+
+  const fetchStarCount = async () => {
+    try {
+      const res = await fetch('https://api.github.com/repos/akramcodez/osfit');
+      const data = await res.json();
+      setStarCount(data.stargazers_count || 0);
+    } catch (e) {
+      console.error('Failed to fetch star count', e);
+    }
+  };
 
   const fetchKeyStatus = async () => {
     try {
@@ -203,10 +216,30 @@ export default function UserSettings({ user, username, onBack, language, onLangu
           {t('backToChat', language)}
         </Button>
         
-        <LanguageSelector 
-          currentLanguage={language}
-          onLanguageChange={onLanguageChange}
-        />
+        <div className="flex items-center gap-3">
+          <div className="flex items-center">
+            <a
+              href="https://github.com/akramcodez/osfit"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex gap-2 h-9 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+            >
+              <FaGithub className='h-4 w-4 text-gray-500 mr-2'/>
+              <Star className="h-4 w-4 text-gray-500" />
+              {/* <span>{t('starRepo', language)}</span> */}
+              {starCount !== null && (
+                <span className="px-1 py-0.5 text-primary text-sm font-medium">
+                  {starCount}
+                </span>
+              )}
+            </a>
+          </div>
+          
+          <LanguageSelector 
+            currentLanguage={language}
+            onLanguageChange={onLanguageChange}
+          />
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6">

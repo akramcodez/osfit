@@ -26,12 +26,12 @@ const SUPPORTED_LANGUAGES = [
 export default function LanguageSelector({ currentLanguage, onLanguageChange }: LanguageSelectorProps) {
   return (
     <div className="flex items-center gap-2">
-      <Languages className="h-4 w-4 text-gray-500" />
+      <Languages className="h-4 w-4 text-gray-500 " />
       <Select value={currentLanguage} onValueChange={onLanguageChange}>
-        <SelectTrigger className="w-[180px]">
+        <SelectTrigger className="w-[180px] hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
           <SelectValue />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className=''>
           {SUPPORTED_LANGUAGES.map((lang) => (
             <SelectItem key={lang.code} value={lang.code}>
               <div className="flex items-center gap-2">
