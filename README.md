@@ -40,7 +40,7 @@ Run these SQL queries in your Supabase SQL Editor:
 -- Enable gen_random_uuid()
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
--- 1) profiles (references auth.users)
+-- Tables (unchanged)
 CREATE TABLE IF NOT EXISTS public.profiles (
   id uuid NOT NULL,
   username text NOT NULL UNIQUE,
@@ -49,7 +49,6 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
 );
 
--- 2) chat_sessions (references profiles)
 CREATE TABLE IF NOT EXISTS public.chat_sessions (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   session_token text NOT NULL UNIQUE,
@@ -62,7 +61,6 @@ CREATE TABLE IF NOT EXISTS public.chat_sessions (
   CONSTRAINT chat_sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
 
--- 3) messages (references chat_sessions)
 CREATE TABLE IF NOT EXISTS public.messages (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   session_id uuid,
@@ -74,7 +72,6 @@ CREATE TABLE IF NOT EXISTS public.messages (
   CONSTRAINT messages_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.chat_sessions(id)
 );
 
--- 4) file_explanations (references chat_sessions)
 CREATE TABLE IF NOT EXISTS public.file_explanations (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   session_id uuid,
@@ -91,7 +88,6 @@ CREATE TABLE IF NOT EXISTS public.file_explanations (
   CONSTRAINT file_explanations_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.chat_sessions(id)
 );
 
--- 5) issue_solutions (references chat_sessions)
 CREATE TABLE IF NOT EXISTS public.issue_solutions (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   session_id uuid,
@@ -115,7 +111,6 @@ CREATE TABLE IF NOT EXISTS public.issue_solutions (
   CONSTRAINT issue_solutions_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.chat_sessions(id)
 );
 
--- 6) user_api_keys (references auth.users)
 CREATE TABLE IF NOT EXISTS public.user_api_keys (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL UNIQUE,
@@ -136,7 +131,7 @@ CREATE TABLE IF NOT EXISTS public.user_api_keys (
   CONSTRAINT user_api_keys_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
 );
 
--- Optional: enable RLS
+-- Enable RLS
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
@@ -144,100 +139,238 @@ ALTER TABLE public.file_explanations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.issue_solutions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_api_keys ENABLE ROW LEVEL SECURITY;
 
--- Optional: minimal RLS policies
-CREATE POLICY IF NOT EXISTS "Users can view own profile" ON public.profiles
-  FOR SELECT USING (auth.uid() = id);
-CREATE POLICY IF NOT EXISTS "Users can insert own profile" ON public.profiles
-  FOR INSERT WITH CHECK (auth.uid() = id);
-CREATE POLICY IF NOT EXISTS "Users can update own profile" ON public.profiles
-  FOR UPDATE USING (auth.uid() = id);
+-- Idempotent policy creation: check pg_policies then CREATE if missing
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_policies
+    WHERE schemaname = 'public' AND tablename = 'profiles' AND policyname = 'users_can_view_own_profile'
+  ) THEN
+    CREATE POLICY users_can_view_own_profile ON public.profiles
+      FOR SELECT
+      USING ((SELECT auth.uid()) = id);
+  END IF;
 
-CREATE POLICY IF NOT EXISTS "Users can view own sessions" ON public.chat_sessions
-  FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY IF NOT EXISTS "Users can insert own sessions" ON public.chat_sessions
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY IF NOT EXISTS "Users can delete own sessions" ON public.chat_sessions
-  FOR DELETE USING (auth.uid() = user_id);
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_policies
+    WHERE schemaname = 'public' AND tablename = 'profiles' AND policyname = 'users_can_insert_own_profile'
+  ) THEN
+    CREATE POLICY users_can_insert_own_profile ON public.profiles
+      FOR INSERT
+      WITH CHECK ((SELECT auth.uid()) = id);
+  END IF;
 
-CREATE POLICY IF NOT EXISTS "Users can view own messages" ON public.messages
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM public.chat_sessions cs
-      WHERE cs.id = messages.session_id AND cs.user_id = auth.uid()
-    )
-  );
-CREATE POLICY IF NOT EXISTS "Users can insert own messages" ON public.messages
-  FOR INSERT WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.chat_sessions cs
-      WHERE cs.id = messages.session_id AND cs.user_id = auth.uid()
-    )
-  );
-CREATE POLICY IF NOT EXISTS "Users can delete own messages" ON public.messages
-  FOR DELETE USING (
-    EXISTS (
-      SELECT 1 FROM public.chat_sessions cs
-      WHERE cs.id = messages.session_id AND cs.user_id = auth.uid()
-    )
-  );
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_policies
+    WHERE schemaname = 'public' AND tablename = 'profiles' AND policyname = 'users_can_update_own_profile'
+  ) THEN
+    CREATE POLICY users_can_update_own_profile ON public.profiles
+      FOR UPDATE
+      USING ((SELECT auth.uid()) = id)
+      WITH CHECK ((SELECT auth.uid()) = id);
+  END IF;
 
-CREATE POLICY IF NOT EXISTS "Users can view own file explanations" ON public.file_explanations
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM public.chat_sessions cs
-      WHERE cs.id = file_explanations.session_id AND cs.user_id = auth.uid()
-    )
-  );
-CREATE POLICY IF NOT EXISTS "Users can insert own file explanations" ON public.file_explanations
-  FOR INSERT WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.chat_sessions cs
-      WHERE cs.id = file_explanations.session_id AND cs.user_id = auth.uid()
-    )
-  );
-CREATE POLICY IF NOT EXISTS "Users can delete own file explanations" ON public.file_explanations
-  FOR DELETE USING (
-    EXISTS (
-      SELECT 1 FROM public.chat_sessions cs
-      WHERE cs.id = file_explanations.session_id AND cs.user_id = auth.uid()
-    )
-  );
+  -- chat_sessions
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_policies
+    WHERE schemaname = 'public' AND tablename = 'chat_sessions' AND policyname = 'users_can_view_own_sessions'
+  ) THEN
+    CREATE POLICY users_can_view_own_sessions ON public.chat_sessions
+      FOR SELECT
+      USING ((SELECT auth.uid()) = user_id);
+  END IF;
 
-CREATE POLICY IF NOT EXISTS "Users can view own issue solutions" ON public.issue_solutions
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM public.chat_sessions cs
-      WHERE cs.id = issue_solutions.session_id AND cs.user_id = auth.uid()
-    )
-  );
-CREATE POLICY IF NOT EXISTS "Users can insert own issue solutions" ON public.issue_solutions
-  FOR INSERT WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.chat_sessions cs
-      WHERE cs.id = issue_solutions.session_id AND cs.user_id = auth.uid()
-    )
-  );
-CREATE POLICY IF NOT EXISTS "Users can update own issue solutions" ON public.issue_solutions
-  FOR UPDATE USING (
-    EXISTS (
-      SELECT 1 FROM public.chat_sessions cs
-      WHERE cs.id = issue_solutions.session_id AND cs.user_id = auth.uid()
-    )
-  );
-CREATE POLICY IF NOT EXISTS "Users can delete own issue solutions" ON public.issue_solutions
-  FOR DELETE USING (
-    EXISTS (
-      SELECT 1 FROM public.chat_sessions cs
-      WHERE cs.id = issue_solutions.session_id AND cs.user_id = auth.uid()
-    )
-  );
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_policies
+    WHERE schemaname = 'public' AND tablename = 'chat_sessions' AND policyname = 'users_can_insert_own_sessions'
+  ) THEN
+    CREATE POLICY users_can_insert_own_sessions ON public.chat_sessions
+      FOR INSERT
+      WITH CHECK ((SELECT auth.uid()) = user_id);
+  END IF;
 
-CREATE POLICY IF NOT EXISTS "Users can view own api keys" ON public.user_api_keys
-  FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY IF NOT EXISTS "Users can insert own api keys" ON public.user_api_keys
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY IF NOT EXISTS "Users can update own api keys" ON public.user_api_keys
-  FOR UPDATE USING (auth.uid() = user_id);
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_policies
+    WHERE schemaname = 'public' AND tablename = 'chat_sessions' AND policyname = 'users_can_delete_own_sessions'
+  ) THEN
+    CREATE POLICY users_can_delete_own_sessions ON public.chat_sessions
+      FOR DELETE
+      USING ((SELECT auth.uid()) = user_id);
+  END IF;
+
+  -- messages
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_policies
+    WHERE schemaname = 'public' AND tablename = 'messages' AND policyname = 'users_can_view_own_messages'
+  ) THEN
+    CREATE POLICY users_can_view_own_messages ON public.messages
+      FOR SELECT
+      USING (
+        EXISTS (
+          SELECT 1 FROM public.chat_sessions cs
+          WHERE cs.id = messages.session_id AND cs.user_id = (SELECT auth.uid())
+        )
+      );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_policies
+    WHERE schemaname = 'public' AND tablename = 'messages' AND policyname = 'users_can_insert_own_messages'
+  ) THEN
+    CREATE POLICY users_can_insert_own_messages ON public.messages
+      FOR INSERT
+      WITH CHECK (
+        EXISTS (
+          SELECT 1 FROM public.chat_sessions cs
+          WHERE cs.id = messages.session_id AND cs.user_id = (SELECT auth.uid())
+        )
+      );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_policies
+    WHERE schemaname = 'public' AND tablename = 'messages' AND policyname = 'users_can_delete_own_messages'
+  ) THEN
+    CREATE POLICY users_can_delete_own_messages ON public.messages
+      FOR DELETE
+      USING (
+        EXISTS (
+          SELECT 1 FROM public.chat_sessions cs
+          WHERE cs.id = messages.session_id AND cs.user_id = (SELECT auth.uid())
+        )
+      );
+  END IF;
+
+  -- file_explanations
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_policies
+    WHERE schemaname = 'public' AND tablename = 'file_explanations' AND policyname = 'users_can_view_own_file_explanations'
+  ) THEN
+    CREATE POLICY users_can_view_own_file_explanations ON public.file_explanations
+      FOR SELECT
+      USING (
+        EXISTS (
+          SELECT 1 FROM public.chat_sessions cs
+          WHERE cs.id = file_explanations.session_id AND cs.user_id = (SELECT auth.uid())
+        )
+      );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_policies
+    WHERE schemaname = 'public' AND tablename = 'file_explanations' AND policyname = 'users_can_insert_own_file_explanations'
+  ) THEN
+    CREATE POLICY users_can_insert_own_file_explanations ON public.file_explanations
+      FOR INSERT
+      WITH CHECK (
+        EXISTS (
+          SELECT 1 FROM public.chat_sessions cs
+          WHERE cs.id = file_explanations.session_id AND cs.user_id = (SELECT auth.uid())
+        )
+      );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_policies
+    WHERE schemaname = 'public' AND tablename = 'file_explanations' AND policyname = 'users_can_delete_own_file_explanations'
+  ) THEN
+    CREATE POLICY users_can_delete_own_file_explanations ON public.file_explanations
+      FOR DELETE
+      USING (
+        EXISTS (
+          SELECT 1 FROM public.chat_sessions cs
+          WHERE cs.id = file_explanations.session_id AND cs.user_id = (SELECT auth.uid())
+        )
+      );
+  END IF;
+
+  -- issue_solutions
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_policies
+    WHERE schemaname = 'public' AND tablename = 'issue_solutions' AND policyname = 'users_can_view_own_issue_solutions'
+  ) THEN
+    CREATE POLICY users_can_view_own_issue_solutions ON public.issue_solutions
+      FOR SELECT
+      USING (
+        EXISTS (
+          SELECT 1 FROM public.chat_sessions cs
+          WHERE cs.id = issue_solutions.session_id AND cs.user_id = (SELECT auth.uid())
+        )
+      );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_policies
+    WHERE schemaname = 'public' AND tablename = 'issue_solutions' AND policyname = 'users_can_insert_own_issue_solutions'
+  ) THEN
+    CREATE POLICY users_can_insert_own_issue_solutions ON public.issue_solutions
+      FOR INSERT
+      WITH CHECK (
+        EXISTS (
+          SELECT 1 FROM public.chat_sessions cs
+          WHERE cs.id = issue_solutions.session_id AND cs.user_id = (SELECT auth.uid())
+        )
+      );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_policies
+    WHERE schemaname = 'public' AND tablename = 'issue_solutions' AND policyname = 'users_can_update_own_issue_solutions'
+  ) THEN
+    CREATE POLICY users_can_update_own_issue_solutions ON public.issue_solutions
+      FOR UPDATE
+      USING (
+        EXISTS (
+          SELECT 1 FROM public.chat_sessions cs
+          WHERE cs.id = issue_solutions.session_id AND cs.user_id = (SELECT auth.uid())
+        )
+      );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_policies
+    WHERE schemaname = 'public' AND tablename = 'issue_solutions' AND policyname = 'users_can_delete_own_issue_solutions'
+  ) THEN
+    CREATE POLICY users_can_delete_own_issue_solutions ON public.issue_solutions
+      FOR DELETE
+      USING (
+        EXISTS (
+          SELECT 1 FROM public.chat_sessions cs
+          WHERE cs.id = issue_solutions.session_id AND cs.user_id = (SELECT auth.uid())
+        )
+      );
+  END IF;
+
+  -- user_api_keys
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_policies
+    WHERE schemaname = 'public' AND tablename = 'user_api_keys' AND policyname = 'users_can_view_own_api_keys'
+  ) THEN
+    CREATE POLICY users_can_view_own_api_keys ON public.user_api_keys
+      FOR SELECT
+      USING ((SELECT auth.uid()) = user_id);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_policies
+    WHERE schemaname = 'public' AND tablename = 'user_api_keys' AND policyname = 'users_can_insert_own_api_keys'
+  ) THEN
+    CREATE POLICY users_can_insert_own_api_keys ON public.user_api_keys
+      FOR INSERT
+      WITH CHECK ((SELECT auth.uid()) = user_id);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_policies
+    WHERE schemaname = 'public' AND tablename = 'user_api_keys' AND policyname = 'users_can_update_own_api_keys'
+  ) THEN
+    CREATE POLICY users_can_update_own_api_keys ON public.user_api_keys
+      FOR UPDATE
+      USING ((SELECT auth.uid()) = user_id)
+      WITH CHECK ((SELECT auth.uid()) = user_id);
+  END IF;
+END
+$$;
 ```
 
 Run:
