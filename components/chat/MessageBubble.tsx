@@ -197,16 +197,16 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
           </div>
         </Card>
         
-        <div className={`flex items-center gap-2 mt-1 px-1 ${isUser ? 'flex-row' : 'flex-row-reverse justify-end'}`}>
+        <div className={`relative z-12 flex items-center gap-2 mt-1 px-1 ${isUser ? 'flex-row' : 'flex-row-reverse justify-end'}`}>
             <button
               onClick={handleCopy}
-              className="p-1 rounded hover:bg-surface-2 transition-colors group/copy"
+              className="p-1.5 rounded hover:bg-surface-2 transition-colors group/copy cursor-pointer"
               title={isCopied ? 'Copied!' : 'Copy markdown'}
             >
               {isCopied ? (
-                <Check className="h-3 w-3 text-primary" />
+                <Check className="h-3.5 w-3.5 text-primary" />
               ) : (
-                <Copy className="h-3 w-3 text-gray-600 group-hover/copy:text-gray-400 transition-colors" />
+                <Copy className="h-3.5 w-3.5 text-gray-600 group-hover/copy:text-gray-400 transition-colors" />
               )}
             </button>
           <span className="text-[10px] text-gray-600">

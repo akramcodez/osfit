@@ -1067,8 +1067,8 @@ export default function ChatInterface() {
                   </div>
 
                   {currentMode === 'issue_solver' && (issueSolverStep === 'solution_step' || issueSolverStep === 'pr_context') ? (
-                    <div className="absolute bottom-0 left-0 right-0 w-full flex justify-center p-2 md:p-4 bg-gradient-to-t from-background from-50% via-background/80 to-transparent pt-12 md:pt-20 pb-4 md:pb-6 z-10">
-                      <div className="w-full max-w-3xl">
+                    <div className="absolute bottom-0 left-0 right-0 w-full flex justify-center p-2 md:p-4 bg-gradient-to-t from-background from-50% via-background/80 to-transparent pt-12 md:pt-20 pb-4 md:pb-6 z-10 pointer-events-none">
+                      <div className="w-full max-w-3xl pointer-events-auto">
                         <IssueSolverBanner
                           currentStep={issueSolverStep}
                           isLoading={isLoading}
@@ -1083,7 +1083,7 @@ export default function ChatInterface() {
                       </div>
                     </div>
                   ) : (
-                    <div className="absolute bottom-0 left-0 right-0 w-full flex justify-center p-2 md:p-4 bg-gradient-to-t from-background from-50% via-background/80 to-transparent pt-12 md:pt-20 pb-4 md:pb-6 z-10">
+                    <div className="absolute bottom-0 left-0 right-0 w-full flex justify-center p-2 md:p-4 bg-gradient-to-t from-background from-50% via-background/80 to-transparent pt-12 md:pt-20 pb-4 md:pb-6 z-10 pointer-events-none">
                       <MessageInput 
                         onSend={handleSendMessage} 
                         disabled={isLoading} 
