@@ -51,6 +51,11 @@ export interface TranslationStrings {
   groqApiKey?: string;
   groqApiKeyDesc?: string;
   starRepo?: string;
+  securityTitle?: string;
+  securityDescription1?: string;
+  securityDescription2?: string;
+  viewSourceCode?: string;
+  setupGuide?: string;
   
   
   welcomeBack?: string;
@@ -120,6 +125,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     groqApiKey: 'Groq API Key',
     groqApiKeyDesc: 'Powers OSS AI model (GPT-OSS-120B)',
     starRepo: 'Star Repo',
+    securityTitle: 'How Your API Keys Are Stored',
+    securityDescription1: 'Your API keys are encrypted using AES-256-GCM encryption before being stored in our database. Only you can decrypt and use them. We never store plain-text keys, and they are never shared with third parties.',
+    securityDescription2: 'If you don\'t trust our implementation, you can review the entire source code yourself. This is an open-source project, and transparency is our priority.',
+    viewSourceCode: 'View Source Code on GitHub',
+    setupGuide: 'Step-by-Step Setup Guide',
     
     welcomeBack: 'Welcome back',
     createAccount: 'Create account',
@@ -183,6 +193,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     groqApiKey: 'Clave API de Groq',
     groqApiKeyDesc: 'Potencia el modelo AI OSS (GPT-OSS-120B)',
     starRepo: 'Dar Estrella',
+    securityTitle: 'Cómo se almacenan sus claves API',
+    securityDescription1: 'Sus claves API se cifran usando encriptación AES-256-GCM antes de almacenarse en nuestra base de datos. Solo usted puede descifrarlas y usarlas. Nunca almacenamos claves en texto plano y nunca se comparten con terceros.',
+    securityDescription2: 'Si no confía en nuestra implementación, puede revisar todo el código fuente usted mismo. Este es un proyecto de código abierto y la transparencia es nuestra prioridad.',
+    viewSourceCode: 'Ver código fuente en GitHub',
+    setupGuide: 'Guía de configuración paso a paso',
     
     welcomeBack: 'Bienvenido de nuevo',
     createAccount: 'Crear cuenta',
@@ -243,6 +258,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     groqApiKey: 'Clé API Groq',
     groqApiKeyDesc: 'Alimente le modèle AI OSS (GPT-OSS-120B)',
     starRepo: 'Étoiler Repo',
+    securityTitle: 'Comment vos clés API sont stockées',
+    securityDescription1: 'Vos clés API sont chiffrées avec AES-256-GCM avant d\'être stockées dans notre base de données. Vous seul pouvez les déchiffrer et les utiliser. Nous ne stockons jamais de clés en texte brut et elles ne sont jamais partagées avec des tiers.',
+    securityDescription2: 'Si vous ne faites pas confiance à notre implémentation, vous pouvez consulter le code source complet vous-même. Il s\'agit d\'un projet open source et la transparence est notre priorité.',
+    viewSourceCode: 'Voir le code source sur GitHub',
+    setupGuide: 'Guide de configuration étape par étape',
     
     welcomeBack: 'Bon retour',
     createAccount: 'Créer un compte',
@@ -303,6 +323,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     groqApiKey: 'Groq API-Schlüssel',
     groqApiKeyDesc: 'Betreibt das OSS-AI-Modell (GPT-OSS-120B)',
     starRepo: 'Repo Sternen',
+    securityTitle: 'Wie Ihre API-Schlüssel gespeichert werden',
+    securityDescription1: 'Ihre API-Schlüssel werden mit AES-256-GCM-Verschlüsselung verschlüsselt, bevor sie in unserer Datenbank gespeichert werden. Nur Sie können sie entschlüsseln und verwenden. Wir speichern niemals Klartext-Schlüssel und sie werden niemals an Dritte weitergegeben.',
+    securityDescription2: 'Wenn Sie unserer Implementierung nicht vertrauen, können Sie den gesamten Quellcode selbst überprüfen. Dies ist ein Open-Source-Projekt und Transparenz ist unsere Priorität.',
+    viewSourceCode: 'Quellcode auf GitHub ansehen',
+    setupGuide: 'Schritt-für-Schritt-Einrichtungsanleitung',
     
     welcomeBack: 'Willkommen zurück',
     createAccount: 'Konto erstellen',
@@ -363,6 +388,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     groqApiKey: 'Groq API कुंजी',
     groqApiKeyDesc: 'OSS AI मॉडल (GPT-OSS-120B) को सक्षम करता है',
     starRepo: 'स्टार रेपो',
+    securityTitle: 'आपकी API कुंजियाँ कैसे संग्रहीत की जाती हैं',
+    securityDescription1: 'आपकी API कुंजियों को हमारे डेटाबेस में संग्रहीत करने से पहले AES-256-GCM एन्क्रिप्शन का उपयोग करके एन्क्रिप्ट किया जाता है। केवल आप ही उन्हें डिक्रिप्ट और उपयोग कर सकते हैं। हम कभी भी सादा-पाठ कुंजियों को संग्रहीत नहीं करते हैं और वे कभी भी तीसरे पक्ष के साथ साझा नहीं की जाती हैं।',
+    securityDescription2: 'यदि आप हमारे कार्यान्वयन पर भरोसा नहीं करते हैं, तो आप पूरे स्रोत कोड की स्वयं समीक्षा कर सकते हैं। यह एक ओपन-सोर्स प्रोजेक्ट है और पारदर्शिता हमारी प्राथमिकता है।',
+    viewSourceCode: 'GitHub पर स्रोत कोड देखें',
+    setupGuide: 'चरण-दर-चरण सेटअप गाइड',
     
     welcomeBack: 'वापस स्वागत है',
     createAccount: 'खाता बनाएं',
@@ -423,6 +453,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     groqApiKey: 'Groq API 密钥',
     groqApiKeyDesc: '驱动 OSS AI 模型 (GPT-OSS-120B)',
     starRepo: '收藏仓库',
+    securityTitle: 'API 密钥的存储方式',
+    securityDescription1: '您的 API 密钥在存储到我们的数据库之前会使用 AES-256-GCM 加密进行加密。只有您可以解密和使用它们。我们从不存储明文密钥，也不会与第三方共享。',
+    securityDescription2: '如果您不信任我们的实现，可以自己查看完整的源代码。这是一个开源项目，透明度是我们的首要任务。',
+    viewSourceCode: '在 GitHub 上查看源代码',
+    setupGuide: '分步设置指南',
     
     welcomeBack: '欢迎回来',
     createAccount: '创建账户',
@@ -483,6 +518,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     groqApiKey: 'Groq APIキー',
     groqApiKeyDesc: 'OSS AIモデル (GPT-OSS-120B) を実行',
     starRepo: 'スター付ける',
+    securityTitle: 'APIキーの保存方法',
+    securityDescription1: 'APIキーは、データベースに保存される前にAES-256-GCM暗号化を使用して暗号化されます。復号化して使用できるのはあなただけです。平文のキーを保存することはなく、第三者と共有されることもありません。',
+    securityDescription2: '私たちの実装を信頼できない場合は、ソースコード全体をご自身で確認できます。これはオープンソースプロジェクトであり、透明性が私たちの優先事項です。',
+    viewSourceCode: 'GitHubでソースコードを見る',
+    setupGuide: 'ステップバイステップのセットアップガイド',
     
     welcomeBack: 'おかえりなさい',
     createAccount: 'アカウント作成',
@@ -543,6 +583,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     groqApiKey: 'Groq API 키',
     groqApiKeyDesc: 'OSS AI 모델 (GPT-OSS-120B) 지원',
     starRepo: '스타 주기',
+    securityTitle: 'API 키 저장 방식',
+    securityDescription1: 'API 키는 데이터베이스에 저장되기 전에 AES-256-GCM 암호화를 사용하여 암호화됩니다. 복호화하고 사용할 수 있는 사람은 오직 귀하뿐입니다. 평문 키를 저장하지 않으며 제3자와 공유되지 않습니다.',
+    securityDescription2: '우리의 구현을 신뢰하지 않는다면 전체 소스 코드를 직접 검토할 수 있습니다. 이것은 오픈 소스 프로젝트이며 투명성이 우리의 우선순위입니다.',
+    viewSourceCode: 'GitHub에서 소스 코드 보기',
+    setupGuide: '단계별 설정 가이드',
     
     welcomeBack: '다시 오신 것을 환영합니다',
     createAccount: '계정 만들기',
@@ -603,6 +648,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     groqApiKey: 'Chave API Groq',
     groqApiKeyDesc: 'Alimenta o modelo AI OSS (GPT-OSS-120B)',
     starRepo: 'Dar Estrela',
+    securityTitle: 'Como suas chaves API são armazenadas',
+    securityDescription1: 'Suas chaves API são criptografadas usando criptografia AES-256-GCM antes de serem armazenadas em nosso banco de dados. Somente você pode descriptografá-las e usá-las. Nunca armazenamos chaves em texto simples e elas nunca são compartilhadas com terceiros.',
+    securityDescription2: 'Se você não confia em nossa implementação, pode revisar todo o código-fonte você mesmo. Este é um projeto de código aberto e a transparência é nossa prioridade.',
+    viewSourceCode: 'Ver código-fonte no GitHub',
+    setupGuide: 'Guia de configuração passo a passo',
     
     welcomeBack: 'Bem-vindo de volta',
     createAccount: 'Criar conta',
@@ -663,6 +713,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     groqApiKey: 'API-ключ Groq',
     groqApiKeyDesc: 'Обеспечивает модель OSS AI (GPT-OSS-120B)',
     starRepo: 'Звезда Репо',
+    securityTitle: 'Как хранятся ваши API-ключи',
+    securityDescription1: 'Ваши API-ключи шифруются с использованием AES-256-GCM перед сохранением в нашей базе данных. Только вы можете расшифровать и использовать их. Мы никогда не храним ключи в открытом виде и никогда не передаем их третьим лицам.',
+    securityDescription2: 'Если вы не доверяете нашей реализации, вы можете просмотреть весь исходный код самостоятельно. Это проект с открытым исходным кодом, и прозрачность является нашим приоритетом.',
+    viewSourceCode: 'Посмотреть исходный код на GitHub',
+    setupGuide: 'Пошаговое руководство по настройке',
     
     welcomeBack: 'С возвращением',
     createAccount: 'Создать аккаунт',
@@ -723,6 +778,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     groqApiKey: 'مفتاح API لـ Groq',
     groqApiKeyDesc: 'يشغل نموذج AI OSS (GPT-OSS-120B)',
     starRepo: 'نجمة المستودع',
+    securityTitle: 'كيف يتم تخزين مفاتيح API الخاصة بك',
+    securityDescription1: 'يتم تشفير مفاتيح API الخاصة بك باستخدام تشفير AES-256-GCM قبل تخزينها في قاعدة البيانات لدينا. أنت وحدك من يمكنه فك تشفيرها واستخدامها. نحن لا نخزن أبدًا المفاتيح بنص عادي، ولا يتم مشاركتها مع أطراف ثالثة.',
+    securityDescription2: 'إذا كنت لا تثق في تنفيذنا، يمكنك مراجعة الكود المصدري بالكامل بنفسك. هذا مشروع مفتوح المصدر والشفافية هي أولويتنا.',
+    viewSourceCode: 'عرض الكود المصدري على GitHub',
+    setupGuide: 'دليل الإعداد خطوة بخطوة',
     
     welcomeBack: 'مرحباً بعودتك',
     createAccount: 'إنشاء حساب',
@@ -783,6 +843,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     groqApiKey: 'Groq API কী',
     groqApiKeyDesc: 'OSS AI মডেল (GPT-OSS-120B) চালায়',
     starRepo: 'স্টার রেপো',
+    securityTitle: 'আপনার API কী কীভাবে সংরক্ষিত হয়',
+    securityDescription1: 'আপনার API কীগুলি আমাদের ডেটাবেসে সংরক্ষণ করার আগে AES-256-GCM এনক্রিপশন ব্যবহার করে এনক্রিপ্ট করা হয়। শুধুমাত্র আপনি সেগুলি ডিক্রিপ্ট এবং ব্যবহার করতে পারেন। আমরা কখনও প্লেইন-টেক্সট কী সংরক্ষণ করি না এবং সেগুলি কখনও তৃতীয় পক্ষের সাথে শেয়ার করা হয় না।',
+    securityDescription2: 'যদি আপনি আমাদের বাস্তবায়নে বিশ্বাস না করেন, তাহলে আপনি নিজেই সম্পূর্ণ সোর্স কোড পর্যালোচনা করতে পারেন। এটি একটি ওপেন-সোর্স প্রকল্প এবং স্বচ্ছতা আমাদের অগ্রাধিকার।',
+    viewSourceCode: 'GitHub-এ সোর্স কোড দেখুন',
+    setupGuide: 'ধাপে ধাপে সেটআপ গাইড',
     
     welcomeBack: 'স্বাগতম',
     createAccount: 'অ্যাকাউন্ট তৈরি করুন',

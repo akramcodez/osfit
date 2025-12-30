@@ -419,16 +419,13 @@ export default function UserSettings({ user, username, onBack, language, onLangu
             >
               <div className="flex gap-2 items-center mb-2">
                 <CiLock />
-                <h3 className="text-sm font-medium text-white">How Your API Keys Are Stored</h3>
+                <h3 className="text-sm font-medium text-white">{t('securityTitle', language)}</h3>
               </div>
               <p className="text-xs text-gray-400 mb-3">
-                Your API keys are encrypted using AES-256-GCM encryption before being stored in our database. 
-                Only you can decrypt and use them. We never store plain-text keys, and they are never shared 
-                with third parties.
+                {t('securityDescription1', language)}
               </p>
               <p className="text-xs text-gray-400 mb-3">
-                If you don't trust our implementation, you can review the entire source code yourself. 
-                This is an open-source project, and transparency is our priority.
+                {t('securityDescription2', language)}
               </p>
               <div className="flex items-center gap-2">
                 <a 
@@ -438,7 +435,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
                   className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
                 >
                   <ExternalLink className="h-3 w-3" />
-                  View Source Code on GitHub
+                  {t('viewSourceCode', language)}
                 </a>
                 <span className="text-gray-600">•</span>
                 <a 
@@ -447,7 +444,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
                 >
-                  Step-by-Step Setup Guide
+                  {t('setupGuide', language)}
                 </a>
               </div>
             </motion.div>
