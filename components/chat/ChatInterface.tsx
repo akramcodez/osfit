@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Message, AssistantMode, FileExplanation } from '@/types';
-import { LanguageCode, t } from '@/lib/translations';
+import { LanguageCode, normalizeLanguageCode, t } from '@/lib/translations';
 import MessageList from './MessageList';
 import FileExplainerList from './FileExplainerList';
 import IssueSolverBanner from './IssueSolverBanner';
@@ -181,7 +181,7 @@ export default function ChatInterface() {
   const [currentMode, setCurrentMode] = useState<AssistantMode>('mentor');
   const [currentLanguage, setCurrentLanguage] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('osfit-language') || 'en';
+      return normalizeLanguageCode(localStorage.getItem('osfit-language'));
     }
     return 'en';
   });
@@ -231,9 +231,10 @@ export default function ChatInterface() {
             headers: { 'Authorization': `Bearer ${session.access_token}` }
           });
           const data = await res.json();
-          if (data.preferred_language && data.preferred_language !== 'en') {
-            setCurrentLanguage(data.preferred_language);
-            localStorage.setItem('osfit-language', data.preferred_language);
+          if (data.preferred_language) {
+            const normalized = normalizeLanguageCode(data.preferred_language);
+            setCurrentLanguage(normalized);
+            localStorage.setItem('osfit-language', normalized);
           }
         } catch (err) {
           console.warn('Failed to load language from DB:', err);
@@ -255,8 +256,9 @@ export default function ChatInterface() {
             });
             const data = await res.json();
             if (data.preferred_language) {
-              setCurrentLanguage(data.preferred_language);
-              localStorage.setItem('osfit-language', data.preferred_language);
+              const normalized = normalizeLanguageCode(data.preferred_language);
+              setCurrentLanguage(normalized);
+              localStorage.setItem('osfit-language', normalized);
             }
           }
         } catch (err) {

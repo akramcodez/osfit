@@ -880,6 +880,22 @@ export function t(key: keyof TranslationStrings, lang: LanguageCode = 'en'): str
 }
 
 
+export function normalizeLanguageCode(lang: string | null | undefined): LanguageCode {
+  if (!lang) return 'en';
+
+  if ((TRANSLATIONS as Record<string, TranslationStrings | undefined>)[lang]) {
+    return lang as LanguageCode;
+  }
+
+  const base = lang.split('-')[0];
+  if ((TRANSLATIONS as Record<string, TranslationStrings | undefined>)[base]) {
+    return base as LanguageCode;
+  }
+
+  return 'en';
+}
+
+
 export const SPEECH_LANG_CODES: Record<LanguageCode, string> = {
   en: 'en-US',
   es: 'es-ES',
