@@ -380,8 +380,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
                       {config.show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  {!config.hasKey && (
-                    <Button
+                  <Button
                     onClick={() => saveKey(config.type, config.value)}
                     disabled={savingKey === config.type || !config.value.trim()}
                     className="bg-primary hover:bg-primary/90 text-black"
@@ -392,7 +391,6 @@ export default function UserSettings({ user, username, onBack, language, onLangu
                       <Save className="h-4 w-4" />
                     )}
                   </Button>
-                  )}
                   {config.hasKey && (
                     <Button
                       variant="outline"
