@@ -974,7 +974,7 @@ export default function ChatInterface() {
               username={getUsername(user)} 
               onBack={() => setShowUserSettings(false)}
               language={currentLanguage as LanguageCode}
-              onLanguageChange={setCurrentLanguage}
+              onLanguageChange={(lang) => setCurrentLanguage(lang)}
             />
           ) : (
             <motion.div
@@ -1026,12 +1026,12 @@ export default function ChatInterface() {
                           currentMode={currentMode} 
                           onModeChange={handleModeChange}
                           currentLanguage={currentLanguage}
-                          onLanguageChange={setCurrentLanguage}
+                          onLanguageChange={(lang) => setCurrentLanguage(normalizeLanguageCode(lang))}
                       />
                       <div className="hidden md:flex items-center">
                         <LanguageSelector 
                             currentLanguage={currentLanguage}
-                            onLanguageChange={setCurrentLanguage}
+                            onLanguageChange={(lang) => setCurrentLanguage(normalizeLanguageCode(lang))}
                         />
                       </div>
                    </div> 

@@ -10,7 +10,7 @@ import { FaGithub } from "react-icons/fa";
 import { supabase } from '@/lib/supabase-auth';
 import { User } from '@supabase/supabase-js';
 import LanguageSelector from '@/components/chat/LanguageSelector';
-import { LanguageCode, t } from '@/lib/translations';
+import { LanguageCode, normalizeLanguageCode, t } from '@/lib/translations';
 import { CiLock } from "react-icons/ci";
 
 interface UserSettingsProps {
@@ -18,7 +18,7 @@ interface UserSettingsProps {
   username: string;
   onBack: () => void;
   language: LanguageCode;
-  onLanguageChange: (lang: string) => void;
+  onLanguageChange: (lang: LanguageCode) => void;
 }
 
 type KeyType = 'gemini' | 'apify' | 'groq';
@@ -237,7 +237,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
           
           <LanguageSelector 
             currentLanguage={language}
-            onLanguageChange={onLanguageChange}
+            onLanguageChange={(lang) => onLanguageChange(normalizeLanguageCode(lang))}
           />
         </div>
       </div>
