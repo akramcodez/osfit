@@ -1,15 +1,11 @@
-
-
-
 import { CheerioCrawler, type CheerioCrawlingContext } from '@crawlee/cheerio';
 import { Actor } from 'apify';
 import Groq from 'groq-sdk';
 
-
 interface Input {
   mode?: 'file_explainer' | 'issue_solver' | 'issue' | 'file';
   url: string;
-  type?: 'issue' | 'file'; 
+  type?: 'issue' | 'file';
   language?: string;
   useLingoTranslation?: boolean;
   includeFlowchart?: boolean;
@@ -52,7 +48,6 @@ interface IssueSolverOutput {
   solutionPlan: string;
 }
 
-
 const LANGUAGE_MAP: Record<string, string> = {
   'js': 'javascript',
   'jsx': 'javascript',
@@ -83,7 +78,6 @@ const LANGUAGE_MAP: Record<string, string> = {
   'bash': 'bash',
 };
 
-
 const LANGUAGE_NAMES: Record<string, string> = {
   'en': 'English',
   'es': 'Spanish',
@@ -108,7 +102,6 @@ const LANGUAGE_NAMES: Record<string, string> = {
   'te': 'Telugu',
 };
 
-
 async function fetchGitHubFile(fileUrl: string): Promise<FileData> {
   const rawUrl = fileUrl
     .replace('github.com', 'raw.githubusercontent.com')
@@ -120,8 +113,7 @@ async function fetchGitHubFile(fileUrl: string): Promise<FileData> {
   }
 
   const content = await response.text();
-  
-  
+
   const urlParts = fileUrl.split('/blob/');
   let path = '';
   if (urlParts.length > 1) {
@@ -139,12 +131,11 @@ async function fetchGitHubFile(fileUrl: string): Promise<FileData> {
 
   return {
     path,
-    content: content.substring(0, 8000), 
+    content: content.substring(0, 8000),
     detectedLanguage,
     url: fileUrl,
   };
 }
-
 
 async function fetchGitHubIssue(issueUrl: string): Promise<IssueData> {
   return new Promise((resolve, reject) => {
@@ -203,10 +194,9 @@ async function fetchGitHubIssue(issueUrl: string): Promise<IssueData> {
   });
 }
 
-
 function extractFileLinks(issue: IssueData): string[] {
   const links: string[] = [];
-  const regex = /github\.com\/[^\/]+\/[^\/]+\/blob\/[^\s\)\"]+/g;
+  const regex = /github\.com\/[^\/]+\/[^\/]+\/blob\/[^\s\)\"\]]+/g;
 
   const findLinks = (text: string) => {
     const matches = text.match(regex) || [];
@@ -223,7 +213,6 @@ function extractFileLinks(issue: IssueData): string[] {
 
   return links;
 }
-
 
 async function analyzeWithGroq(
   systemPrompt: string,
@@ -253,7 +242,6 @@ async function analyzeWithGroq(
 
   return completion.choices[0]?.message?.content || '';
 }
-
 
 async function generateFlowchart(
   fileContent: string,
@@ -306,27 +294,22 @@ But the LABELS inside nodes MUST be in ${targetLangName}.`;
     });
 
     let code = completion.choices[0]?.message?.content || '';
-    
-    
+
     const match = code.match(/```mermaid\n?([\s\S]*?)```/);
     if (match) {
       code = match[1].trim();
     }
-    
-    
-    
+
     code = code.replace(/→/g, ' to ');
     code = code.replace(/←/g, ' from ');
-    
     code = code.replace(/\[([^\]]*[@*\/][^\]]*)\]/g, '["$1"]');
-    
+
     return code;
   } catch (error) {
     console.warn('Flowchart generation failed:', error);
     return '';
   }
 }
-
 
 async function translateWithLingo(text: string, targetLanguage: string): Promise<string> {
   const lingoKey = process.env.LINGO_API_KEY;
@@ -335,22 +318,20 @@ async function translateWithLingo(text: string, targetLanguage: string): Promise
   }
 
   try {
-    
     const { LingoDotDevEngine } = await import('lingo.dev/sdk');
     const lingo = new LingoDotDevEngine({ apiKey: lingoKey });
-    
+
     const result = await lingo.localizeObject(
       { text },
       { sourceLocale: 'en', targetLocale: targetLanguage }
     );
-    
+
     return result.text || text;
   } catch (error) {
     console.warn('Lingo translation failed, using original:', error);
     return text;
   }
 }
-
 
 async function handleFileExplainer(
   url: string,
@@ -395,12 +376,10 @@ ${file.content.substring(0, 4000)}
   const usedLingo = useLingoTranslation && language !== 'en';
 
   if (usedLingo) {
-    
     explanation = await analyzeWithGroq(systemPrompt, userMessage, 'en');
     console.log('[File Explainer] Translating with Lingo...');
     explanation = await translateWithLingo(explanation, language);
   } else {
-    
     explanation = await analyzeWithGroq(systemPrompt, userMessage, language);
   }
 
@@ -410,7 +389,6 @@ ${file.content.substring(0, 4000)}
     flowchart = await generateFlowchart(file.content, file.detectedLanguage, language);
   }
 
-  
   if (flowchart && usedLingo) {
     await Actor.charge({ eventName: 'file_analysis_flowchart_generation_lingo', count: 1 });
   } else if (flowchart) {
@@ -428,7 +406,6 @@ ${file.content.substring(0, 4000)}
   };
 }
 
-
 async function handleIssueSolver(
   url: string,
   language: string,
@@ -438,7 +415,6 @@ async function handleIssueSolver(
   console.log(`[Issue Solver] Fetching issue: ${url}`);
   const issue = await fetchGitHubIssue(url);
 
-  
   const fileLinks = extractFileLinks(issue);
   const relatedFiles: FileData[] = [];
 
@@ -499,7 +475,6 @@ ${issue.body || 'No description provided'}`;
     response = await analyzeWithGroq(systemPrompt, userMessage, language);
   }
 
-  
   const explanationMatch = response.match(/## Issue Explanation\n([\s\S]*?)(?=\n## |$)/);
   const solutionMatch = response.match(/## Solution Plan\n([\s\S]*?)(?=\n## Files|$)/);
   const filesMatch = response.match(/## Files to Modify\n([\s\S]*?)$/);
@@ -507,13 +482,11 @@ ${issue.body || 'No description provided'}`;
   const issueExplanation = explanationMatch?.[1]?.trim() || response;
   let solutionPlan = '';
 
-  
   if (includeSolutionPlan) {
     solutionPlan = (solutionMatch?.[1] || '') + (filesMatch ? '\n\n## Files to Modify\n' + filesMatch[1] : '');
     solutionPlan = solutionPlan.trim() || response;
   }
 
-  
   if (includeSolutionPlan && usedLingo) {
     await Actor.charge({ eventName: 'issue_explanation_solution_plan_lingo', count: 1 });
   } else if (includeSolutionPlan) {
@@ -532,7 +505,6 @@ ${issue.body || 'No description provided'}`;
   };
 }
 
-
 async function handleLegacyIssue(url: string): Promise<IssueData> {
   return await fetchGitHubIssue(url);
 }
@@ -540,7 +512,6 @@ async function handleLegacyIssue(url: string): Promise<IssueData> {
 async function handleLegacyFile(url: string): Promise<FileData> {
   return await fetchGitHubFile(url);
 }
-
 
 async function main(): Promise<void> {
   await Actor.init();
@@ -551,15 +522,14 @@ async function main(): Promise<void> {
     throw new Error('URL is required');
   }
 
-  const { 
-    url, 
-    language = 'en', 
+  const {
+    url,
+    language = 'en',
     useLingoTranslation = false,
-    includeFlowchart = true, 
-    includeSolutionPlan = true 
+    includeFlowchart = true,
+    includeSolutionPlan = true
   } = input;
-  
-  
+
   const mode = input.mode || input.type || 'file_explainer';
 
   console.log(`[Actor] Mode: ${mode}, Language: ${language}, Lingo: ${useLingoTranslation}`);
@@ -576,13 +546,11 @@ async function main(): Promise<void> {
       break;
 
     case 'issue':
-      
       result = { type: 'issue', ...(await handleLegacyIssue(url)) };
       await Actor.charge({ eventName: 'issue_fetcher', count: 1 });
       break;
 
     case 'file':
-      
       const fileData = await handleLegacyFile(url);
       result = { type: 'file', ...fileData, language: fileData.detectedLanguage };
       await Actor.charge({ eventName: 'file_fetcher', count: 1 });
@@ -598,20 +566,18 @@ async function main(): Promise<void> {
   await Actor.exit();
 }
 
-
 main().catch(async (err: unknown) => {
   const errorMessage = err instanceof Error ? err.message : String(err);
   console.error('Actor failed:', errorMessage);
-  
+
   try {
-    
     await Actor.pushData({
       success: false,
       error: errorMessage,
     });
   } catch {
-    
+    // Ignore push failures during error handling
   }
-  
+
   await Actor.fail(errorMessage);
 });
