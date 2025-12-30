@@ -12,7 +12,7 @@ import { CodeBlock } from './CodeBlock';
 import InteractiveCodeViewer from './InteractiveCodeViewer';
 import MermaidRenderer from './MermaidRenderer';
 import Spinner from '@/components/ui/spinner';
-import { LanguageCode } from '@/lib/translations';
+import { LanguageCode, t } from '@/lib/translations';
 import { supabase } from '@/lib/supabase-auth';
 
 interface FileExplainerCardProps {
@@ -168,11 +168,11 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
       if (result.explanation) {
         setLineExplanation(result.explanation);
       } else {
-        setLineExplanation('Could not explain this line. Try another one.');
+        setLineExplanation(t('lineExplainFailed', uiLanguage) || 'Could not explain this line. Try another one.');
       }
     } catch (error) {
       console.error('Line explanation error:', error);
-      setLineExplanation('Failed to get explanation. Please try again.');
+      setLineExplanation(t('explanationFailed', uiLanguage) || 'Failed to get explanation. Please try again.');
     } finally {
       setIsExplainingLine(false);
     }
@@ -209,7 +209,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
               <button
                 onClick={openInGitHub}
                 className="p-1.5 sm:p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
-                title="Open in GitHub"
+                title={t('openInGitHub', uiLanguage) || 'Open in GitHub'}
               >
                 <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </button>
@@ -221,12 +221,12 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
               {isCollapsed ? (
                 <>
                   <ChevronsDown className="h-3 w-3" />
-                  <span className="hidden sm:inline">Expand</span>
+                  <span className="hidden sm:inline">{t('expand', uiLanguage) || 'Expand'}</span>
                 </>
               ) : (
                 <>
                   <ChevronsUp className="h-3 w-3" />
-                  <span className="hidden sm:inline">Collapse</span>
+                  <span className="hidden sm:inline">{t('collapse', uiLanguage) || 'Collapse'}</span>
                 </>
               )}
             </button>
@@ -238,12 +238,12 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
               {isCodeExpanded ? (
                 <>
                   <ChevronLeft className="h-3 w-3" />
-                  <span className="hidden sm:inline">Code</span>
+                  <span className="hidden sm:inline">{t('code', uiLanguage) || 'Code'}</span>
                 </>
               ) : (
                 <>
                   <ChevronRight className="h-3 w-3" />
-                  <span className="hidden sm:inline">Code</span>
+                  <span className="hidden sm:inline">{t('code', uiLanguage) || 'Code'}</span>
                 </>
               )}
             </button>
@@ -264,7 +264,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                     ? 'cursor-wait opacity-100 text-red-500/80 bg-red-500/10' 
                     : 'text-gray-400 hover:text-red-400 hover:bg-red-500/10'
                 }`}
-                title="Delete explanation"
+                title={t('deleteExplanation', uiLanguage) || 'Delete explanation'}
                 disabled={isDeleting}
               >
                 {isDeleting ? <Spinner size="sm" className="text-red-500 h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
@@ -363,11 +363,11 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                           if (result.flowchart) {
                             setFlowchart(result.flowchart);
                           } else {
-                            setFlowchartError('Could not generate diagram');
+                            setFlowchartError(t('diagramGenerateFailed', uiLanguage) || 'Could not generate diagram');
                           }
                         } catch (err) {
                           console.error('Flowchart error:', err);
-                          setFlowchartError('Failed to generate diagram');
+                          setFlowchartError(t('diagramFailed', uiLanguage) || 'Failed to generate diagram');
                         } finally {
                           setIsGeneratingFlowchart(false);
                         }
@@ -468,12 +468,12 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                 <div className="prose prose-invert prose-sm max-w-full prose-p:break-words prose-strong:break-words prose-li:break-words overflow-hidden" style={{ maxWidth: '100%', wordBreak: 'break-word' }}>
                   {!selectedLine ? (
                     <div className="text-center py-8">
-                      <p className="text-gray-500">👆 Click any line in the code to explain it</p>
+                      <p className="text-gray-500">{t('clickLineToExplain', uiLanguage) || '👆 Click any line in the code to explain it'}</p>
                     </div>
                   ) : isExplainingLine ? (
                     <div className="flex flex-col items-center justify-center py-8 gap-3">
                       <Spinner size="md" />
-                      <p className="text-gray-400 text-sm">Explaining line {selectedLine}...</p>
+                      <p className="text-gray-400 text-sm">{t('explainingLine', uiLanguage) || 'Explaining line'} {selectedLine}...</p>
                     </div>
                   ) : lineExplanation ? (
                     <div>
@@ -508,7 +508,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                     </div>
                   ) : (
                     <div className="text-center py-8">
-                      <p className="text-gray-500">Select a line to see its explanation</p>
+                      <p className="text-gray-500">{t('selectLineForExplanation', uiLanguage) || 'Select a line to see its explanation'}</p>
                     </div>
                   )}
                 </div>
@@ -519,7 +519,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                   {isGeneratingFlowchart ? (
                     <div className="flex flex-col items-center justify-center py-12 gap-3">
                       <Spinner size="md" />
-                      <p className="text-gray-400 text-sm">Generating flowchart...</p>
+                      <p className="text-gray-400 text-sm">{t('generatingFlowchart', uiLanguage) || 'Generating flowchart...'}</p>
                     </div>
                   ) : flowchartError ? (
                     <div className="text-center py-8">
@@ -544,7 +544,7 @@ export default function FileExplainerCard({ data, isNew = false, onStreamComplet
                   ) : (
                     <div className="flex flex-col items-center justify-center py-12 gap-3">
                       <Spinner size="md" />
-                      <p className="text-gray-400 text-sm">Loading diagram...</p>
+                      <p className="text-gray-400 text-sm">{t('loadingDiagram', uiLanguage) || 'Loading diagram...'}</p>
                     </div>
                   )}
                 </div>

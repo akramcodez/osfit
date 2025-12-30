@@ -363,7 +363,7 @@ export default function ChatInterface() {
     if (!activeSessionId) {
       activeSessionId = await initSession(content, currentMode);
       if (!activeSessionId) {
-        setApiError('Failed to create session. Please try again.');
+        setApiError(t('sessionCreateFailed', currentLanguage) || 'Failed to create session. Please try again.');
         return;
       }
     }
@@ -479,17 +479,17 @@ export default function ChatInterface() {
     const isFolderUrl = trimmedContent.includes('/tree/');
     
     if (!isGitHubUrl) {
-      setApiError('Please enter a valid GitHub file URL (e.g., github.com/owner/repo/blob/main/file.js)');
+      setApiError(t('invalidFileUrl', currentLanguage) || 'Please enter a valid GitHub file URL (e.g., github.com/owner/repo/blob/main/file.js)');
       return;
     }
     
     if (isFolderUrl) {
-      setApiError('Folder URLs are not supported. Please enter a file URL (use /blob/ not /tree/)');
+      setApiError(t('folderUrlsNotSupported', currentLanguage) || 'Folder URLs are not supported. Please enter a file URL (use /blob/ not /tree/)');
       return;
     }
     
     if (!isFileUrl) {
-      setApiError('Invalid URL format. File URLs should contain /blob/ in the path');
+      setApiError(t('invalidUrlFormat', currentLanguage) || 'Invalid URL format. File URLs should contain /blob/ in the path');
       return;
     }
 
@@ -877,7 +877,7 @@ export default function ChatInterface() {
       }
     } catch (err) {
       console.error('Delete error:', err);
-      setApiError('Failed to delete. Please try again.');
+      setApiError(t('deleteFailed', currentLanguage) || 'Failed to delete. Please try again.');
     }
   };
 

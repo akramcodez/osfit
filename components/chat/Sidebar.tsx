@@ -198,7 +198,7 @@ export default function Sidebar({
                                 ? 'opacity-100 cursor-wait' 
                                 : 'opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-400 hover:bg-red-500/10'
                             }`}
-                            title="Delete session"
+                            title={t('deleteSession', language) || 'Delete session'}
                             disabled={!!deletingSessionId}
                           >
                             {deletingSessionId === session.id ? (

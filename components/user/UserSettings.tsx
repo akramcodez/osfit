@@ -89,7 +89,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
 
   const saveKey = async (keyType: KeyType, value: string) => {
     if (!value.trim()) {
-      setMessage({ type: 'error', text: 'Please enter a valid API key' });
+      setMessage({ type: 'error', text: t('enterValidApiKey', language) || 'Please enter a valid API key' });
       return;
     }
     
@@ -107,7 +107,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
       
       if (!res.ok) throw new Error('Failed to save');
       
-      setMessage({ type: 'success', text: 'API key saved successfully' });
+      setMessage({ type: 'success', text: t('apiKeySaved', language) || 'API key saved successfully' });
       
       if (keyType === 'gemini') setGeminiKey('');
       if (keyType === 'apify') setApifyKey('');
@@ -115,7 +115,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
       
       await fetchKeyStatus();
     } catch (e) {
-      setMessage({ type: 'error', text: 'Failed to save API key' });
+      setMessage({ type: 'error', text: t('apiKeySaveFailed', language) || 'Failed to save API key' });
     } finally {
       setSavingKey(null);
       setTimeout(() => setMessage(null), 3000);
@@ -135,10 +135,10 @@ export default function UserSettings({ user, username, onBack, language, onLangu
       
       if (!res.ok) throw new Error('Failed to delete');
       
-      setMessage({ type: 'success', text: 'API key removed' });
+      setMessage({ type: 'success', text: t('apiKeyRemoved', language) || 'API key removed' });
       await fetchKeyStatus();
     } catch (e) {
-      setMessage({ type: 'error', text: 'Failed to remove API key' });
+      setMessage({ type: 'error', text: t('apiKeyRemoveFailed', language) || 'Failed to remove API key' });
     } finally {
       setDeletingKey(null);
       setTimeout(() => setMessage(null), 3000);
@@ -256,7 +256,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
               </div>
               <div>
                 <h1 className="text-xl font-semibold text-white">{username}</h1>
-                <p className="text-sm text-gray-400">the open-source warrior</p>
+                <p className="text-sm text-gray-400">{t('ossWarrior', language)}</p>
               </div>
             </div>
           </motion.div>
@@ -294,8 +294,8 @@ export default function UserSettings({ user, username, onBack, language, onLangu
             <div className="p-4 bg-surface-2 rounded-lg border border-border-subtle mb-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-medium text-white">AI Provider</h3>
-                  <p className="text-xs text-gray-500">Choose which AI model to use</p>
+                  <h3 className="text-sm font-medium text-white">{t('aiProvider', language)}</h3>
+                  <p className="text-xs text-gray-500">{t('aiProviderDesc', language)}</p>
                 </div>
                 <Select 
                   value={selectedProvider} 
@@ -311,7 +311,7 @@ export default function UserSettings({ user, username, onBack, language, onLangu
                         },
                         body: JSON.stringify({ ai_provider: newProvider }),
                       });
-                      setMessage({ type: 'success', text: `Switched to ${newProvider === 'gemini' ? 'Gemini' : 'Groq (OSS)'}` });
+                      setMessage({ type: 'success', text: newProvider === 'gemini' ? t('switchedToGemini', language) : t('switchedToGroq', language) });
                       setTimeout(() => setMessage(null), 3000);
                     } catch (e) {
                       console.error('Failed to save provider', e);
@@ -322,8 +322,8 @@ export default function UserSettings({ user, username, onBack, language, onLangu
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="gemini">Gemini (Default)</SelectItem>
-                    <SelectItem value="groq">Groq (OSS)</SelectItem>
+                    <SelectItem value="gemini">{t('geminiDefault', language)}</SelectItem>
+                    <SelectItem value="groq">{t('groqOss', language)}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
