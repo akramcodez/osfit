@@ -216,10 +216,10 @@
   }
   
   .prose table {
-    display: block !important;
+    display: table !important;
     max-width: 100% !important;
     overflow-x: auto !important;
-    width: max-content !important;
+    width: 100% !important;
   }
   
   /* Utility class for anywhere overflow wrap */
@@ -247,17 +247,25 @@
     
     /* Force code tables in prose to be constrained on mobile */
     .prose table {
-      display: block;
+      display: table;
       max-width: 100%;
+      width: 100%;
       overflow-x: auto;
     }
     
     .prose table tbody,
     .prose table thead,
     .prose table tr {
-      display: table;
+      display: table-row-group;
       width: 100%;
-      table-layout: fixed;
+    }
+    
+    .prose table thead {
+      display: table-header-group;
+    }
+    
+    .prose table tr {
+      display: table-row;
     }
     
     /* Ensure code doesn't overflow */

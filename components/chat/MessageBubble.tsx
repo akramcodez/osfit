@@ -90,7 +90,7 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
     return content.slice(0, displayedLength);
   }, [content, displayedLength]);
 
-  const shouldRenderMarkdown = !isStreaming || displayedLength >= content.length;
+  const shouldRenderMarkdown = true; // Always render markdown, even during streaming
 
   return (
     <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} mb-2 animate-message-in overflow-hidden`}>
@@ -153,8 +153,8 @@ export default function MessageBubble({ message, isNew = false, onStreamComplete
                     <strong className="font-semibold text-white break-words">{children}</strong>
                   ),
                   table: ({ children }) => (
-                    <div className="my-4 overflow-x-auto rounded-lg border border-border-subtle">
-                      <table className="w-full text-left text-sm text-gray-200 min-w-full">{children}</table>
+                    <div className="my-4 w-full overflow-x-auto rounded-lg border border-border-subtle">
+                      <table className="w-full text-left text-sm text-gray-200 table-fixed">{children}</table>
                     </div>
                   ),
                   thead: ({ children }) => (
