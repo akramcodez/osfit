@@ -37,150 +37,207 @@ Minimal setup requires Supabase + one AI key (Gemini or Groq). Add Apify for bet
 Run these SQL queries in your Supabase SQL Editor:
 
 ```sql
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- Enable gen_random_uuid()
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
--- User API Keys table
-CREATE TABLE user_api_keys (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  gemini_key_encrypted TEXT,
-  apify_key_encrypted TEXT,
-  lingo_key_encrypted TEXT,
-  groq_key_encrypted TEXT,
-  ai_provider TEXT DEFAULT 'gemini',
-  preferred_language TEXT DEFAULT 'en',
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(user_id)
+-- 1) profiles (references auth.users)
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id uuid NOT NULL,
+  username text NOT NULL UNIQUE,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
 );
 
--- Chat Sessions table
-CREATE TABLE chat_sessions (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  session_token UUID DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  title TEXT,
-  mode TEXT DEFAULT 'mentor',
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  last_active TIMESTAMPTZ DEFAULT NOW()
+-- 2) chat_sessions (references profiles)
+CREATE TABLE IF NOT EXISTS public.chat_sessions (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  session_token text NOT NULL UNIQUE,
+  created_at timestamp without time zone DEFAULT now(),
+  last_active timestamp without time zone DEFAULT now(),
+  title text,
+  user_id uuid,
+  mode text DEFAULT 'mentor'::text,
+  CONSTRAINT chat_sessions_pkey PRIMARY KEY (id),
+  CONSTRAINT chat_sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
 
--- Messages table
-CREATE TABLE messages (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  session_id UUID REFERENCES chat_sessions(id) ON DELETE CASCADE,
-  role TEXT NOT NULL,
-  content TEXT NOT NULL,
-  metadata JSONB,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+-- 3) messages (references chat_sessions)
+CREATE TABLE IF NOT EXISTS public.messages (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  session_id uuid,
+  role text NOT NULL CHECK (role = ANY (ARRAY['user'::text, 'assistant'::text, 'system'::text])),
+  content text NOT NULL,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT messages_pkey PRIMARY KEY (id),
+  CONSTRAINT messages_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.chat_sessions(id)
 );
 
--- File Explanations table
-CREATE TABLE file_explanations (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  session_id UUID REFERENCES chat_sessions(id) ON DELETE CASCADE,
-  file_url TEXT NOT NULL,
-  file_path TEXT,
-  role TEXT,
-  language TEXT,
-  explanation TEXT,
-  flowchart TEXT,
-  metadata JSONB,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+-- 4) file_explanations (references chat_sessions)
+CREATE TABLE IF NOT EXISTS public.file_explanations (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  session_id uuid,
+  role text NOT NULL CHECK (role = ANY (ARRAY['user'::text, 'assistant'::text])),
+  file_url text,
+  file_path text,
+  file_content text,
+  language text,
+  explanation text,
+  created_at timestamp with time zone DEFAULT now(),
+  metadata jsonb DEFAULT '{}'::jsonb,
+  flowchart text,
+  CONSTRAINT file_explanations_pkey PRIMARY KEY (id),
+  CONSTRAINT file_explanations_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.chat_sessions(id)
 );
 
--- Issue Solutions table
-CREATE TABLE issue_solutions (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  session_id UUID REFERENCES chat_sessions(id) ON DELETE CASCADE,
-  issue_url TEXT NOT NULL,
-  issue_title TEXT,
-  issue_body TEXT,
-  explanation TEXT,
-  solution_plan TEXT,
-  pr_files_changed TEXT[],
-  pr_title TEXT,
-  pr_description TEXT,
-  pr_solution TEXT,
-  current_step TEXT,
-  status TEXT,
-  role TEXT,
-  metadata JSONB,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+-- 5) issue_solutions (references chat_sessions)
+CREATE TABLE IF NOT EXISTS public.issue_solutions (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  session_id uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  issue_url text,
+  issue_title text,
+  issue_body text,
+  explanation text,
+  solution_plan text,
+  git_diff text,
+  pr_title text,
+  pr_description text,
+  current_step text DEFAULT 'issue_input'::text,
+  issue_labels text,
+  pr_solution text,
+  pr_files_changed text,
+  status text DEFAULT 'in_progress'::text,
+  role text DEFAULT 'assistant'::text,
+  metadata jsonb,
+  CONSTRAINT issue_solutions_pkey PRIMARY KEY (id),
+  CONSTRAINT issue_solutions_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.chat_sessions(id)
 );
 
--- Enable Row Level Security
-ALTER TABLE user_api_keys ENABLE ROW LEVEL SECURITY;
-ALTER TABLE chat_sessions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
-ALTER TABLE file_explanations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE issue_solutions ENABLE ROW LEVEL SECURITY;
+-- 6) user_api_keys (references auth.users)
+CREATE TABLE IF NOT EXISTS public.user_api_keys (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL UNIQUE,
+  gemini_key_encrypted text,
+  apify_key_encrypted text,
+  lingo_key_encrypted text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  openai_key_encrypted text,
+  claude_key_encrypted text,
+  grok_key_encrypted text,
+  selected_ai_provider text DEFAULT 'gemini'::text,
+  groq_key text,
+  ai_provider text DEFAULT 'gemini'::text,
+  groq_key_encrypted text,
+  preferred_language text DEFAULT 'en'::text,
+  CONSTRAINT user_api_keys_pkey PRIMARY KEY (id),
+  CONSTRAINT user_api_keys_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
 
--- RLS Policies for user_api_keys
-CREATE POLICY "Users can view own API keys" ON user_api_keys
+-- Optional: enable RLS
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.chat_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.file_explanations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.issue_solutions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_api_keys ENABLE ROW LEVEL SECURITY;
+
+-- Optional: minimal RLS policies
+CREATE POLICY IF NOT EXISTS "Users can view own profile" ON public.profiles
+  FOR SELECT USING (auth.uid() = id);
+CREATE POLICY IF NOT EXISTS "Users can insert own profile" ON public.profiles
+  FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY IF NOT EXISTS "Users can update own profile" ON public.profiles
+  FOR UPDATE USING (auth.uid() = id);
+
+CREATE POLICY IF NOT EXISTS "Users can view own sessions" ON public.chat_sessions
   FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own API keys" ON user_api_keys
+CREATE POLICY IF NOT EXISTS "Users can insert own sessions" ON public.chat_sessions
   FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own API keys" ON user_api_keys
-  FOR UPDATE USING (auth.uid() = user_id);
-CREATE POLICY "Users can delete own API keys" ON user_api_keys
+CREATE POLICY IF NOT EXISTS "Users can delete own sessions" ON public.chat_sessions
   FOR DELETE USING (auth.uid() = user_id);
 
--- RLS Policies for chat_sessions
-CREATE POLICY "Users can view own sessions" ON chat_sessions
-  FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own sessions" ON chat_sessions
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can delete own sessions" ON chat_sessions
-  FOR DELETE USING (auth.uid() = user_id);
-
--- RLS Policies for messages
-CREATE POLICY "Users can view messages from own sessions" ON messages
+CREATE POLICY IF NOT EXISTS "Users can view own messages" ON public.messages
   FOR SELECT USING (
-    EXISTS (SELECT 1 FROM chat_sessions WHERE chat_sessions.id = messages.session_id AND chat_sessions.user_id = auth.uid())
+    EXISTS (
+      SELECT 1 FROM public.chat_sessions cs
+      WHERE cs.id = messages.session_id AND cs.user_id = auth.uid()
+    )
   );
-CREATE POLICY "Users can insert messages to own sessions" ON messages
+CREATE POLICY IF NOT EXISTS "Users can insert own messages" ON public.messages
   FOR INSERT WITH CHECK (
-    EXISTS (SELECT 1 FROM chat_sessions WHERE chat_sessions.id = messages.session_id AND chat_sessions.user_id = auth.uid())
+    EXISTS (
+      SELECT 1 FROM public.chat_sessions cs
+      WHERE cs.id = messages.session_id AND cs.user_id = auth.uid()
+    )
   );
-CREATE POLICY "Users can delete messages from own sessions" ON messages
+CREATE POLICY IF NOT EXISTS "Users can delete own messages" ON public.messages
   FOR DELETE USING (
-    EXISTS (SELECT 1 FROM chat_sessions WHERE chat_sessions.id = messages.session_id AND chat_sessions.user_id = auth.uid())
+    EXISTS (
+      SELECT 1 FROM public.chat_sessions cs
+      WHERE cs.id = messages.session_id AND cs.user_id = auth.uid()
+    )
   );
 
--- RLS Policies for file_explanations
-CREATE POLICY "Users can view explanations from own sessions" ON file_explanations
+CREATE POLICY IF NOT EXISTS "Users can view own file explanations" ON public.file_explanations
   FOR SELECT USING (
-    EXISTS (SELECT 1 FROM chat_sessions WHERE chat_sessions.id = file_explanations.session_id AND chat_sessions.user_id = auth.uid())
+    EXISTS (
+      SELECT 1 FROM public.chat_sessions cs
+      WHERE cs.id = file_explanations.session_id AND cs.user_id = auth.uid()
+    )
   );
-CREATE POLICY "Users can insert explanations to own sessions" ON file_explanations
+CREATE POLICY IF NOT EXISTS "Users can insert own file explanations" ON public.file_explanations
   FOR INSERT WITH CHECK (
-    EXISTS (SELECT 1 FROM chat_sessions WHERE chat_sessions.id = file_explanations.session_id AND chat_sessions.user_id = auth.uid())
+    EXISTS (
+      SELECT 1 FROM public.chat_sessions cs
+      WHERE cs.id = file_explanations.session_id AND cs.user_id = auth.uid()
+    )
   );
-CREATE POLICY "Users can delete explanations from own sessions" ON file_explanations
+CREATE POLICY IF NOT EXISTS "Users can delete own file explanations" ON public.file_explanations
   FOR DELETE USING (
-    EXISTS (SELECT 1 FROM chat_sessions WHERE chat_sessions.id = file_explanations.session_id AND chat_sessions.user_id = auth.uid())
+    EXISTS (
+      SELECT 1 FROM public.chat_sessions cs
+      WHERE cs.id = file_explanations.session_id AND cs.user_id = auth.uid()
+    )
   );
 
--- RLS Policies for issue_solutions
-CREATE POLICY "Users can view solutions from own sessions" ON issue_solutions
+CREATE POLICY IF NOT EXISTS "Users can view own issue solutions" ON public.issue_solutions
   FOR SELECT USING (
-    EXISTS (SELECT 1 FROM chat_sessions WHERE chat_sessions.id = issue_solutions.session_id AND chat_sessions.user_id = auth.uid())
+    EXISTS (
+      SELECT 1 FROM public.chat_sessions cs
+      WHERE cs.id = issue_solutions.session_id AND cs.user_id = auth.uid()
+    )
   );
-CREATE POLICY "Users can insert solutions to own sessions" ON issue_solutions
+CREATE POLICY IF NOT EXISTS "Users can insert own issue solutions" ON public.issue_solutions
   FOR INSERT WITH CHECK (
-    EXISTS (SELECT 1 FROM chat_sessions WHERE chat_sessions.id = issue_solutions.session_id AND chat_sessions.user_id = auth.uid())
+    EXISTS (
+      SELECT 1 FROM public.chat_sessions cs
+      WHERE cs.id = issue_solutions.session_id AND cs.user_id = auth.uid()
+    )
   );
-CREATE POLICY "Users can update solutions in own sessions" ON issue_solutions
+CREATE POLICY IF NOT EXISTS "Users can update own issue solutions" ON public.issue_solutions
   FOR UPDATE USING (
-    EXISTS (SELECT 1 FROM chat_sessions WHERE chat_sessions.id = issue_solutions.session_id AND chat_sessions.user_id = auth.uid())
+    EXISTS (
+      SELECT 1 FROM public.chat_sessions cs
+      WHERE cs.id = issue_solutions.session_id AND cs.user_id = auth.uid()
+    )
   );
-CREATE POLICY "Users can delete solutions from own sessions" ON issue_solutions
+CREATE POLICY IF NOT EXISTS "Users can delete own issue solutions" ON public.issue_solutions
   FOR DELETE USING (
-    EXISTS (SELECT 1 FROM chat_sessions WHERE chat_sessions.id = issue_solutions.session_id AND chat_sessions.user_id = auth.uid())
+    EXISTS (
+      SELECT 1 FROM public.chat_sessions cs
+      WHERE cs.id = issue_solutions.session_id AND cs.user_id = auth.uid()
+    )
   );
+
+CREATE POLICY IF NOT EXISTS "Users can view own api keys" ON public.user_api_keys
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY IF NOT EXISTS "Users can insert own api keys" ON public.user_api_keys
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY IF NOT EXISTS "Users can update own api keys" ON public.user_api_keys
+  FOR UPDATE USING (auth.uid() = user_id);
 ```
 
 Run:
