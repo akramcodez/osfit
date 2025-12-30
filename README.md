@@ -32,6 +32,10 @@ LINGO_API_KEY=your_lingo_key
 
 Minimal setup requires Supabase + one AI key (Gemini or Groq). Add Apify for better file/issue analysis. Add Lingo for professional translations for app's every component.
 
+**Note:** This app uses:
+- [multilingual-github-scraper](https://apify.com/sincere_spinner/multilingual-github-scraper) Apify actor for fetching GitHub content
+- [Lingo](https://lingo.dev/) for localizing app text in multiple languages
+
 ### Database Setup
 
 Run these SQL queries in your Supabase SQL Editor:
