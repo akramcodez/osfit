@@ -2,14 +2,36 @@
 
 A standalone, AI-powered Apify Actor designed to analyze GitHub repositories. It can explain code files, visually diagram logic with flowcharts, and create solution plans for GitHub issues. It supports multiple languages and two primary usage patterns: Standalone (AI-powered) and App Integration (Raw Data).
 
-## Features
+## User Guidance
 
-- **File Explainer**: Analyzes code files to explain their purpose, main functions, and logic flow.
-- **Flowchart Generation**: Automatically creates Mermaid.js flowcharts to visualize the code's execution path.
-- **Issue Solver**: Analyzes GitHub issues and fetches referenced files to propose actionable, step-by-step solution plans.
-- **Multilingual Support**: Supports output in over 20 languages (English, Spanish, French, Hindi, Bengali, etc.).
-- **High-Quality Translation**: Optional integration with Lingo.dev for superior translation accuracy.
-- **App Integration Modes**: Includes raw data fetching modes ("file" and "issue") for external applications to build their own AI pipelines.
+### 1. Raw Data Modes (Fast & Cheap)
+These modes perform NO AI analysis. They simply fetch the raw content from GitHub. Ideal for feeding data into your own external pipelines.
+
+| Mode | Purpose | Required Input | URL Error Policy |
+|------|---------|----------------|------------------|
+| `file` | Fetch raw code file content | **Github File URL** (e.g., `.../blob/main/main.ts`) | ❌ **Error:** If you provide an Issue URL, it will fail. |
+| `issue` | Fetch raw issue data (body, comments, labels) | **Github Issue URL** (e.g., `.../issues/1`) | ❌ **Error:** If you provide a File URL, it will fail. |
+
+### 2. AI-Powered Modes (Deep Analysis)
+These modes use LLMs (and optionally Lingo.dev) to analyze the content.
+
+#### 📄 File Explainer (`file_explainer`)
+Analyzes code files to explain purpose, logic, and structure.
+
+| Feature | Input | Description |
+|---------|-------|-------------|
+| **Base Analysis** | `mode: "file_explainer"` | Standard logic explanation. |
+| **Flowchart** | `includeFlowchart: true` | Adds a Mermaid.js flowchart visualization. |
+| **Lingo Translation** | `useLingoTranslation: true` | Uses Lingo.dev for high-quality technical translation (if `language` != `en`). |
+
+#### 🔧 Issue Solver (`issue_solver`)
+Analyzes GitHub issues to propose actionable step-by-step solutions.
+
+| Feature | Input | Description |
+|---------|-------|-------------|
+| **Base Analysis** | `mode: "issue_solver"` | Explains the issue context and problem. |
+| **Solution Plan** | `includeSolutionPlan: true` | Adds a detailed, step-by-step fix plan with code snippets. |
+| **Lingo Translation** | `useLingoTranslation: true` | Uses Lingo.dev for high-quality technical translation (if `language` != `en`). |
 
 ---
 
