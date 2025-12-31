@@ -10,6 +10,12 @@
       "description": "AI-powered code explanation in 20+ languages"
     },
     {
+      "name": "file_analysis_lingo",
+      "displayName": "File Analysis + Lingo",
+      "price": 0.20,
+      "description": "AI-powered code explanation with professional Lingo.dev translation"
+    },
+    {
       "name": "file_analysis_flowchart_generation",
       "displayName": "File Analysis with Flowchart",
       "price": 0.10,
@@ -26,6 +32,12 @@
       "displayName": "Issue Explanation",
       "price": 0.04,
       "description": "AI-powered GitHub issue analysis in 20+ languages"
+    },
+    {
+      "name": "issue_explanation_lingo",
+      "displayName": "Issue Explanation + Lingo",
+      "price": 0.20,
+      "description": "AI-powered GitHub issue analysis with professional Lingo.dev translation"
     },
     {
       "name": "issue_explanation_solution_plan",

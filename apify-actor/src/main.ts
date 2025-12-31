@@ -396,6 +396,8 @@ ${file.content.substring(0, 4000)}
     await Actor.charge({ eventName: 'file_analysis_flowchart_generation_lingo', count: 1 });
   } else if (flowchart) {
     await Actor.charge({ eventName: 'file_analysis_flowchart_generation', count: 1 });
+  } else if (usedLingo) {
+    await Actor.charge({ eventName: 'file_analysis_lingo', count: 1 });
   } else {
     await Actor.charge({ eventName: 'file_analysis', count: 1 });
   }
@@ -494,6 +496,8 @@ ${issue.body || 'No description provided'}`;
     await Actor.charge({ eventName: 'issue_explanation_solution_plan_lingo', count: 1 });
   } else if (includeSolutionPlan) {
     await Actor.charge({ eventName: 'issue_explanation_solution_plan', count: 1 });
+  } else if (usedLingo) {
+    await Actor.charge({ eventName: 'issue_explanation_lingo', count: 1 });
   } else {
     await Actor.charge({ eventName: 'issue_explanation', count: 1 });
   }
