@@ -145,13 +145,20 @@ RULES:
 6. Return ONLY the mermaid code, nothing else
 7. IMPORTANT: Write all node labels in ${targetLangName} language
 
-CRITICAL - AVOID SPECIAL CHARACTERS IN LABELS:
+CRITICAL - NODE SYNTAX (EVERY NODE NEEDS AN ID):
+- Rectangle: A[Label Text]
+- Rounded: B(Label Text)  
+- Circle: C((Label Text))
+- Diamond/Decision: D{Label Text}
+- Subroutine: E[[Label Text]]
+- Example: A((Start)) --> B[Process] --> C{Decision?}
+- WRONG: ((Start)) --> [Process]  (missing IDs!)
+- Use single letter IDs: A, B, C, D, E, F, etc.
+
+AVOID SPECIAL CHARACTERS IN LABELS:
 - Do NOT use: @ * / \\ | # < > in node labels
 - Do NOT use arrows like → or ← in labels
-- Use simple text only, no code symbols
 - Use quotes around labels if needed: A["My Label"]
-- Example: Use "Route All" instead of "@/*"
-- Example: Use "Path Pattern" instead of "./*"
 
 EXAMPLE OUTPUT (in English):
 flowchart TD

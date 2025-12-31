@@ -193,28 +193,31 @@ RULES:
 2. Use top-down direction: flowchart TD
 3. Keep it simple and high-level (max 15-20 nodes)
 4. Focus on data flow and main logic steps
-5. Use recognizable shapes:
-   - [rect] for processes
-   - {rhombus} for decisions
-   - (circle) for start/end
-   - [[subroutine]] for function calls
-6. Return ONLY the mermaid code, nothing else
 
-CRITICAL - AVOID SPECIAL CHARACTERS IN LABELS:
+CRITICAL - NODE SYNTAX (EVERY NODE NEEDS AN ID):
+- Rectangle: A[Label Text]
+- Rounded: B(Label Text)  
+- Circle: C((Label Text))
+- Diamond/Decision: D{Label Text}
+- Subroutine: E[[Label Text]]
+- Example: A((Start)) --> B[Process] --> C{Decision?}
+- WRONG: ((Start)) --> [Process]  (missing IDs!)
+- Use single letter IDs: A, B, C, D, E, F, etc.
+
+5. Return ONLY the mermaid code, nothing else
+
+AVOID SPECIAL CHARACTERS IN LABELS:
 - Do NOT use: @ * / \\ | # < > in node labels
 - Do NOT use arrows like → or ← in labels
-- Use simple text only, no code symbols
 - Use quotes around labels if needed: A["My Label"]
-- Example: Use "Route All" instead of "@/*"
-- Example: Use "Path Pattern" instead of "./*"
 
-IMPORTANT LANGUAGE REQUIREMENT:
+LANGUAGE REQUIREMENT:
 The flowchart syntax (flowchart TD, -->, etc.) MUST be in English.
 But the LABELS inside nodes MUST be in ${targetLangName}.`;
     const userMessage = `Generate a flowchart for this ${language} file:\n\n${fileContent.substring(0, 3000)}`;
     try {
         const completion = await groq.chat.completions.create({
-            model: 'llama-3.3-70b-versatile',
+            model: 'openai/gpt-oss-120b',
             messages: [
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: userMessage }
