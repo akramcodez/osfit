@@ -79,37 +79,66 @@ const LANGUAGE_MAP: Record<string, string> = {
 };
 
 const LANGUAGE_NAMES: Record<string, string> = {
-  'en': 'English',
-  'es': 'Spanish',
-  'fr': 'French',
-  'de': 'German',
-  'bn': 'Bengali',
-  'hi': 'Hindi',
-  'ar': 'Arabic',
-  'ja': 'Japanese',
-  'ko': 'Korean',
-  'zh': 'Chinese',
-  'ru': 'Russian',
-  'pt': 'Portuguese',
-  'it': 'Italian',
-  'nl': 'Dutch',
-  'tr': 'Turkish',
-  'vi': 'Vietnamese',
-  'th': 'Thai',
-  'id': 'Indonesian',
-  'ms': 'Malay',
-  'ta': 'Tamil',
-  'te': 'Telugu',
+  en: 'English',
+  es: 'Spanish',
+  fr: 'French',
+  de: 'German',
+  it: 'Italian',
+  pt: 'Portuguese',
+  nl: 'Dutch',
+  ru: 'Russian',
+  ja: 'Japanese',
+  ko: 'Korean',
+  zh: 'Chinese',
+  hi: 'Hindi',
+  ar: 'Arabic',
+  tr: 'Turkish',
+  pl: 'Polish',
+  sv: 'Swedish',
+  da: 'Danish',
+  fi: 'Finnish',
+  no: 'Norwegian',
+  cs: 'Czech',
+  ta: 'Tamil',
+  te: 'Telugu',
 };
 
+// Helper to safely charge preventing actor crash
+async function safelyCharge(eventName: string, count: number = 1) {
+  try {
+    const apifyClient = Actor.newClient();
+    // Usually Actor.charge works directly. But if we want to be super safe:
+    await Actor.charge({ eventName, count });
+  } catch (err) {
+    console.warn(`[Billing Error] Failed to charge for ${eventName}:`, err);
+  }
+}
+
 async function fetchGitHubFile(fileUrl: string): Promise<FileData> {
+  // Validate that this is NOT an issue URL
+  if (fileUrl.includes('/issues/')) {
+    throw new Error(
+      `Invalid URL for File Mode: You provided a GitHub Issue URL ('${fileUrl}') but selected 'file' or 'file_explainer' mode. Please switch to 'issue' or 'issue_solver' mode.`
+    );
+  }
+
+  // Validate that this is a file URL
+  if (!fileUrl.includes('github.com') || (!fileUrl.includes('/blob/') && !fileUrl.includes('raw.githubusercontent.com'))) {
+     throw new Error(
+      `Invalid GitHub File URL: '${fileUrl}'. Please provide a valid GitHub file URL (e.g., https://github.com/user/repo/blob/main/file.ts).`
+    );
+  }
+
   const rawUrl = fileUrl
     .replace('github.com', 'raw.githubusercontent.com')
     .replace('/blob/', '/');
 
   const response = await fetch(rawUrl);
   if (!response.ok) {
-    throw new Error(`Failed to fetch file: ${response.status}`);
+    if (response.status === 404) {
+      throw new Error(`File not found (404): '${fileUrl}'. Please check if the URL is correct and the file exists.`);
+    }
+    throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
   }
 
   const content = await response.text();
@@ -138,6 +167,20 @@ async function fetchGitHubFile(fileUrl: string): Promise<FileData> {
 }
 
 async function fetchGitHubIssue(issueUrl: string): Promise<IssueData> {
+  // Validate that this is NOT a file URL
+  if (issueUrl.includes('/blob/') || issueUrl.includes('/tree/')) {
+    throw new Error(
+       `Invalid URL for Issue Mode: You provided a GitHub File URL ('${issueUrl}') but selected 'issue' or 'issue_solver' mode. Please switch to 'file' or 'file_explainer' mode.`
+    );
+  }
+
+  // Validate that this IS an issue URL
+  if (!issueUrl.includes('github.com') || !issueUrl.includes('/issues/')) {
+     throw new Error(
+      `Invalid GitHub Issue URL: '${issueUrl}'. Please provide a valid GitHub issue URL (e.g., https://github.com/user/repo/issues/1).`
+    );
+  }
+
   return new Promise((resolve, reject) => {
     const crawler = new CheerioCrawler({
       maxRequestsPerCrawl: 1,
@@ -147,18 +190,30 @@ async function fetchGitHubIssue(issueUrl: string): Promise<IssueData> {
         const urlParts = request.url.split('/');
         const issueNumber = parseInt(urlParts[urlParts.length - 1], 10);
 
+        if (isNaN(issueNumber)) {
+           throw new Error(`Could not parse issue number from URL: ${request.url}`);
+        }
+
         const title = $('h1.gh-header-title .js-issue-title').text().trim() ||
                       $('[data-testid="issue-title"]').text().trim() ||
                       $('h1').first().text().trim();
 
-        const bodyElement = $('.js-comment-body').first();
-        const body = bodyElement.text().trim() || '';
+        if (!title) {
+            // If we can't find a title, it's likely a 404 or not an issue page
+             throw new Error(`Could not find issue title. Please verify the URL points to a valid, public GitHub issue.`);
+        }
 
-        const state = $('.State').text().trim().toLowerCase() ||
-                      $('[data-testid="state-label"]').text().trim().toLowerCase() || 'unknown';
+        const bodyElement = $('.js-comment-body').first();
+        const body = bodyElement.text().trim() || 
+                     $('.markdown-body').first().text().trim() || '';
+
+        // GitHub often changes class names. 'State' is common, but let's be more robust.
+        // We look for elements with 'State' in class or data-testid.
+        const stateEl = $('.State, [class*="State--"], [data-testid="state-label"]').first();
+        const state = stateEl.text().trim().toLowerCase() || 'unknown';
 
         const labels: string[] = [];
-        $('.IssueLabel, [data-testid="issue-label"]').each((_i, el) => {
+        $('.IssueLabel, [data-testid="issue-label"], a[class*="IssueLabel"]').each((_i, el) => {
           const labelText = $(el).text().trim();
           if (labelText) labels.push(labelText);
         });
@@ -186,7 +241,7 @@ async function fetchGitHubIssue(issueUrl: string): Promise<IssueData> {
         });
       },
       failedRequestHandler: async ({ request }) => {
-        reject(new Error(`Failed to fetch issue: ${request.url}`));
+        reject(new Error(`Failed to fetch issue page: ${request.url}`));
       },
     });
 
@@ -331,7 +386,11 @@ async function translateWithLingo(text: string, targetLanguage: string): Promise
 
     return result.text || text;
   } catch (error) {
-    console.warn('Lingo translation failed, using original:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : '';
+    console.warn(`Lingo translation failed: ${errorMessage}`);
+    console.warn(`Error stack: ${errorStack}`);
+    // Return original text instead of crashing
     return text;
   }
 }
@@ -393,13 +452,13 @@ ${file.content.substring(0, 4000)}
   }
 
   if (flowchart && usedLingo) {
-    await Actor.charge({ eventName: 'file_analysis_flowchart_generation_lingo', count: 1 });
+    await safelyCharge('file_analysis_flowchart_generation_lingo');
   } else if (flowchart) {
-    await Actor.charge({ eventName: 'file_analysis_flowchart_generation', count: 1 });
+    await safelyCharge('file_analysis_flowchart_generation');
   } else if (usedLingo) {
-    await Actor.charge({ eventName: 'file_analysis_lingo', count: 1 });
+    await safelyCharge('file_analysis_lingo');
   } else {
-    await Actor.charge({ eventName: 'file_analysis', count: 1 });
+    await safelyCharge('file_analysis');
   }
 
   return {
@@ -493,13 +552,13 @@ ${issue.body || 'No description provided'}`;
   }
 
   if (includeSolutionPlan && usedLingo) {
-    await Actor.charge({ eventName: 'issue_explanation_solution_plan_lingo', count: 1 });
+    await safelyCharge('issue_explanation_solution_plan_lingo');
   } else if (includeSolutionPlan) {
-    await Actor.charge({ eventName: 'issue_explanation_solution_plan', count: 1 });
+    await safelyCharge('issue_explanation_solution_plan');
   } else if (usedLingo) {
-    await Actor.charge({ eventName: 'issue_explanation_lingo', count: 1 });
+    await safelyCharge('issue_explanation_lingo');
   } else {
-    await Actor.charge({ eventName: 'issue_explanation', count: 1 });
+    await safelyCharge('issue_explanation');
   }
 
   return {
@@ -553,14 +612,23 @@ async function main(): Promise<void> {
       break;
 
     case 'issue':
-      result = { type: 'issue', ...(await handleLegacyIssue(url)) };
-      await Actor.charge({ eventName: 'issue_fetcher', count: 1 });
+      const issueData = await handleLegacyIssue(url);
+      result = { 
+        mode: 'issue',
+        success: true,
+        issue: issueData 
+      };
+      await safelyCharge('issue_fetcher');
       break;
 
     case 'file':
       const fileData = await handleLegacyFile(url);
-      result = { type: 'file', ...fileData, language: fileData.detectedLanguage };
-      await Actor.charge({ eventName: 'file_fetcher', count: 1 });
+      result = { 
+        mode: 'file',
+        success: true,
+        file: fileData 
+      };
+      await safelyCharge('file_fetcher');
       break;
 
     default:

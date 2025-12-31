@@ -1,9 +1,6 @@
-// Multilingual GitHub Scraper
-// Standalone AI-powered file explainer and issue solver with multilingual support
 import { CheerioCrawler } from '@crawlee/cheerio';
 import { Actor } from 'apify';
 import Groq from 'groq-sdk';
-// Language mapping
 const LANGUAGE_MAP = {
     'js': 'javascript',
     'jsx': 'javascript',
@@ -33,41 +30,61 @@ const LANGUAGE_MAP = {
     'sh': 'bash',
     'bash': 'bash',
 };
-// Language names for prompts
 const LANGUAGE_NAMES = {
-    'en': 'English',
-    'es': 'Spanish',
-    'fr': 'French',
-    'de': 'German',
-    'bn': 'Bengali',
-    'hi': 'Hindi',
-    'ar': 'Arabic',
-    'ja': 'Japanese',
-    'ko': 'Korean',
-    'zh': 'Chinese',
-    'ru': 'Russian',
-    'pt': 'Portuguese',
-    'it': 'Italian',
-    'nl': 'Dutch',
-    'tr': 'Turkish',
-    'vi': 'Vietnamese',
-    'th': 'Thai',
-    'id': 'Indonesian',
-    'ms': 'Malay',
-    'ta': 'Tamil',
-    'te': 'Telugu',
+    en: 'English',
+    es: 'Spanish',
+    fr: 'French',
+    de: 'German',
+    it: 'Italian',
+    pt: 'Portuguese',
+    nl: 'Dutch',
+    ru: 'Russian',
+    ja: 'Japanese',
+    ko: 'Korean',
+    zh: 'Chinese',
+    hi: 'Hindi',
+    ar: 'Arabic',
+    tr: 'Turkish',
+    pl: 'Polish',
+    sv: 'Swedish',
+    da: 'Danish',
+    fi: 'Finnish',
+    no: 'Norwegian',
+    cs: 'Czech',
+    ta: 'Tamil',
+    te: 'Telugu',
 };
-// Fetch file content from GitHub
+// Helper to safely charge preventing actor crash
+async function safelyCharge(eventName, count = 1) {
+    try {
+        const apifyClient = Actor.newClient();
+        // Usually Actor.charge works directly. But if we want to be super safe:
+        await Actor.charge({ eventName, count });
+    }
+    catch (err) {
+        console.warn(`[Billing Error] Failed to charge for ${eventName}:`, err);
+    }
+}
 async function fetchGitHubFile(fileUrl) {
+    // Validate that this is NOT an issue URL
+    if (fileUrl.includes('/issues/')) {
+        throw new Error(`Invalid URL for File Mode: You provided a GitHub Issue URL ('${fileUrl}') but selected 'file' or 'file_explainer' mode. Please switch to 'issue' or 'issue_solver' mode.`);
+    }
+    // Validate that this is a file URL
+    if (!fileUrl.includes('github.com') || (!fileUrl.includes('/blob/') && !fileUrl.includes('raw.githubusercontent.com'))) {
+        throw new Error(`Invalid GitHub File URL: '${fileUrl}'. Please provide a valid GitHub file URL (e.g., https://github.com/user/repo/blob/main/file.ts).`);
+    }
     const rawUrl = fileUrl
         .replace('github.com', 'raw.githubusercontent.com')
         .replace('/blob/', '/');
     const response = await fetch(rawUrl);
     if (!response.ok) {
-        throw new Error(`Failed to fetch file: ${response.status}`);
+        if (response.status === 404) {
+            throw new Error(`File not found (404): '${fileUrl}'. Please check if the URL is correct and the file exists.`);
+        }
+        throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
     }
     const content = await response.text();
-    // Extract path
     const urlParts = fileUrl.split('/blob/');
     let path = '';
     if (urlParts.length > 1) {
@@ -83,13 +100,20 @@ async function fetchGitHubFile(fileUrl) {
     const detectedLanguage = LANGUAGE_MAP[extension] || extension;
     return {
         path,
-        content: content.substring(0, 8000), // Limit content size
+        content: content.substring(0, 8000),
         detectedLanguage,
         url: fileUrl,
     };
 }
-// Fetch issue data from GitHub
 async function fetchGitHubIssue(issueUrl) {
+    // Validate that this is NOT a file URL
+    if (issueUrl.includes('/blob/') || issueUrl.includes('/tree/')) {
+        throw new Error(`Invalid URL for Issue Mode: You provided a GitHub File URL ('${issueUrl}') but selected 'issue' or 'issue_solver' mode. Please switch to 'file' or 'file_explainer' mode.`);
+    }
+    // Validate that this IS an issue URL
+    if (!issueUrl.includes('github.com') || !issueUrl.includes('/issues/')) {
+        throw new Error(`Invalid GitHub Issue URL: '${issueUrl}'. Please provide a valid GitHub issue URL (e.g., https://github.com/user/repo/issues/1).`);
+    }
     return new Promise((resolve, reject) => {
         const crawler = new CheerioCrawler({
             maxRequestsPerCrawl: 1,
@@ -97,15 +121,25 @@ async function fetchGitHubIssue(issueUrl) {
                 const { request, $ } = context;
                 const urlParts = request.url.split('/');
                 const issueNumber = parseInt(urlParts[urlParts.length - 1], 10);
+                if (isNaN(issueNumber)) {
+                    throw new Error(`Could not parse issue number from URL: ${request.url}`);
+                }
                 const title = $('h1.gh-header-title .js-issue-title').text().trim() ||
                     $('[data-testid="issue-title"]').text().trim() ||
                     $('h1').first().text().trim();
+                if (!title) {
+                    // If we can't find a title, it's likely a 404 or not an issue page
+                    throw new Error(`Could not find issue title. Please verify the URL points to a valid, public GitHub issue.`);
+                }
                 const bodyElement = $('.js-comment-body').first();
-                const body = bodyElement.text().trim() || '';
-                const state = $('.State').text().trim().toLowerCase() ||
-                    $('[data-testid="state-label"]').text().trim().toLowerCase() || 'unknown';
+                const body = bodyElement.text().trim() ||
+                    $('.markdown-body').first().text().trim() || '';
+                // GitHub often changes class names. 'State' is common, but let's be more robust.
+                // We look for elements with 'State' in class or data-testid.
+                const stateEl = $('.State, [class*="State--"], [data-testid="state-label"]').first();
+                const state = stateEl.text().trim().toLowerCase() || 'unknown';
                 const labels = [];
-                $('.IssueLabel, [data-testid="issue-label"]').each((_i, el) => {
+                $('.IssueLabel, [data-testid="issue-label"], a[class*="IssueLabel"]').each((_i, el) => {
                     const labelText = $(el).text().trim();
                     if (labelText)
                         labels.push(labelText);
@@ -133,16 +167,15 @@ async function fetchGitHubIssue(issueUrl) {
                 });
             },
             failedRequestHandler: async ({ request }) => {
-                reject(new Error(`Failed to fetch issue: ${request.url}`));
+                reject(new Error(`Failed to fetch issue page: ${request.url}`));
             },
         });
         crawler.run([issueUrl]).catch(reject);
     });
 }
-// Extract file links from issue body/comments
 function extractFileLinks(issue) {
     const links = [];
-    const regex = /github\.com\/[^\/]+\/[^\/]+\/blob\/[^\s\)\"]+/g;
+    const regex = /github\.com\/[^\/]+\/[^\/]+\/blob\/[^\s\)\"\]]+/g;
     const findLinks = (text) => {
         const matches = text.match(regex) || [];
         matches.forEach(match => {
@@ -157,7 +190,6 @@ function extractFileLinks(issue) {
     issue.comments.forEach(c => findLinks(c.body));
     return links;
 }
-// AI Analysis with Groq
 async function analyzeWithGroq(systemPrompt, userMessage, targetLanguage = 'en') {
     const groqKey = process.env.GROQ_API_KEY;
     if (!groqKey) {
@@ -179,7 +211,6 @@ async function analyzeWithGroq(systemPrompt, userMessage, targetLanguage = 'en')
     });
     return completion.choices[0]?.message?.content || '';
 }
-// Generate Flowchart using Groq
 async function generateFlowchart(fileContent, language, targetLanguage = 'en') {
     const groqKey = process.env.GROQ_API_KEY;
     if (!groqKey)
@@ -226,16 +257,12 @@ But the LABELS inside nodes MUST be in ${targetLangName}.`;
             max_tokens: 1000,
         });
         let code = completion.choices[0]?.message?.content || '';
-        // Extract mermaid block
         const match = code.match(/```mermaid\n?([\s\S]*?)```/);
         if (match) {
             code = match[1].trim();
         }
-        // Sanitize: Remove problematic characters from node labels
-        // Replace arrows in labels with text
         code = code.replace(/→/g, ' to ');
         code = code.replace(/←/g, ' from ');
-        // Wrap labels with @ or * or / in quotes to prevent parse errors
         code = code.replace(/\[([^\]]*[@*\/][^\]]*)\]/g, '["$1"]');
         return code;
     }
@@ -244,25 +271,26 @@ But the LABELS inside nodes MUST be in ${targetLangName}.`;
         return '';
     }
 }
-// Translate with Lingo (optional high-quality translation)
 async function translateWithLingo(text, targetLanguage) {
     const lingoKey = process.env.LINGO_API_KEY;
     if (!lingoKey || targetLanguage === 'en') {
         return text;
     }
     try {
-        // Dynamic import to avoid issues if not installed
         const { LingoDotDevEngine } = await import('lingo.dev/sdk');
         const lingo = new LingoDotDevEngine({ apiKey: lingoKey });
         const result = await lingo.localizeObject({ text }, { sourceLocale: 'en', targetLocale: targetLanguage });
         return result.text || text;
     }
     catch (error) {
-        console.warn('Lingo translation failed, using original:', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorStack = error instanceof Error ? error.stack : '';
+        console.warn(`Lingo translation failed: ${errorMessage}`);
+        console.warn(`Error stack: ${errorStack}`);
+        // Return original text instead of crashing
         return text;
     }
 }
-// File Explainer Mode
 async function handleFileExplainer(url, language, useLingoTranslation, includeFlowchart) {
     console.log(`[File Explainer] Fetching file: ${url}`);
     const file = await fetchGitHubFile(url);
@@ -297,13 +325,11 @@ ${file.content.substring(0, 4000)}
     let explanation;
     const usedLingo = useLingoTranslation && language !== 'en';
     if (usedLingo) {
-        // Get English response, then translate
         explanation = await analyzeWithGroq(systemPrompt, userMessage, 'en');
         console.log('[File Explainer] Translating with Lingo...');
         explanation = await translateWithLingo(explanation, language);
     }
     else {
-        // Direct response in target language
         explanation = await analyzeWithGroq(systemPrompt, userMessage, language);
     }
     let flowchart;
@@ -311,15 +337,17 @@ ${file.content.substring(0, 4000)}
         console.log('[File Explainer] Generating flowchart...');
         flowchart = await generateFlowchart(file.content, file.detectedLanguage, language);
     }
-    // Record billing event based on combination of features
     if (flowchart && usedLingo) {
-        await Actor.charge({ eventName: 'file_analysis_flowchart_generation_lingo', count: 1 });
+        await safelyCharge('file_analysis_flowchart_generation_lingo');
     }
     else if (flowchart) {
-        await Actor.charge({ eventName: 'file_analysis_flowchart_generation', count: 1 });
+        await safelyCharge('file_analysis_flowchart_generation');
+    }
+    else if (usedLingo) {
+        await safelyCharge('file_analysis_lingo');
     }
     else {
-        await Actor.charge({ eventName: 'file_analysis', count: 1 });
+        await safelyCharge('file_analysis');
     }
     return {
         success: true,
@@ -329,11 +357,9 @@ ${file.content.substring(0, 4000)}
         flowchart,
     };
 }
-// Issue Solver Mode
 async function handleIssueSolver(url, language, useLingoTranslation, includeSolutionPlan) {
     console.log(`[Issue Solver] Fetching issue: ${url}`);
     const issue = await fetchGitHubIssue(url);
-    // Extract and fetch related files
     const fileLinks = extractFileLinks(issue);
     const relatedFiles = [];
     for (const link of fileLinks) {
@@ -389,26 +415,26 @@ ${issue.body || 'No description provided'}`;
     else {
         response = await analyzeWithGroq(systemPrompt, userMessage, language);
     }
-    // Parse response into explanation and solution
     const explanationMatch = response.match(/## Issue Explanation\n([\s\S]*?)(?=\n## |$)/);
     const solutionMatch = response.match(/## Solution Plan\n([\s\S]*?)(?=\n## Files|$)/);
     const filesMatch = response.match(/## Files to Modify\n([\s\S]*?)$/);
     const issueExplanation = explanationMatch?.[1]?.trim() || response;
     let solutionPlan = '';
-    // Only include solution plan in output if requested
     if (includeSolutionPlan) {
         solutionPlan = (solutionMatch?.[1] || '') + (filesMatch ? '\n\n## Files to Modify\n' + filesMatch[1] : '');
         solutionPlan = solutionPlan.trim() || response;
     }
-    // Record billing event based on combination of features
     if (includeSolutionPlan && usedLingo) {
-        await Actor.charge({ eventName: 'issue_explanation_solution_plan_lingo', count: 1 });
+        await safelyCharge('issue_explanation_solution_plan_lingo');
     }
     else if (includeSolutionPlan) {
-        await Actor.charge({ eventName: 'issue_explanation_solution_plan', count: 1 });
+        await safelyCharge('issue_explanation_solution_plan');
+    }
+    else if (usedLingo) {
+        await safelyCharge('issue_explanation_lingo');
     }
     else {
-        await Actor.charge({ eventName: 'issue_explanation', count: 1 });
+        await safelyCharge('issue_explanation');
     }
     return {
         success: true,
@@ -419,24 +445,19 @@ ${issue.body || 'No description provided'}`;
         solutionPlan,
     };
 }
-// Legacy mode handlers (backward compatibility)
 async function handleLegacyIssue(url) {
     return await fetchGitHubIssue(url);
 }
 async function handleLegacyFile(url) {
     return await fetchGitHubFile(url);
 }
-// Main entry point
 async function main() {
     await Actor.init();
     const input = await Actor.getInput();
     if (!input?.url) {
         throw new Error('URL is required');
     }
-    const { url, language = 'en', useLingoTranslation = false, includeFlowchart = true, // Default to true
-    includeSolutionPlan = true // Default to true
-     } = input;
-    // Determine mode (support both new 'mode' and legacy 'type')
+    const { url, language = 'en', useLingoTranslation = false, includeFlowchart = true, includeSolutionPlan = true } = input;
     const mode = input.mode || input.type || 'file_explainer';
     console.log(`[Actor] Mode: ${mode}, Language: ${language}, Lingo: ${useLingoTranslation}`);
     let result;
@@ -448,15 +469,22 @@ async function main() {
             result = await handleIssueSolver(url, language, useLingoTranslation, includeSolutionPlan);
             break;
         case 'issue':
-            // Raw data mode - just fetch issue data
-            result = { type: 'issue', ...(await handleLegacyIssue(url)) };
-            await Actor.charge({ eventName: 'issue_fetcher', count: 1 });
+            const issueData = await handleLegacyIssue(url);
+            result = {
+                mode: 'issue',
+                success: true,
+                issue: issueData
+            };
+            await safelyCharge('issue_fetcher');
             break;
         case 'file':
-            // Raw data mode - just fetch file data
             const fileData = await handleLegacyFile(url);
-            result = { type: 'file', ...fileData, language: fileData.detectedLanguage };
-            await Actor.charge({ eventName: 'file_fetcher', count: 1 });
+            result = {
+                mode: 'file',
+                success: true,
+                file: fileData
+            };
+            await safelyCharge('file_fetcher');
             break;
         default:
             throw new Error(`Unknown mode: ${mode}`);
@@ -465,19 +493,17 @@ async function main() {
     console.log('[Actor] Done!');
     await Actor.exit();
 }
-// Run
 main().catch(async (err) => {
     const errorMessage = err instanceof Error ? err.message : String(err);
     console.error('Actor failed:', errorMessage);
     try {
-        // Push structured error to dataset
         await Actor.pushData({
             success: false,
             error: errorMessage,
         });
     }
     catch {
-        // Ignore if pushData fails
+        // Ignore push failures during error handling
     }
     await Actor.fail(errorMessage);
 });
