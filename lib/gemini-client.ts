@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 
-export const geminiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const GEMINI_MODEL = 'gemini-2.5-flash';
 
 
 export function createGeminiClient(apiKey: string): GoogleGenerativeAI {
@@ -10,15 +10,15 @@ export function createGeminiClient(apiKey: string): GoogleGenerativeAI {
 
 
 export function getGeminiClient(userApiKey?: string | null): GoogleGenerativeAI {
-  if (userApiKey) {
-    return createGeminiClient(userApiKey);
+  if (!userApiKey) {
+    throw new Error('Gemini API key is required');
   }
-  return geminiClient;
+  return createGeminiClient(userApiKey);
 }
 
 export async function generateResponse(prompt: string, userApiKey?: string | null): Promise<string> {
   const client = getGeminiClient(userApiKey);
-  const model = client.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const model = client.getGenerativeModel({ model: GEMINI_MODEL });
   const result = await model.generateContent(prompt);
   const response = await result.response;
   return response.text();

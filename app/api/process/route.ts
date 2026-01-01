@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 import { getUserApiKeys } from '@/app/api/user/keys/route';
 
 import { getSupabase } from '@/lib/supabase';
-import { geminiClient, getGeminiClient } from '@/lib/gemini-client';
+import { getGeminiClient } from '@/lib/gemini-client';
 
 
 const isDevelopment = process.env.NODE_ENV === 'development';

@@ -52,6 +52,7 @@ export async function generateAIResponse(
   }
 
   
+  if (!geminiKey) throw new Error('Gemini API key is required');
   return generateGemini(enhancedPrompt, geminiKey);
 }
 
@@ -74,5 +75,6 @@ export async function analyzeWithAI(
   }
 
   
+  if (!geminiKey) throw new Error('Gemini API key is required');
   return analyzeGemini(enhancedSystemPrompt, userMessage, context, geminiKey);
 }
