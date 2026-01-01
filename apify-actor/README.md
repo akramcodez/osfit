@@ -236,14 +236,3 @@ This Actor uses a **pay-per-event** model. You pay for the specific features you
 |------|-------------|-------|
 | **File Fetcher** | Fetch raw file content | $0.001 |
 | **Issue Fetcher** | Fetch raw issue data | $0.001 |
-
-### Cost Estimation Examples
-- Analyze 10 files **without** flowcharts: 10 × $0.06 = **$0.60**
-- Analyze 10 files **with** flowcharts: 10 × $0.10 = **$1.00**
-- Analyze 10 files **with** flowcharts + Lingo: 10 × $0.50 = **$5.00**
-- Get explanations for 10 issues (no solutions): 10 × $0.04 = **$0.40**
-- Solve 10 issues (with solution plans): 10 × $0.10 = **$1.00**
-- Fetch 100 raw files: 100 × $0.001 = **$0.10**
-
-> **Note**: Platform usage costs (compute units, storage) are waived for pay-per-event Actors.
-
